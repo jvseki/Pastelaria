@@ -7,6 +7,16 @@ from database import engine, Base, SessionLocal
 from models import Produto
 from routes import auth, usuarios, produtos, pedidos, admin
 
+
+def _cors_origins() -> list[str]:
+    origins = {
+        settings.FRONTEND_URL.rstrip("/"),
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+    }
+    return [o for o in origins if o]
+
+
 app = FastAPI(
     title="Pastelaria Delivery API",
     description="API do sistema de delivery da Pastelaria",
@@ -15,7 +25,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:5500", "http://127.0.0.1:5500", "*"],
+    allow_origins=_cors_origins(),
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
