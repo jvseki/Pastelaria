@@ -24,6 +24,7 @@ if (!apiUrl) {
 const vercelConfig = {
     framework: null,
     buildCommand: "node scripts/build-config.js",
+    outputDirectory: ".",
     rewrites: [
         { source: "/favicon.ico", destination: "/favicon.svg" },
         { source: "/api/:path*", destination: `${apiUrl}/:path*` },

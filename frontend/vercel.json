@@ -1,6 +1,7 @@
 {
   "framework": null,
   "buildCommand": "node scripts/build-config.js",
+  "outputDirectory": ".",
   "rewrites": [
     { "source": "/favicon.ico", "destination": "/favicon.svg" }
   ]
