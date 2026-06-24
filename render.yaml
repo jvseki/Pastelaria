@@ -5,6 +5,7 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -13,8 +14,12 @@ services:
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: ADMIN_TOKEN
-        generateValue: true
+        sync: false
       - key: MOTOBOY_WHATSAPP
         sync: false
+      - key: PIX_CHAVE
+        sync: false
       - key: FRONTEND_URL
+        sync: false
+      - key: GOOGLE_MAPS_API_KEY
         sync: false
