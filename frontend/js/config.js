@@ -3,11 +3,8 @@
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1";
 
-    // Producao: URL do seu Web Service no Render (Settings → copie a URL)
-    // No Vercel: Environment → API_URL = mesma URL (sem barra no final)
-    window.API_URL = isLocal
-        ? "http://localhost:8000"
-        : "https://SUBSTITUA-PELA-SUA-URL.onrender.com";
+    // Producao: /api (proxy na Vercel → Render). Local: API direta.
+    window.API_URL = isLocal ? "http://localhost:8000" : "/api";
 
     window.GOOGLE_CLIENT_ID =
         "19682040972-bqnoppb492er7rm8kdtlj3b6ie7ug5e3.apps.googleusercontent.com";

@@ -1,34 +1,38 @@
 /**
- * Injeta API_URL do Vercel no config.js no momento do deploy.
- * Local: não altera nada (usa o valor já no config.js).
+ * Deploy Vercel: exige API_URL (URL do Web Service no Render).
+ * Cria proxy /api → Render (evita CORS no navegador).
  */
 const fs = require("fs");
 const path = require("path");
 
+const root = path.join(__dirname, "..");
 const apiUrl = (process.env.API_URL || "").trim().replace(/\/$/, "");
-const configPath = path.join(__dirname, "..", "js", "config.js");
 
 if (!apiUrl) {
-    console.warn(
-        "[build-config] API_URL não definida no Vercel — usando config.js do repositório."
-    );
-    process.exit(0);
-}
-
-let content = fs.readFileSync(configPath, "utf8");
-const replacement = `window.API_URL = isLocal
-        ? "http://localhost:8000"
-        : "${apiUrl}";`;
-
-if (!content.includes("window.API_URL = isLocal")) {
-    console.error("[build-config] config.js não tem o padrão esperado de API_URL.");
+    console.error("");
+    console.error("ERRO: API_URL nao definida na Vercel.");
+    console.error("");
+    console.error("1. Render → servico Pastelaria → copie a URL no topo");
+    console.error("   Exemplo: https://pastelaria.onrender.com");
+    console.error("2. Vercel → Settings → Environment Variables");
+    console.error("   Nome: API_URL  |  Valor: URL do Render (sem barra no final)");
+    console.error("3. Redeploy");
+    console.error("");
     process.exit(1);
 }
 
-content = content.replace(
-    /window\.API_URL = isLocal[\s\S]*?;/,
-    replacement
+const vercelConfig = {
+    framework: null,
+    buildCommand: "node scripts/build-config.js",
+    rewrites: [
+        { source: "/favicon.ico", destination: "/favicon.svg" },
+        { source: "/api/:path*", destination: `${apiUrl}/:path*` },
+    ],
+};
+
+fs.writeFileSync(
+    path.join(root, "vercel.json"),
+    JSON.stringify(vercelConfig, null, 2) + "\n"
 );
 
-fs.writeFileSync(configPath, content);
-console.log("[build-config] API_URL de produção:", apiUrl);
+console.log("[build-config] Proxy /api ->", apiUrl);
