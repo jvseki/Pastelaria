@@ -3,8 +3,10 @@
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1";
 
-    // Producao: /api (proxy na Vercel → Render). Local: API direta.
-    window.API_URL = isLocal ? "http://localhost:8000" : "/api";
+    // Producao: API no Render | Local: localhost
+    window.API_URL = isLocal
+        ? "http://localhost:8000"
+        : "https://pastelaria-geu7.onrender.com";
 
     window.GOOGLE_CLIENT_ID =
         "19682040972-bqnoppb492er7rm8kdtlj3b6ie7ug5e3.apps.googleusercontent.com";
