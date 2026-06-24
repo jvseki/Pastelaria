@@ -1,14 +1,11 @@
 services:
   - type: web
     name: pastelaria-delivery-api
-    runtime: python
+    runtime: docker
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.8
       - key: DATABASE_URL
         sync: false
       - key: SECRET_KEY
