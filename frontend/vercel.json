@@ -1,4 +1,7 @@
 {
   "framework": null,
-  "buildCommand": "node scripts/build-config.js"
+  "buildCommand": "node scripts/build-config.js",
+  "rewrites": [
+    { "source": "/favicon.ico", "destination": "/favicon.svg" }
+  ]
 }
