@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Pastelaria Delivery</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="brand">
+                <div class="brand-mark">パ</div>
+                <div class="brand-text">Pastelaria<span>パステル屋 · Delivery</span></div>
+            </a>
+            <nav class="site-nav">
+                <a href="index.html">Cardápio</a>
+                <a href="carrinho.html" class="active">Carrinho</a>
+            </nav>
+            <div class="header-actions" id="headerActions"></div>
+        </div>
+    </header>
+
+    <div class="page-title">
+        <a href="carrinho.html" class="page-back">Voltar ao carrinho</a>
+        <h1>Endereço de entrega</h1>
+        <p>Onde devemos entregar seu pedido?</p>
+    </div>
+
+    <div class="checkout-steps">
+        <span class="step done">Carrinho</span>
+        <span class="step-line done"></span>
+        <span class="step active">Endereço</span>
+        <span class="step-line"></span>
+        <span class="step">Pagamento</span>
+    </div>
+
+    <main class="container container-narrow">
+        <form class="form-card" id="formCadastro" onsubmit="salvarCadastro(event)">
+            <div id="formErro" class="form-erro" style="display:none"></div>
+
+            <div class="form-group">
+                <label for="nome">Nome completo</label>
+                <input type="text" id="nome" required placeholder="Seu nome" autocomplete="name">
+            </div>
+
+            <div class="form-group">
+                <label for="telefone">Telefone (WhatsApp)</label>
+                <input type="tel" id="telefone" required placeholder="(11) 99999-9999" autocomplete="tel">
+            </div>
+
+            <div class="form-group">
+                <label for="rua">Rua</label>
+                <input type="text" id="rua" required placeholder="Nome da rua" autocomplete="street-address">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="numero">Número</label>
+                    <input type="text" id="numero" required placeholder="123">
+                </div>
+                <div class="form-group">
+                    <label for="bairro">Bairro</label>
+                    <input type="text" id="bairro" required placeholder="Centro">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="referencia">Ponto de referência</label>
+                <textarea id="referencia" rows="2" placeholder="Próximo ao mercado, portão azul..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" id="btnSalvar">Salvar e continuar</button>
+        </form>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            Cardápio
+        </a>
+        <a href="carrinho.html" class="nav-item active">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>
+            Carrinho
+        </a>
+        <a href="login.html" class="nav-item nav-conta">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span class="nav-label">Conta</span>
+        </a>
+    </nav>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cadastro.js"></script>
+</body>
+</html>

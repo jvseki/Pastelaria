@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Conta - Pastelaria Delivery</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="brand">
+                <div class="brand-mark">パ</div>
+                <div class="brand-text">Pastelaria<span>パステル屋 · Delivery</span></div>
+            </a>
+            <nav class="site-nav">
+                <a href="index.html">Cardápio</a>
+                <a href="carrinho.html">Carrinho</a>
+            </nav>
+            <div class="header-actions" id="headerActions"></div>
+        </div>
+    </header>
+
+    <div class="page-title">
+        <a href="index.html" class="page-back">Voltar ao cardápio</a>
+        <h1>Minha conta</h1>
+    </div>
+
+    <main class="container container-narrow" id="contaConteudo"></main>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            Cardápio
+        </a>
+        <a href="carrinho.html" class="nav-item">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>
+            Carrinho
+            <span class="nav-badge" style="display:none">0</span>
+        </a>
+        <a href="conta.html" class="nav-item nav-conta active">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span class="nav-label">Conta</span>
+        </a>
+    </nav>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        if (!estaLogado()) {
+            window.location.href = "login.html?redirect=conta.html";
+        }
+
+        const container = document.getElementById("contaConteudo");
+        const usuario = getUsuario();
+
+        function renderizarConta(user) {
+            container.innerHTML = `
+                <div class="form-card conta-card">
+                    <div class="conta-avatar">${(user.nome || "U")[0].toUpperCase()}</div>
+                    <h2>${user.nome}</h2>
+                    <p class="conta-email">${user.email_google || ""}</p>
+                    ${user.telefone ? `<p class="conta-tel">${user.telefone}</p>` : ""}
+                </div>
+                <a href="cadastro.html" class="btn btn-secondary" style="margin-bottom:12px">Editar endereço</a>
+                <button class="btn btn-danger" onclick="logout()">Sair da conta</button>`;
+        }
+
+        async function carregarConta() {
+            try {
+                const user = await api.getMe();
+                if (user) {
+                    localStorage.setItem("usuario", JSON.stringify(user));
+                    renderizarConta(user);
+                    return;
+                }
+            } catch (_) {}
+
+            if (usuario) renderizarConta(usuario);
+        }
+
+        carregarConta();
+    </script>
+</body>
+</html>

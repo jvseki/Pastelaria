@@ -1,0 +1,7 @@
+backend/.env
+backend/pastelaria.db
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+.env
+client_secret*.json

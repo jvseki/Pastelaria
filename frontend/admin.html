@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Pastelaria Delivery</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="no-bottom-nav">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="brand">
+                <div class="brand-mark">パ</div>
+                <div class="brand-text">Pastelaria<span>パステル屋 · Delivery</span></div>
+            </a>
+            <nav class="site-nav">
+                <a href="index.html">Cardápio</a>
+                <a href="admin.html" class="active">Admin</a>
+            </nav>
+            <div class="header-actions" id="headerActions"></div>
+        </div>
+    </header>
+
+    <div class="page-title">
+        <a href="index.html" class="page-back">Voltar ao cardápio</a>
+        <h1>Painel administrativo</h1>
+        <p>Gerencie os pedidos da pastelaria</p>
+    </div>
+
+    <main class="container">
+        <div class="admin-header">
+            <h2>Pedidos de hoje</h2>
+            <div class="admin-header-acoes">
+                <button class="btn btn-secondary btn-sm" onclick="carregarPedidos()" style="width:auto">Atualizar</button>
+                <button class="btn btn-warning btn-sm" onclick="fecharDia()" style="width:auto">Fechar dia (gaveta)</button>
+            </div>
+        </div>
+
+        <div class="admin-stats" id="adminStats"></div>
+
+        <div id="listaPedidos">
+            <div class="loading">
+                <div class="spinner"></div>
+                Carregando pedidos...
+            </div>
+        </div>
+
+        <section class="gaveta-section">
+            <div class="admin-header">
+                <h2>Gaveta — historico arquivado</h2>
+                <p class="gaveta-desc">Pedidos guardados ao fechar cada dia de trabalho</p>
+            </div>
+            <div id="listaGavetas">
+                <div class="loading"><div class="spinner"></div> Carregando gavetas...</div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
