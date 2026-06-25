@@ -15,6 +15,7 @@ class Pedido(Base):
     status = Column(String(50), default="pendente")
     pagamento_confirmado = Column(Boolean, default=False)
     arquivado = Column(Boolean, default=False)
+    numero_dia = Column(Integer)
     data_pedido = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="pedidos")

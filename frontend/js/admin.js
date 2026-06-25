@@ -19,6 +19,7 @@ const PAGAMENTO_LABELS = {
 };
 
 const MOTOBOY_WHATSAPP = window.MOTOBOY_WHATSAPP || "5518997640335";
+const TZ_BR = "America/Sao_Paulo";
 
 if (!protegerPaginaAdmin()) {
     throw new Error("Acesso negado");
@@ -26,17 +27,42 @@ if (!protegerPaginaAdmin()) {
 
 let pedidos = [];
 let gavetas = [];
+let refreshInterval = null;
 
 function formatarDataBR(iso) {
     if (!iso) return "";
     const d = new Date(iso);
-    return d.toLocaleDateString("pt-BR");
+    return d.toLocaleDateString("pt-BR", {
+        timeZone: TZ_BR,
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
+}
+
+function formatarDataCurta(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR", { timeZone: TZ_BR });
 }
 
 function formatarDataHoraBR(iso) {
     if (!iso) return "";
     const d = new Date(iso);
-    return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    return d.toLocaleString("pt-BR", {
+        timeZone: TZ_BR,
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function formatarNumeroPedido(pedido) {
+    const n = pedido.numero_dia ?? pedido.id;
+    return String(n).padStart(3, "0");
 }
 
 function calcularTotal(itens) {
@@ -54,7 +80,7 @@ function gerarLinkMaps(endereco) {
 }
 
 function gerarMensagemMotoboy(pedido) {
-    const num = String(pedido.id).padStart(3, "0");
+    const num = formatarNumeroPedido(pedido);
     const usuario = pedido.usuario || {};
     const endereco = pedido.endereco || {};
     const itens = pedido.itens || [];
@@ -85,6 +111,41 @@ function gerarMensagemMotoboy(pedido) {
     msg += `Pastelaria Delivery`;
 
     return encodeURIComponent(msg);
+}
+
+function trocarAba(tabId) {
+    document.querySelectorAll(".admin-tab").forEach((btn) => {
+        const ativo = btn.dataset.tab === tabId;
+        btn.classList.toggle("active", ativo);
+        btn.setAttribute("aria-selected", ativo ? "true" : "false");
+    });
+
+    document.querySelectorAll(".admin-tab-panel").forEach((panel) => {
+        const ativo = panel.id === `tab${tabId.charAt(0).toUpperCase()}${tabId.slice(1)}`;
+        panel.classList.toggle("active", ativo);
+        panel.hidden = !ativo;
+    });
+
+    if (tabId === "gaveta") {
+        carregarGavetas();
+    }
+}
+
+function initAbas() {
+    document.querySelectorAll(".admin-tab").forEach((btn) => {
+        btn.addEventListener("click", () => trocarAba(btn.dataset.tab));
+    });
+
+    const hoje = new Date();
+    const dataHoje = hoje.toLocaleDateString("pt-BR", {
+        timeZone: TZ_BR,
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    });
+    const el = document.getElementById("dataHojeAdmin");
+    if (el) el.textContent = `Hoje: ${dataHoje} · numeracao reinicia ao fechar a gaveta`;
 }
 
 async function confirmarPagamento(pedidoId) {
@@ -184,14 +245,14 @@ function renderizarPedidos() {
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
                 </div>
                 <h3>Nenhum pedido ativo</h3>
-                <p>Novos pedidos aparecem aqui. Ao fechar o dia, eles vao para a gaveta abaixo.</p>
+                <p>Novos pedidos comecam em #001. Ao fechar o dia, vao para a aba Gaveta.</p>
             </div>`;
         return;
     }
 
     container.innerHTML = pedidos
         .map((pedido) => {
-            const num = String(pedido.id).padStart(3, "0");
+            const num = formatarNumeroPedido(pedido);
             const usuario = pedido.usuario || {};
             const endereco = pedido.endereco || {};
             const itens = pedido.itens || [];
@@ -203,7 +264,10 @@ function renderizarPedidos() {
             return `
             <article class="pedido-admin-card">
                 <div class="pedido-admin-header">
-                    <h2>Pedido #${num}</h2>
+                    <div>
+                        <h2>Pedido #${num}</h2>
+                        <p class="pedido-admin-meta">${formatarDataHoraBR(pedido.data_pedido)}</p>
+                    </div>
                     <span class="status-badge ${statusClass}">${STATUS_LABELS[statusKey] || pedido.status}</span>
                 </div>
 
@@ -263,7 +327,7 @@ function renderizarGavetas() {
         container.innerHTML = `
             <div class="admin-empty gaveta-empty">
                 <h3>Gaveta vazia</h3>
-                <p>Quando voce clicar em "Fechar dia", os pedidos do dia ficam guardados aqui.</p>
+                <p>Quando voce clicar em "Fechar dia", os pedidos ficam guardados aqui com a data correta.</p>
             </div>`;
         return;
     }
@@ -274,8 +338,8 @@ function renderizarGavetas() {
         <article class="gaveta-card">
             <button type="button" class="gaveta-card-header" onclick="toggleGaveta(${g.id})">
                 <div>
-                    <strong>Gaveta #${g.id}</strong>
-                    <span class="gaveta-data">${formatarDataBR(g.data_referencia)} · fechado ${formatarDataHoraBR(g.fechado_em)}</span>
+                    <strong>${formatarDataBR(g.data_referencia)}</strong>
+                    <span class="gaveta-data">Fechado em ${formatarDataHoraBR(g.fechado_em)}</span>
                 </div>
                 <div class="gaveta-resumo">
                     <span>${g.qtd_pedidos} pedido(s)</span>
@@ -309,10 +373,15 @@ async function toggleGaveta(id) {
                 : pedidosGaveta
                       .map((p) => {
                           const total = calcularTotal(p.itens || []);
+                          const statusKey = p.status === "aceito" ? "preparando" : p.status;
                           return `
-                <div class="gaveta-pedido-item">
-                    <strong>#${String(p.id).padStart(3, "0")} — ${p.usuario?.nome || "Cliente"}</strong>
-                    <span>${STATUS_LABELS[p.status] || p.status} · ${formatarPreco(total)}</span>
+                <div class="gaveta-pedido-detalhe">
+                    <div class="gaveta-pedido-topo">
+                        <strong>Pedido #${formatarNumeroPedido(p)} — ${p.usuario?.nome || "Cliente"}</strong>
+                        <span>${formatarPreco(total)}</span>
+                    </div>
+                    <p class="gaveta-pedido-data">${formatarDataHoraBR(p.data_pedido)} · ${STATUS_LABELS[statusKey] || p.status}</p>
+                    <p class="gaveta-pedido-data">${(p.itens || []).map((i) => `${i.quantidade}x ${i.nome}`).join(" · ")}</p>
                 </div>`;
                       })
                       .join("");
@@ -336,7 +405,7 @@ async function fecharDia(forcar = false) {
         const msg =
             pedidos.length === 0
                 ? "Nao ha pedidos ativos para arquivar."
-                : `Arquivar ${pedidos.length} pedido(s) na gaveta e limpar a lista de hoje?`;
+                : `Arquivar ${pedidos.length} pedido(s) na gaveta de hoje e reiniciar a numeracao (#001)?`;
         if (pedidos.length === 0) {
             alert(msg);
             return;
@@ -346,9 +415,10 @@ async function fecharDia(forcar = false) {
 
     try {
         const resultado = await api.fecharDia(forcar);
-        mostrarToast(resultado.mensagem || "Dia fechado!");
+        mostrarToast(resultado.mensagem || "Dia fechado! Proximo pedido sera #001.");
         await carregarPedidos();
         await carregarGavetas();
+        trocarAba("gaveta");
     } catch (error) {
         if (error.message.includes("em aberto") || error.message.includes("aberto")) {
             if (confirm(`${error.message}\n\nDeseja arquivar mesmo assim?`)) {
@@ -360,6 +430,16 @@ async function fecharDia(forcar = false) {
     }
 }
 
+function iniciarAutoRefresh() {
+    refreshInterval = setInterval(() => {
+        const painel = document.getElementById("tabPedidos");
+        if (painel && painel.classList.contains("active")) {
+            carregarPedidos();
+        }
+    }, 15000);
+}
+
+initAbas();
 carregarPedidos();
 carregarGavetas();
-setInterval(carregarPedidos, 15000);
+iniciarAutoRefresh();

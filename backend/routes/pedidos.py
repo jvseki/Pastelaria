@@ -7,6 +7,7 @@ from database import get_db
 from models import Pedido, ItemPedido, Produto, Endereco
 from routes.usuarios import get_current_user
 from models import Usuario
+from services.numeracao_pedidos import proximo_numero_dia
 
 router = APIRouter(prefix="/pedidos", tags=["pedidos"])
 
@@ -40,6 +41,7 @@ def criar_pedido(
         pagamento=body.pagamento,
         troco=body.troco,
         status="pendente",
+        numero_dia=proximo_numero_dia(db),
     )
     db.add(pedido)
     db.flush()
@@ -63,6 +65,7 @@ def criar_pedido(
 
     return {
         "id": pedido.id,
+        "numero_dia": pedido.numero_dia,
         "pagamento": pedido.pagamento,
         "troco": pedido.troco,
         "status": pedido.status,

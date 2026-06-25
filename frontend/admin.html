@@ -25,31 +25,48 @@
     <div class="page-title">
         <a href="index.html" class="page-back">Voltar ao cardápio</a>
         <h1>Painel administrativo</h1>
-        <p>Gerencie os pedidos da pastelaria</p>
+        <p>Gerencie pedidos e consulte a gaveta diaria</p>
     </div>
 
     <main class="container">
-        <div class="admin-header">
-            <h2>Pedidos de hoje</h2>
-            <div class="admin-header-acoes">
-                <button class="btn btn-secondary btn-sm" onclick="carregarPedidos()" style="width:auto">Atualizar</button>
-                <button class="btn btn-warning btn-sm" onclick="fecharDia()" style="width:auto">Fechar dia (gaveta)</button>
-            </div>
-        </div>
+        <nav class="admin-tabs" role="tablist">
+            <button type="button" class="admin-tab active" data-tab="pedidos" role="tab" aria-selected="true">
+                Pedidos de hoje
+            </button>
+            <button type="button" class="admin-tab" data-tab="gaveta" role="tab" aria-selected="false">
+                Gaveta
+            </button>
+        </nav>
 
-        <div class="admin-stats" id="adminStats"></div>
-
-        <div id="listaPedidos">
-            <div class="loading">
-                <div class="spinner"></div>
-                Carregando pedidos...
-            </div>
-        </div>
-
-        <section class="gaveta-section">
+        <section id="tabPedidos" class="admin-tab-panel active" role="tabpanel">
             <div class="admin-header">
-                <h2>Gaveta — historico arquivado</h2>
-                <p class="gaveta-desc">Pedidos guardados ao fechar cada dia de trabalho</p>
+                <div>
+                    <h2>Pedidos ativos</h2>
+                    <p class="admin-subtitulo" id="dataHojeAdmin"></p>
+                </div>
+                <div class="admin-header-acoes">
+                    <button class="btn btn-secondary btn-sm" onclick="carregarPedidos()" style="width:auto">Atualizar</button>
+                    <button class="btn btn-warning btn-sm" onclick="fecharDia()" style="width:auto">Fechar dia (gaveta)</button>
+                </div>
+            </div>
+
+            <div class="admin-stats" id="adminStats"></div>
+
+            <div id="listaPedidos">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Carregando pedidos...
+                </div>
+            </div>
+        </section>
+
+        <section id="tabGaveta" class="admin-tab-panel" role="tabpanel" hidden>
+            <div class="admin-header">
+                <div>
+                    <h2>Gaveta — historico arquivado</h2>
+                    <p class="admin-subtitulo">Pedidos guardados ao fechar cada dia. A numeracao (#001, #002…) reinicia no dia seguinte.</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="carregarGavetas()" style="width:auto">Atualizar</button>
             </div>
             <div id="listaGavetas">
                 <div class="loading"><div class="spinner"></div> Carregando gavetas...</div>

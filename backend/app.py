@@ -44,6 +44,7 @@ def startup():
     try:
         Base.metadata.create_all(bind=engine)
         _migrate_db()
+        _backfill_numero_dia()
         _seed_produtos()
     except Exception as exc:
         msg = str(exc)
@@ -68,7 +69,19 @@ def _migrate_db():
             )
         if "arquivado" not in colunas:
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN arquivado BOOLEAN DEFAULT 0"))
+        if "numero_dia" not in colunas:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN numero_dia INTEGER"))
         conn.commit()
+
+
+def _backfill_numero_dia():
+    from services.numeracao_pedidos import sincronizar_numeros_dia
+
+    db = SessionLocal()
+    try:
+        sincronizar_numeros_dia(db)
+    finally:
+        db.close()
 
 
 CATALOGO_PRODUTOS = [

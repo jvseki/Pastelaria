@@ -35,6 +35,7 @@ def serializar_pedido(pedido: Pedido, db: Session) -> dict:
 
     return {
         "id": pedido.id,
+        "numero_dia": pedido.numero_dia,
         "pagamento": pedido.pagamento,
         "troco": pedido.troco,
         "status": pedido.status,
