@@ -190,7 +190,7 @@ function getCarrinhoCount() {
 
 function atualizarBadgeCarrinho() {
     const count = getCarrinhoCount();
-    document.querySelectorAll(".nav-badge").forEach((badge) => {
+    document.querySelectorAll(".nav-badge, .cart-fab-badge").forEach((badge) => {
         if (count > 0) {
             badge.textContent = count;
             badge.style.display = "flex";

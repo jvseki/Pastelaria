@@ -192,4 +192,6 @@ document.getElementById("modalItem")?.addEventListener("click", (e) => {
     if (e.target.id === "modalItem") fecharModalItem();
 });
 
-carregarCardapio();
+if (document.getElementById("produtosGrid")) {
+    carregarCardapio();
+}

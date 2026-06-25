@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <title>Cardápio - Pastelaria Delivery</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="cardapio">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="brand">
+                <div class="brand-mark">パ</div>
+                <div class="brand-text">Pastelaria<span>パステル屋 · Delivery</span></div>
+            </a>
+            <nav class="site-nav">
+                <a href="index.html" data-nav="inicio">Início</a>
+                <a href="cardapio.html" data-nav="cardapio">Cardápio</a>
+            </nav>
+            <div class="header-actions" id="headerActions"></div>
+        </div>
+    </header>
+
+    <section class="hero hero-compact">
+        <div class="hero-content">
+            <div class="hero-badge">メニュー · Cardápio</div>
+            <h1>Escolha seus pasteis</h1>
+            <p>Massa fina, recheio generoso e entrega quentinha na sua porta.</p>
+        </div>
+    </section>
+
+    <div class="categorias" id="categorias"></div>
+
+    <section class="produtos-grid" id="produtosGrid">
+        <div class="loading">
+            <div class="spinner"></div>
+            Carregando cardapio...
+        </div>
+    </section>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item" data-nav="inicio">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            Início
+        </a>
+        <a href="cardapio.html" class="nav-item" data-nav="cardapio">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>
+            Cardápio
+        </a>
+        <a href="login.html" class="nav-item nav-conta">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span class="nav-label">Conta</span>
+        </a>
+    </nav>
+
+    <div class="modal-overlay" id="modalItem">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-header-kanji" id="modalItemKanji">商品</div>
+                <h3 id="modalItemTitulo">Adicionar ao carrinho?</h3>
+            </div>
+            <div class="modal-body">
+                <div class="modal-produto">
+                    <img id="modalItemImg" class="modal-produto-img-cartoon" src="" alt="">
+                    <div class="modal-produto-info">
+                        <h4 id="modalItemNome"></h4>
+                        <p id="modalItemPreco"></p>
+                        <p class="modal-qty" id="modalItemQty"></p>
+                    </div>
+                </div>
+                <div id="modalItemPreview">
+                    <p class="modal-text">Deseja adicionar este item ao seu carrinho?</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="confirmarAdicionarItem()">Sim, adicionar</button>
+                        <button class="btn btn-secondary" onclick="fecharModalItem()">Nao, voltar</button>
+                    </div>
+                </div>
+                <div id="modalItemPosAdd" style="display:none">
+                    <p class="modal-text">Deseja adicionar mais um igual ou finalizar o pedido?</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="adicionarMaisItem()">Adicionar mais um</button>
+                        <button class="btn btn-secondary" onclick="finalizarPedidoDoModal()">Finalizar pedido</button>
+                        <button class="btn btn-secondary btn-ghost" onclick="fecharModalItem()">Continuar escolhendo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/produto-imagens.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/cardapio.js"></script>
+</body>
+</html>
