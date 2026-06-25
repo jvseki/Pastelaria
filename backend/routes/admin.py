@@ -40,6 +40,7 @@ def serializar_pedido(pedido: Pedido, db: Session) -> dict:
         "troco": pedido.troco,
         "status": pedido.status,
         "pagamento_confirmado": bool(pedido.pagamento_confirmado),
+        "observacao": pedido.observacao,
         "data_pedido": pedido.data_pedido.isoformat() if pedido.data_pedido else None,
         "usuario": {
             "id": pedido.usuario.id,

@@ -54,6 +54,7 @@ function renderizarDestaques(lista) {
             </div>
             <div class="destaque-mini-body">
                 <h4>${p.nome}</h4>
+                ${isCombo ? `<p class="destaque-combo-hint">Escolha sabores e bebidas</p>` : ""}
                 <div class="destaque-mini-footer">
                     <span class="destaque-preco">${formatarPreco(p.preco)}</span>
                     <span class="destaque-mini-add">+</span>
@@ -70,6 +71,7 @@ async function carregarInicio() {
     try {
         let lista = await api.getProdutos();
         lista = lista.filter((p) => p.ativo !== false);
+        lista = deduplicarCombos(lista);
         produtos = aplicarImagensLocais(lista);
         renderizarDestaques(produtos);
     } catch (error) {

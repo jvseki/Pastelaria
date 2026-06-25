@@ -140,36 +140,60 @@
         </a>
     </nav>
 
-    <div class="modal-overlay" id="modalItem">
-        <div class="modal-box">
-            <div class="modal-header">
-                <div class="modal-header-kanji" id="modalItemKanji">商品</div>
-                <h3 id="modalItemTitulo">Adicionar ao carrinho?</h3>
+    <div class="modal-overlay modal-overlay--produto" id="modalItem">
+        <div class="modal-box modal-produto-sheet">
+            <button type="button" class="modal-close-btn" onclick="fecharModalItem()" aria-label="Fechar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+
+            <div class="modal-produto-hero">
+                <img id="modalItemImg" class="modal-produto-hero-img" src="" alt="">
+                <span class="modal-produto-kanji" id="modalItemKanji">商品</span>
             </div>
-            <div class="modal-body">
-                <div class="modal-produto">
-                    <img id="modalItemImg" class="modal-produto-img-cartoon" src="" alt="">
-                    <div class="modal-produto-info">
-                        <h4 id="modalItemNome"></h4>
-                        <p id="modalItemPreco"></p>
-                        <p class="modal-qty" id="modalItemQty"></p>
+
+            <div class="modal-produto-scroll">
+                <div class="modal-produto-head">
+                    <span class="modal-produto-cat" id="modalItemCategoria"></span>
+                    <h2 class="modal-produto-nome" id="modalItemNome"></h2>
+                    <p class="modal-produto-desc" id="modalItemDescricao"></p>
+                    <div class="modal-produto-preco-row">
+                        <span class="modal-produto-preco" id="modalItemPreco"></span>
+                        <span class="modal-carrinho-badge" id="modalItemQty"></span>
                     </div>
                 </div>
+
                 <div id="modalItemPreview">
-                    <p class="modal-text">Deseja adicionar este item ao seu carrinho?</p>
-                    <div class="modal-actions">
-                        <button class="btn btn-primary" onclick="confirmarAdicionarItem()">Sim, adicionar</button>
-                        <button class="btn btn-secondary" onclick="fecharModalItem()">Nao, voltar</button>
+                    <div id="modalComboArea" style="display:none"></div>
+                    <div id="modalSimpleArea" class="modal-produto-qty">
+                        <span class="modal-produto-qty-label">Quantidade</span>
+                        <div class="modal-qty-stepper">
+                            <button type="button" class="modal-qty-btn" onclick="alterarModalQuantidade(-1)" aria-label="Diminuir">−</button>
+                            <span class="modal-qty-valor" id="modalItemQuantidade">1</span>
+                            <button type="button" class="modal-qty-btn" onclick="alterarModalQuantidade(1)" aria-label="Aumentar">+</button>
+                        </div>
                     </div>
                 </div>
-                <div id="modalItemPosAdd" style="display:none">
-                    <p class="modal-text">Deseja adicionar mais um igual ou finalizar o pedido?</p>
-                    <div class="modal-actions">
-                        <button class="btn btn-primary" onclick="adicionarMaisItem()">Adicionar mais um</button>
-                        <button class="btn btn-secondary" onclick="finalizarPedidoDoModal()">Finalizar pedido</button>
-                        <button class="btn btn-secondary btn-ghost" onclick="fecharModalItem()">Continuar escolhendo</button>
+
+                <div id="modalItemPosAdd" class="modal-produto-sucesso" style="display:none">
+                    <div class="modal-sucesso-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                     </div>
+                    <h3 class="modal-sucesso-titulo" id="modalItemTituloSucesso">Adicionado!</h3>
+                    <p class="modal-sucesso-texto" id="modalItemSucessoTexto"></p>
+                    <button type="button" class="modal-sucesso-mais" onclick="adicionarMaisItem()">+ Adicionar mais um igual</button>
                 </div>
+            </div>
+
+            <div class="modal-produto-footer" id="modalItemFooterPreview">
+                <button type="button" class="btn btn-primary btn-modal-add" id="btnConfirmarItem" onclick="confirmarAdicionarItem()">
+                    <span class="btn-modal-add-label" id="modalItemBtnLabel">Adicionar</span>
+                    <span class="btn-modal-add-preco" id="modalItemTotalBtn">R$ 0,00</span>
+                </button>
+            </div>
+
+            <div class="modal-produto-footer modal-produto-footer--dual" id="modalItemFooterPosAdd" style="display:none">
+                <button type="button" class="btn btn-secondary" onclick="fecharModalItem()">Continuar comprando</button>
+                <button type="button" class="btn btn-primary" onclick="finalizarPedidoDoModal()">Ver carrinho</button>
             </div>
         </div>
     </div>
@@ -179,6 +203,7 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/combo.js"></script>
     <script src="js/cardapio.js"></script>
     <script src="js/inicio.js"></script>
 </body>

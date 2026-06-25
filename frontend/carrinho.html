@@ -37,6 +37,13 @@
     </div>
 
     <main class="container">
+        <div class="carrinho-toolbar" id="carrinhoToolbar" style="display:none">
+            <button type="button" class="btn-limpar-carrinho" onclick="solicitarLimparCarrinho()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Limpar carrinho
+            </button>
+        </div>
+
         <div class="carrinho-lista" id="listaPedido"></div>
 
         <div class="carrinho-total-box" id="totalBox" style="display:none">
@@ -92,6 +99,48 @@
                         <button class="btn btn-primary" onclick="adicionarMaisBebida()">Adicionar mais uma</button>
                         <button class="btn btn-secondary" onclick="concluirBebidas()">Continuar</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalRemover">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-header-kanji">削除</div>
+                <h3 id="modalRemoverTitulo">Remover item?</h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-text" id="modalRemoverTexto">Deseja remover este item do carrinho?</p>
+                <div id="modalRemoverQtyArea" class="modal-remover-qty" style="display:none">
+                    <span class="modal-remover-qty-label">Quantas unidades remover?</span>
+                    <div class="modal-qty-stepper modal-qty-stepper--center">
+                        <button type="button" class="modal-qty-btn" onclick="alterarQtyRemover(-1)" aria-label="Diminuir">−</button>
+                        <span class="modal-qty-valor" id="modalRemoverQty">1</span>
+                        <button type="button" class="modal-qty-btn" onclick="alterarQtyRemover(1)" aria-label="Aumentar">+</button>
+                    </div>
+                    <p class="modal-remover-hint" id="modalRemoverRestante"></p>
+                    <button type="button" class="modal-remover-todas" onclick="setRemoverTodas()">Remover todas as unidades</button>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" id="btnConfirmarRemover" onclick="confirmarRemoverItem()">Remover</button>
+                    <button class="btn btn-secondary" onclick="fecharModalRemover()">Nao, voltar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAdicionar">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-header-kanji">追加</div>
+                <h3>Adicionar mais um?</h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-text" id="modalAdicionarTexto">Deseja adicionar mais um item ao carrinho?</p>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="confirmarAumentarItem()">Sim, adicionar</button>
+                    <button class="btn btn-secondary" onclick="fecharModalAdicionar()">Nao, voltar</button>
                 </div>
             </div>
         </div>

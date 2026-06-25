@@ -16,6 +16,7 @@ class Pedido(Base):
     pagamento_confirmado = Column(Boolean, default=False)
     arquivado = Column(Boolean, default=False)
     numero_dia = Column(Integer)
+    observacao = Column(String(2000))
     data_pedido = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="pedidos")

@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     pagamento_confirmado BOOLEAN DEFAULT FALSE,
     arquivado BOOLEAN DEFAULT FALSE,
     numero_dia INTEGER,
+    observacao VARCHAR(2000),
     data_pedido TIMESTAMPTZ DEFAULT NOW()
 );
 

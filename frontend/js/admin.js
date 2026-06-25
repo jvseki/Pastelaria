@@ -95,6 +95,9 @@ function gerarMensagemMotoboy(pedido) {
     itens.forEach((item) => {
         msg += `- ${item.quantidade}x ${item.nome || "Produto"}\n`;
     });
+    if (pedido.observacao) {
+        msg += `\n*Detalhes do combo:*\n${pedido.observacao}\n`;
+    }
     msg += `\n*Total:* ${formatarPreco(total)}\n`;
     msg += `*Pagamento:* ${pagamento}\n`;
     if (pedido.troco) {
@@ -281,6 +284,7 @@ function renderizarPedidos() {
                     <div class="pedido-admin-section">
                         <h4>Produtos</h4>
                         <ul>${itens.map((i) => `<li>${i.quantidade}x ${i.nome || "Produto"}</li>`).join("")}</ul>
+                        ${pedido.observacao ? `<p class="pedido-observacao"><strong>Combo:</strong> ${pedido.observacao.replace(/\n/g, "<br>")}</p>` : ""}
                         <p><strong>Total:</strong> ${formatarPreco(total)}</p>
                     </div>
 

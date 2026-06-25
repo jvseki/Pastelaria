@@ -20,6 +20,7 @@ class ItemPedidoRequest(BaseModel):
 class PedidoRequest(BaseModel):
     pagamento: str
     troco: Optional[float] = None
+    observacao: Optional[str] = None
     itens: list[ItemPedidoRequest]
 
 
@@ -40,6 +41,7 @@ def criar_pedido(
         usuario_id=usuario.id,
         pagamento=body.pagamento,
         troco=body.troco,
+        observacao=body.observacao,
         status="pendente",
         numero_dia=proximo_numero_dia(db),
     )

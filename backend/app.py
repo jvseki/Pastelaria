@@ -71,6 +71,8 @@ def _migrate_db():
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN arquivado BOOLEAN DEFAULT 0"))
         if "numero_dia" not in colunas:
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN numero_dia INTEGER"))
+        if "observacao" not in colunas:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN observacao VARCHAR(2000)"))
         conn.commit()
 
 
@@ -157,7 +159,7 @@ CATALOGO_PRODUTOS = [
     },
     {
         "nome": "Combo Familia",
-        "descricao": "5 pasteis salgados + 2 refrigerantes",
+        "descricao": "5 pasteis salgados + 2 bebidas — voce escolhe os sabores!",
         "preco": 45.0,
         "imagem": "images/produtos/combo.svg",
         "categoria": "Combos",
@@ -181,6 +183,11 @@ def _seed_produtos():
                 existente.ativo = True
             else:
                 db.add(Produto(**item))
+        # Desativa duplicata antiga "Combo Família" (acento)
+        duplicata = db.query(Produto).filter(Produto.nome == "Combo Família").first()
+        principal = db.query(Produto).filter(Produto.nome == "Combo Familia").first()
+        if duplicata and principal and duplicata.id != principal.id:
+            duplicata.ativo = False
         db.commit()
     finally:
         db.close()
