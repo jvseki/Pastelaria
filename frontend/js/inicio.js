@@ -5,39 +5,65 @@ const DESTAQUES_NOMES = [
     "Combo Familia",
 ];
 
+const DESTAQUE_RANKS = ["#1 Favorito", "#2 Clássico", "Doce da casa", "Combo família"];
+
 function renderizarDestaques(lista) {
-    const grid = document.getElementById("destaquesGrid");
-    if (!grid) return;
+    const container = document.getElementById("destaquesGrid");
+    if (!container) return;
 
     const destaques = DESTAQUES_NOMES.map((nome) => lista.find((p) => p.nome === nome)).filter(Boolean);
 
     if (!destaques.length) {
-        grid.innerHTML = `<p class="home-empty">Cardapio em breve.</p>`;
+        container.innerHTML = `<p class="home-empty home-empty--light">Cardápio em breve.</p>`;
         return;
     }
 
-    grid.innerHTML = destaques
+    const [principal, ...outros] = destaques;
+    const imgPrincipal = imagemProduto(principal);
+
+    const featureHtml = `
+        <article class="destaque-feature" onclick="clicarProduto(${principal.id})" role="button" tabindex="0">
+            <div class="destaque-feature-frame">
+                <div class="destaque-feature-img produto-img-cartoon">
+                    <img src="${imgPrincipal}" alt="${principal.nome}" loading="lazy">
+                </div>
+                <div class="destaque-feature-body">
+                    <span class="destaque-rank">${DESTAQUE_RANKS[0]}</span>
+                    <span class="produto-categoria produto-categoria--light">${principal.categoria}</span>
+                    <h3>${principal.nome}</h3>
+                    <p>${principal.descricao}</p>
+                    <div class="destaque-feature-footer">
+                        <span class="destaque-preco">${formatarPreco(principal.preco)}</span>
+                        <span class="destaque-btn-add">+ Adicionar</span>
+                    </div>
+                </div>
+            </div>
+        </article>`;
+
+    const gridHtml = outros
         .map((p, i) => {
             const img = imagemProduto(p);
-            const tag = p.categoria === "Combos" ? "Combo imperdível" : "Mais pedido";
+            const rank = DESTAQUE_RANKS[i + 1] || "Destaque";
+            const isCombo = p.categoria === "Combos";
             return `
-        <article class="destaque-card ${i === 0 ? "destaque-card--hero" : ""}" onclick="clicarProduto(${p.id})" role="button" tabindex="0">
-            <div class="destaque-card-img produto-img-cartoon">
+        <article class="destaque-mini ${isCombo ? "destaque-mini--combo" : ""}" onclick="clicarProduto(${p.id})" role="button" tabindex="0">
+            <div class="destaque-mini-glow"></div>
+            <span class="destaque-mini-rank">${rank}</span>
+            <div class="destaque-mini-img produto-img-cartoon">
                 <img src="${img}" alt="${p.nome}" loading="lazy">
-                <span class="destaque-tag">${tag}</span>
             </div>
-            <div class="destaque-card-body">
-                <span class="produto-categoria">${p.categoria}</span>
-                <h3>${p.nome}</h3>
-                <p>${p.descricao}</p>
-                <div class="destaque-card-footer">
-                    <span class="produto-preco">${formatarPreco(p.preco)}</span>
-                    <span class="destaque-link">Adicionar →</span>
+            <div class="destaque-mini-body">
+                <h4>${p.nome}</h4>
+                <div class="destaque-mini-footer">
+                    <span class="destaque-preco">${formatarPreco(p.preco)}</span>
+                    <span class="destaque-mini-add">+</span>
                 </div>
             </div>
         </article>`;
         })
         .join("");
+
+    container.innerHTML = featureHtml + `<div class="destaques-minis">${gridHtml}</div>`;
 }
 
 async function carregarInicio() {
@@ -49,7 +75,7 @@ async function carregarInicio() {
     } catch (error) {
         const grid = document.getElementById("destaquesGrid");
         if (grid) {
-            grid.innerHTML = `<p class="home-empty">Nao foi possivel carregar os destaques.</p>`;
+            grid.innerHTML = `<p class="home-empty home-empty--light">Não foi possível carregar os destaques.</p>`;
         }
     }
 }

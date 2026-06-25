@@ -70,18 +70,23 @@
         </div>
     </section>
 
-    <section class="home-section home-section--alt">
-        <div class="home-section-inner">
-            <div class="section-head">
-                <span class="section-kicker"> destaques</span>
+    <section class="home-destaques" id="destaques">
+        <div class="destaques-art-layer" aria-hidden="true">
+            <img src="images/destaques-art.svg" alt="" class="destaques-art-svg">
+            <div class="destaques-lantern destaques-lantern--left"></div>
+            <div class="destaques-lantern destaques-lantern--right"></div>
+        </div>
+        <div class="home-section-inner destaques-inner">
+            <div class="destaques-head">
+                <span class="section-kicker section-kicker--light">人気 · destaques</span>
                 <h2>Os favoritos da casa</h2>
-                <p>Os pasteis e combos mais pedidos — clique para adicionar ao carrinho.</p>
+                <p>Escolhas da cozinha — massa dourada, recheio generoso. Toque para adicionar.</p>
             </div>
-            <div class="destaques-grid" id="destaquesGrid">
-                <div class="loading"><div class="spinner"></div> Carregando destaques...</div>
+            <div class="destaques-showcase" id="destaquesGrid">
+                <div class="loading loading--light"><div class="spinner"></div> Carregando destaques...</div>
             </div>
-            <div class="section-cta">
-                <a href="cardapio.html" class="btn btn-primary">Ver cardápio completo</a>
+            <div class="section-cta section-cta--destaques">
+                <a href="cardapio.html" class="btn btn-light">Ver cardápio completo</a>
             </div>
         </div>
     </section>

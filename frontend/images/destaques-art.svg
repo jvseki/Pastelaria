@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none" aria-hidden="true">
+  <defs>
+    <pattern id="seigaiha" width="40" height="22" patternUnits="userSpaceOnUse">
+      <path d="M0 22 Q10 0 20 22 T40 22" stroke="rgba(253,230,138,0.08)" stroke-width="1" fill="none"/>
+    </pattern>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c41e3a" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#c41e3a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#seigaiha)"/>
+  <circle cx="680" cy="120" r="140" fill="url(#glow)"/>
+  <circle cx="100" cy="480" r="100" fill="url(#glow)" opacity="0.6"/>
+  <text x="620" y="520" font-family="serif" font-size="180" fill="rgba(253,230,138,0.06)">Ú</text>
+  <text x="40" y="140" font-family="serif" font-size="120" fill="rgba(255,255,255,0.04)">s</text>
+  <path d="M120 80 Q140 40 160 80 T200 80" stroke="rgba(255,255,255,0.12)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M150 60 Q170 20 190 60 T230 60" stroke="rgba(255,255,255,0.08)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <ellipse cx="400" cy="300" rx="280" ry="120" stroke="rgba(184,134,11,0.12)" stroke-width="1.5" fill="none"/>
+  <path d="M0 560 Q200 520 400 560 T800 560" stroke="rgba(253,230,138,0.15)" stroke-width="2" fill="none"/>
+</svg>
