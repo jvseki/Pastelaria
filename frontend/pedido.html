@@ -67,7 +67,7 @@
                     <a href="index.html" class="btn btn-primary" style="margin-top:20px">Ver cardápio</a>
                 </div>`;
         } else {
-            const numPedido = String(pedido.id).padStart(3, "0");
+            const numPedido = String(pedido.numero_dia ?? pedido.id).padStart(3, "0");
             const pagamentoLabels = {
                 pix: "Pix na entrega",
                 dinheiro: "Dinheiro na entrega",
