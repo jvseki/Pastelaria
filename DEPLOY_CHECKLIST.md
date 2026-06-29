@@ -42,7 +42,7 @@ postgresql://postgres.xxxxx:MINHA_SENHA@aws-0-sa-east-1.pooler.supabase.com:6543
 | `GOOGLE_CLIENT_ID` | `19682040972-bqnoppb492er7rm8kdtlj3b6ie7ug5e3.apps.googleusercontent.com` |
 | `ADMIN_TOKEN` | `admin-token-secreto` (igual ao `frontend/js/config.js`) |
 | `MOTOBOY_WHATSAPP` | `5518997640335` |
-| `PIX_CHAVE` | `jv.s.m2006@hotmail.com` |
+| `PIX_CHAVE` | sua chave Pix |
 | `FRONTEND_URL` | Preencha depois do passo 3 (URL da Vercel) |
 
 5. Deploy → teste: `https://pastelaria-delivery-api.onrender.com`  

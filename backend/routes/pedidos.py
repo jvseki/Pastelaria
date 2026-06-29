@@ -20,6 +20,9 @@ class ItemPedidoRequest(BaseModel):
 class PedidoRequest(BaseModel):
     pagamento: str
     troco: Optional[float] = None
+    tipo_entrega: str = "entrega"
+    taxa_entrega: float = 0
+    local_retirada: Optional[str] = None
     observacao: Optional[str] = None
     itens: list[ItemPedidoRequest]
 
@@ -33,14 +36,19 @@ def criar_pedido(
     if not body.itens:
         raise HTTPException(status_code=400, detail="Pedido sem itens")
 
+    tipo_entrega = body.tipo_entrega if body.tipo_entrega in ("entrega", "retirada") else "entrega"
+    taxa_entrega = max(body.taxa_entrega or 0, 0)
     endereco = db.query(Endereco).filter(Endereco.usuario_id == usuario.id).first()
-    if not endereco:
+    if tipo_entrega == "entrega" and not endereco:
         raise HTTPException(status_code=400, detail="Cadastre seu endereço antes de pedir")
 
     pedido = Pedido(
         usuario_id=usuario.id,
         pagamento=body.pagamento,
         troco=body.troco,
+        tipo_entrega=tipo_entrega,
+        taxa_entrega=taxa_entrega if tipo_entrega == "entrega" else 0,
+        local_retirada=body.local_retirada if tipo_entrega == "retirada" else None,
         observacao=body.observacao,
         status="pendente",
         numero_dia=proximo_numero_dia(db),
@@ -70,6 +78,9 @@ def criar_pedido(
         "numero_dia": pedido.numero_dia,
         "pagamento": pedido.pagamento,
         "troco": pedido.troco,
+        "tipo_entrega": pedido.tipo_entrega,
+        "taxa_entrega": pedido.taxa_entrega,
+        "local_retirada": pedido.local_retirada,
         "status": pedido.status,
         "pagamento_confirmado": bool(pedido.pagamento_confirmado),
         "data_pedido": pedido.data_pedido.isoformat() if pedido.data_pedido else None,
@@ -79,12 +90,12 @@ def criar_pedido(
             "telefone": usuario.telefone,
         },
         "endereco": {
-            "rua": endereco.rua,
-            "numero": endereco.numero,
-            "bairro": endereco.bairro,
-            "referencia": endereco.referencia,
-            "latitude": endereco.latitude,
-            "longitude": endereco.longitude,
+            "rua": endereco.rua if endereco else "",
+            "numero": endereco.numero if endereco else "",
+            "bairro": endereco.bairro if endereco else "",
+            "referencia": endereco.referencia if endereco else "",
+            "latitude": endereco.latitude if endereco else None,
+            "longitude": endereco.longitude if endereco else None,
         },
         "itens": itens_resposta,
     }

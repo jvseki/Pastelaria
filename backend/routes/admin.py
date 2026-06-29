@@ -38,6 +38,9 @@ def serializar_pedido(pedido: Pedido, db: Session) -> dict:
         "numero_dia": pedido.numero_dia,
         "pagamento": pedido.pagamento,
         "troco": pedido.troco,
+        "tipo_entrega": pedido.tipo_entrega or "entrega",
+        "taxa_entrega": pedido.taxa_entrega or 0,
+        "local_retirada": pedido.local_retirada,
         "status": pedido.status,
         "pagamento_confirmado": bool(pedido.pagamento_confirmado),
         "observacao": pedido.observacao,
@@ -60,7 +63,8 @@ def serializar_pedido(pedido: Pedido, db: Session) -> dict:
 
 
 def _total_pedido(dados: dict) -> float:
-    return sum(i["preco"] * i["quantidade"] for i in dados.get("itens", []))
+    itens_total = sum(i["preco"] * i["quantidade"] for i in dados.get("itens", []))
+    return itens_total + (dados.get("taxa_entrega") or 0)
 
 
 def _serializar_gaveta(gaveta: GavetaDiaria, resumo: bool = False) -> dict:

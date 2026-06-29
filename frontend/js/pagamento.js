@@ -1,6 +1,7 @@
 let pagamentoSelecionado = null;
 let formaPresencial = null;
 const carrinho = JSON.parse(localStorage.getItem("carrinho") || "[]");
+const TAXA_ENTREGA = Number(window.TAXA_ENTREGA || 0);
 
 async function initPagamento() {
     if (!estaLogado()) {
@@ -15,18 +16,82 @@ async function initPagamento() {
 
     await restaurarSessao();
 
-    if (!temEndereco()) {
+    if (getTipoEntrega() !== "retirada" && !temEndereco()) {
         window.location.href = "cadastro.html";
         return;
     }
 
     document.getElementById("totalPedido").textContent = formatarPreco(calcularTotal());
-    document.getElementById("pixChaveTexto").textContent = window.PIX_CHAVE || "";
+    atualizarDetalhesTotal();
+    renderizarResumoEntrega();
+    configurarPix();
     atualizarBotaoFinalizar();
 }
 
-function calcularTotal() {
+function getTipoEntrega() {
+    return localStorage.getItem("tipoEntrega") || "entrega";
+}
+
+function calcularSubtotal() {
     return carrinho.reduce((sum, item) => sum + item.preco * item.quantidade, 0);
+}
+
+function calcularTaxaEntrega() {
+    return getTipoEntrega() === "entrega" ? TAXA_ENTREGA : 0;
+}
+
+function calcularTotal() {
+    return calcularSubtotal() + calcularTaxaEntrega();
+}
+
+function atualizarDetalhesTotal() {
+    const detalhes = document.getElementById("totalDetalhes");
+    const taxa = calcularTaxaEntrega();
+    detalhes.innerHTML = `
+        <span>Produtos: ${formatarPreco(calcularSubtotal())}</span>
+        <span>${taxa > 0 ? `Taxa de entrega: ${formatarPreco(taxa)}` : "Retirada: sem taxa"}</span>
+    `;
+}
+
+function renderizarResumoEntrega() {
+    const texto = document.getElementById("entregaResumoTexto");
+    const tipo = getTipoEntrega();
+
+    if (tipo === "retirada") {
+        const local = JSON.parse(localStorage.getItem("localRetirada") || "null") || {
+            nome: window.LOJA_NOME || "Pastelaria Delivery",
+            endereco: window.LOJA_ENDERECO || "Endereço da pastelaria",
+            mapsUrl: window.LOJA_MAPS_URL || "",
+        };
+        texto.innerHTML = `
+            <strong>Retirar no local</strong><br>
+            ${local.nome} - ${local.endereco}
+            ${local.mapsUrl ? `<br><a href="${local.mapsUrl}" target="_blank" rel="noopener">Ver localização</a>` : ""}
+        `;
+        return;
+    }
+
+    const endereco = JSON.parse(localStorage.getItem("endereco") || "null") || {};
+    texto.innerHTML = `
+        <strong>Entrega com motoboy</strong><br>
+        ${endereco.rua || ""}, ${endereco.numero || ""} - ${endereco.bairro || ""}
+    `;
+}
+
+function configurarPix() {
+    const chave = window.PIX_CHAVE || "";
+    const chaveTexto = document.getElementById("pixChaveTexto");
+    const pixLabel = document.querySelector(".pix-label");
+    const copiarBtn = document.querySelector(".pix-chave-box button");
+
+    if (chave) {
+        chaveTexto.textContent = chave;
+        return;
+    }
+
+    chaveTexto.textContent = "Chave Pix não configurada";
+    if (pixLabel) pixLabel.textContent = "Combine o Pix diretamente na retirada/entrega";
+    if (copiarBtn) copiarBtn.style.display = "none";
 }
 
 function montarObservacao() {
@@ -98,6 +163,10 @@ function selecionarFormaPresencial(forma) {
 
 function copiarPix() {
     const chave = window.PIX_CHAVE || "";
+    if (!chave) {
+        mostrarToast("Chave Pix ainda não configurada");
+        return;
+    }
     navigator.clipboard.writeText(chave).then(() => mostrarToast("Chave Pix copiada!"));
 }
 
@@ -113,7 +182,7 @@ async function finalizarPedido() {
     }
 
     if (!document.getElementById("confirmarPagamento").checked) {
-        mostrarToast("Confirme o pagamento na entrega para continuar");
+        mostrarToast("Confirme o pagamento ao receber para continuar");
         return;
     }
 
@@ -122,7 +191,7 @@ async function finalizarPedido() {
 
     if (pagamentoSelecionado === "presencial") {
         if (!formaPresencial) {
-            mostrarToast("Escolha Pix ou Dinheiro na entrega");
+            mostrarToast("Escolha Pix ou Dinheiro ao receber");
             return;
         }
         pagamentoFinal = formaPresencial;
@@ -146,6 +215,9 @@ async function finalizarPedido() {
     const pedido = {
         pagamento: pagamentoFinal,
         troco: troco,
+        tipo_entrega: getTipoEntrega(),
+        taxa_entrega: calcularTaxaEntrega(),
+        local_retirada: window.LOJA_ENDERECO || null,
         observacao: montarObservacao(),
         itens: carrinho.map((item) => ({
             produto_id: item.id,

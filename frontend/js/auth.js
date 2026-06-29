@@ -30,7 +30,10 @@ async function restaurarSessao() {
         const usuario = await api.getMe();
         localStorage.setItem("usuario", JSON.stringify(usuario));
         await api.getEndereco();
-    } catch (_) {
+    } catch (error) {
+        if (error.message?.includes("conectar ao servidor")) {
+            return;
+        }
         localStorage.removeItem("token");
         localStorage.removeItem("usuario");
         localStorage.removeItem("endereco");

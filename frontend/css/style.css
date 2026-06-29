@@ -1143,6 +1143,40 @@ img {
     word-break: break-all;
 }
 
+.total-detalhes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 10px;
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+}
+
+.entrega-resumo p {
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.retirada-info {
+    display: none;
+    margin: 14px 0 18px;
+    padding: 16px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.retirada-info.visible {
+    display: block;
+}
+
+.retirada-info p {
+    margin-bottom: 6px;
+}
+
 .troco-opcoes {
     display: flex;
     gap: 20px;
@@ -1701,6 +1735,27 @@ img {
     display: flex;
     justify-content: center;
     min-height: 50px;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.login-local-form .btn {
+    width: 100%;
 }
 
 .login-alert {

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from config import settings
 from database import get_db
@@ -13,6 +14,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 class GoogleLoginRequest(BaseModel):
     credential: str
+
+
+class LocalLoginRequest(BaseModel):
+    nome: str
+    telefone: str
+    email: Optional[str] = None
 
 
 class LoginResponse(BaseModel):
@@ -37,6 +44,15 @@ def auth_config():
 
 @router.get("/me")
 def get_me(usuario: Usuario = Depends(get_current_user)):
+    return {
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "email_google": usuario.email_google,
+        "telefone": usuario.telefone,
+    }
+
+
+def _usuario_response(usuario: Usuario) -> dict:
     return {
         "id": usuario.id,
         "nome": usuario.nome,
@@ -71,10 +87,34 @@ def login_google(body: GoogleLoginRequest, db: Session = Depends(get_db)):
 
     return LoginResponse(
         access_token=token,
-        usuario={
-            "id": usuario.id,
-            "nome": usuario.nome,
-            "email_google": usuario.email_google,
-            "telefone": usuario.telefone,
-        },
+        usuario=_usuario_response(usuario),
     )
+
+
+@router.post("/local", response_model=LoginResponse)
+def login_local(body: LocalLoginRequest, db: Session = Depends(get_db)):
+    nome = body.nome.strip()
+    telefone = body.telefone.strip()
+    email = (body.email or "").strip().lower()
+    telefone_digits = "".join(ch for ch in telefone if ch.isdigit())
+
+    if not nome:
+        raise HTTPException(status_code=400, detail="Informe seu nome")
+    if not telefone_digits:
+        raise HTTPException(status_code=400, detail="Informe seu telefone")
+
+    conta_local = f"local:{email}" if email else f"local:telefone:{telefone_digits}"
+    usuario = db.query(Usuario).filter(Usuario.email_google == conta_local).first()
+
+    if not usuario:
+        usuario = Usuario(nome=nome, telefone=telefone, email_google=conta_local)
+        db.add(usuario)
+    else:
+        usuario.nome = nome
+        usuario.telefone = telefone
+
+    db.commit()
+    db.refresh(usuario)
+
+    token = create_access_token({"sub": str(usuario.id), "email": conta_local})
+    return LoginResponse(access_token=token, usuario=_usuario_response(usuario))

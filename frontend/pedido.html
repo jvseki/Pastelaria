@@ -69,12 +69,14 @@
         } else {
             const numPedido = String(pedido.numero_dia ?? pedido.id).padStart(3, "0");
             const pagamentoLabels = {
-                pix: "Pix na entrega",
-                dinheiro: "Dinheiro na entrega",
-                cartao: "Cartao na entrega",
+                pix: "Pix ao receber",
+                dinheiro: "Dinheiro ao receber",
+                cartao: "Cartao ao receber",
             };
             const itens = pedido.itens || [];
-            const total = itens.reduce((s, i) => s + i.preco * i.quantidade, 0);
+            const taxaEntrega = pedido.taxa_entrega || 0;
+            const total = itens.reduce((s, i) => s + i.preco * i.quantidade, 0) + taxaEntrega;
+            const tipoEntrega = pedido.tipo_entrega || "entrega";
 
             const statusLabels = {
                 pendente: "Aguardando confirmação",
@@ -104,10 +106,13 @@
                 <div class="pedido-detalhes">
                     <h3>Resumo do pedido</h3>
                     ${itens.map((i) => `<p>${i.quantidade}x ${i.nome} — ${formatarPreco(i.preco * i.quantidade)}</p>`).join("")}
+                    ${taxaEntrega ? `<p>Taxa de entrega — ${formatarPreco(taxaEntrega)}</p>` : ""}
                     <p style="margin-top:12px;font-weight:600;color:var(--text)">Total: ${formatarPreco(total)}</p>
                     <hr style="margin:12px 0;border:none;border-top:1px solid var(--border)">
-                    <p><strong>Pagamento:</strong> ${pagamentoLabels[pedido.pagamento] || pedido.pagamento} (na entrega)</p>
-                    <p style="font-size:0.88rem;color:var(--text-secondary)">Voce confirmou o pagamento na entrega ao finalizar o pedido.</p>
+                    <p><strong>Recebimento:</strong> ${tipoEntrega === "retirada" ? "Retirar no local" : "Entrega com motoboy"}</p>
+                    ${tipoEntrega === "retirada" ? `<p style="font-size:0.88rem;color:var(--text-secondary)">${pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria"}</p>` : ""}
+                    <p><strong>Pagamento:</strong> ${pagamentoLabels[pedido.pagamento] || pedido.pagamento}</p>
+                    <p style="font-size:0.88rem;color:var(--text-secondary)">Voce confirmou o pagamento ao receber ao finalizar o pedido.</p>
                     ${pedido.troco ? `<p><strong>Troco para:</strong> ${formatarPreco(pedido.troco)}</p>` : ""}
                 </div>
 

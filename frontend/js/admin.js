@@ -13,9 +13,9 @@ const STATUS_CLASSES = {
 };
 
 const PAGAMENTO_LABELS = {
-    pix: "Pix na entrega",
-    dinheiro: "Dinheiro na entrega",
-    cartao: "Cartao na entrega",
+    pix: "Pix ao receber",
+    dinheiro: "Dinheiro ao receber",
+    cartao: "Cartao ao receber",
 };
 
 const MOTOBOY_WHATSAPP = window.MOTOBOY_WHATSAPP || "5518997640335";
@@ -69,6 +69,10 @@ function calcularTotal(itens) {
     return itens.reduce((s, i) => s + i.preco * i.quantidade, 0);
 }
 
+function calcularTotalPedido(pedido) {
+    return calcularTotal(pedido.itens || []) + (pedido.taxa_entrega || 0);
+}
+
 function gerarLinkMaps(endereco) {
     if (endereco.latitude && endereco.longitude) {
         return `https://www.google.com/maps/dir/?api=1&destination=${endereco.latitude},${endereco.longitude}`;
@@ -84,10 +88,12 @@ function gerarMensagemMotoboy(pedido) {
     const usuario = pedido.usuario || {};
     const endereco = pedido.endereco || {};
     const itens = pedido.itens || [];
-    const total = calcularTotal(itens);
+    const taxaEntrega = pedido.taxa_entrega || 0;
+    const total = calcularTotal(itens) + taxaEntrega;
     const pagamento = PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento;
+    const tipoEntrega = pedido.tipo_entrega || "entrega";
 
-    let msg = `*ENTREGA - Pedido #${num}*\n`;
+    let msg = `*${tipoEntrega === "retirada" ? "RETIRADA" : "ENTREGA"} - Pedido #${num}*\n`;
     msg += `------------------------\n\n`;
     msg += `*Cliente:* ${usuario.nome || "N/A"}\n`;
     msg += `*Telefone:* ${usuario.telefone || "N/A"}\n\n`;
@@ -98,10 +104,20 @@ function gerarMensagemMotoboy(pedido) {
     if (pedido.observacao) {
         msg += `\n*Detalhes do combo:*\n${pedido.observacao}\n`;
     }
+    if (taxaEntrega) {
+        msg += `\n*Taxa de entrega:* ${formatarPreco(taxaEntrega)}\n`;
+    }
     msg += `\n*Total:* ${formatarPreco(total)}\n`;
     msg += `*Pagamento:* ${pagamento}\n`;
     if (pedido.troco) {
         msg += `*Troco para:* ${formatarPreco(pedido.troco)}\n`;
+    }
+    if (tipoEntrega === "retirada") {
+        msg += `\n*Cliente vai retirar no local:*\n`;
+        msg += `${pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria"}\n`;
+        msg += `\n------------------------\n`;
+        msg += `Pastelaria Delivery`;
+        return encodeURIComponent(msg);
     }
     msg += `\n*Entregar em:*\n`;
     msg += `${endereco.rua || ""}, ${endereco.numero || ""}\n`;
@@ -200,6 +216,9 @@ function renderizarAcoes(pedido) {
         return `<button class="btn btn-success" onclick="aceitarPedido(${pedido.id})">Aceitar pedido</button>`;
     }
     if (pedido.status === "preparando") {
+        if ((pedido.tipo_entrega || "entrega") === "retirada") {
+            return `<button class="btn btn-primary" onclick="atualizarStatus(${pedido.id}, 'finalizado')">Finalizar retirada</button>`;
+        }
         return `<button class="btn btn-whatsapp" onclick="enviarParaMotoboy(${pedido.id})">Enviar para motoboy</button>`;
     }
     if (pedido.status === "entrega") {
@@ -261,8 +280,9 @@ function renderizarPedidos() {
             const itens = pedido.itens || [];
             const statusKey = pedido.status === "aceito" ? "preparando" : pedido.status;
             const statusClass = STATUS_CLASSES[statusKey] || "status-pendente";
-            const total = calcularTotal(itens);
+            const total = calcularTotalPedido(pedido);
             const mapsLink = gerarLinkMaps(endereco);
+            const tipoEntrega = pedido.tipo_entrega || "entrega";
 
             return `
             <article class="pedido-admin-card">
@@ -285,6 +305,7 @@ function renderizarPedidos() {
                         <h4>Produtos</h4>
                         <ul>${itens.map((i) => `<li>${i.quantidade}x ${i.nome || "Produto"}</li>`).join("")}</ul>
                         ${pedido.observacao ? `<p class="pedido-observacao"><strong>Combo:</strong> ${pedido.observacao.replace(/\n/g, "<br>")}</p>` : ""}
+                        ${pedido.taxa_entrega ? `<p>Taxa de entrega: ${formatarPreco(pedido.taxa_entrega)}</p>` : ""}
                         <p><strong>Total:</strong> ${formatarPreco(total)}</p>
                     </div>
 
@@ -298,11 +319,15 @@ function renderizarPedidos() {
                     </div>
 
                     <div class="pedido-admin-section">
-                        <h4>Endereço</h4>
-                        <p>${endereco.rua || ""}, ${endereco.numero || ""}</p>
-                        <p>${endereco.bairro || ""}</p>
-                        ${endereco.referencia ? `<p>Ref: ${endereco.referencia}</p>` : ""}
-                        <a href="${mapsLink}" target="_blank" class="maps-link">Ver no Google Maps</a>
+                        <h4>${tipoEntrega === "retirada" ? "Retirada" : "Endereço"}</h4>
+                        ${
+                            tipoEntrega === "retirada"
+                                ? `<p>Cliente retira no local</p><p>${pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria"}</p>`
+                                : `<p>${endereco.rua || ""}, ${endereco.numero || ""}</p>
+                                   <p>${endereco.bairro || ""}</p>
+                                   ${endereco.referencia ? `<p>Ref: ${endereco.referencia}</p>` : ""}
+                                   <a href="${mapsLink}" target="_blank" class="maps-link">Ver no Google Maps</a>`
+                        }
                     </div>
                 </div>
 
@@ -376,7 +401,7 @@ async function toggleGaveta(id) {
                 ? `<p class="gaveta-sem-itens">Nenhum pedido nesta gaveta.</p>`
                 : pedidosGaveta
                       .map((p) => {
-                          const total = calcularTotal(p.itens || []);
+                          const total = calcularTotalPedido(p);
                           const statusKey = p.status === "aceito" ? "preparando" : p.status;
                           return `
                 <div class="gaveta-pedido-detalhe">

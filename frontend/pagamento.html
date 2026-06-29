@@ -25,7 +25,7 @@
     <div class="page-title">
         <a href="cadastro.html" class="page-back">Voltar ao endereço</a>
         <h1>Pagamento</h1>
-        <p>Pagamento na hora da entrega</p>
+        <p>Pagamento ao receber o pedido</p>
     </div>
 
     <div class="checkout-steps">
@@ -40,6 +40,13 @@
         <div class="carrinho-total-box total-destaque">
             <p class="total-label">Total do pedido</p>
             <p class="total-valor" id="totalPedido">R$ 0,00</p>
+            <div class="total-detalhes" id="totalDetalhes"></div>
+        </div>
+
+        <div class="form-card entrega-resumo" id="entregaResumo">
+            <h3 class="section-title">Recebimento</h3>
+            <p id="entregaResumoTexto"></p>
+            <a href="cadastro.html" class="btn btn-secondary btn-sm">Alterar</a>
         </div>
 
         <div class="form-card">
@@ -50,34 +57,34 @@
                     <input type="radio" name="pagamento" value="presencial">
                     <div class="opcao-info">
                         <div class="opcao-titulo">Pix ou Dinheiro</div>
-                        <div class="opcao-desc">Pague na entrega, ao receber o pedido</div>
+                        <div class="opcao-desc">Pague ao receber o pedido</div>
                     </div>
                 </label>
 
                 <label class="pagamento-opcao" onclick="selecionarPagamento('cartao')">
                     <input type="radio" name="pagamento" value="cartao">
                     <div class="opcao-info">
-                        <div class="opcao-titulo">Cartão na entrega</div>
-                        <div class="opcao-desc">Débito ou crédito na hora da entrega</div>
+                        <div class="opcao-titulo">Cartão ao receber</div>
+                        <div class="opcao-desc">Débito ou crédito na hora que receber</div>
                     </div>
                 </label>
             </div>
 
             <div class="presencial-section" id="presencialSection">
-                <p class="presencial-label">Como você vai pagar na entrega?</p>
+                <p class="presencial-label">Como você vai pagar ao receber?</p>
                 <div class="presencial-opcoes">
                     <label class="presencial-radio">
                         <input type="radio" name="formaPresencial" value="pix" onchange="selecionarFormaPresencial('pix')">
-                        Pix na entrega
+                        Pix ao receber
                     </label>
                     <label class="presencial-radio">
                         <input type="radio" name="formaPresencial" value="dinheiro" onchange="selecionarFormaPresencial('dinheiro')">
-                        Dinheiro na entrega
+                        Dinheiro ao receber
                     </label>
                 </div>
 
                 <div class="pix-info-box" id="pixInfoBox">
-                    <p class="pix-label">Chave Pix da pastelaria (pagamento na entrega)</p>
+                    <p class="pix-label">Chave Pix da pastelaria</p>
                     <div class="pix-chave-box">
                         <span id="pixChaveTexto"></span>
                         <button type="button" class="btn btn-secondary btn-sm" onclick="copiarPix()">Copiar</button>
@@ -105,7 +112,7 @@
                 <input type="checkbox" id="confirmarPagamento" onchange="atualizarBotaoFinalizar()">
                 <span>
                     <strong>Confirmo o pagamento na entrega</strong>
-                    <small>Estou ciente de que pagarei na hora da entrega conforme a forma selecionada acima.</small>
+                    <small>Estou ciente de que pagarei ao receber o pedido conforme a forma selecionada acima.</small>
                 </span>
             </label>
         </div>

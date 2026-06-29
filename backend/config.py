@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
     ADMIN_TOKEN: str = "admin-token-secreto"
     MOTOBOY_WHATSAPP: str = "5518997640335"
-    PIX_CHAVE: str = "jv.s.m2006@hotmail.com"
+    PIX_CHAVE: str = ""
     GOOGLE_MAPS_API_KEY: str = ""
     FRONTEND_URL: str = "http://localhost:5500"
     ALGORITHM: str = "HS256"

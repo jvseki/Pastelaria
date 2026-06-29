@@ -21,6 +21,11 @@ class EnderecoRequest(BaseModel):
     referencia: Optional[str] = None
 
 
+class PerfilRequest(BaseModel):
+    nome: str
+    telefone: str
+
+
 def get_current_user(authorization: str = Header(None), db: Session = Depends(get_db)) -> Usuario:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Não autenticado")
@@ -36,6 +41,33 @@ def get_current_user(authorization: str = Header(None), db: Session = Depends(ge
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return usuario
+
+
+@router.post("/perfil")
+def salvar_perfil(
+    body: PerfilRequest,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    nome = body.nome.strip()
+    telefone = body.telefone.strip()
+
+    if not nome:
+        raise HTTPException(status_code=400, detail="Informe seu nome")
+    if not telefone:
+        raise HTTPException(status_code=400, detail="Informe seu telefone")
+
+    usuario.nome = nome
+    usuario.telefone = telefone
+    db.commit()
+    db.refresh(usuario)
+
+    return {
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "email_google": usuario.email_google,
+        "telefone": usuario.telefone,
+    }
 
 
 @router.post("/endereco")

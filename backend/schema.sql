@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
     status VARCHAR(50) DEFAULT 'pendente',
     pagamento_confirmado BOOLEAN DEFAULT FALSE,
     arquivado BOOLEAN DEFAULT FALSE,
+    tipo_entrega VARCHAR(20) DEFAULT 'entrega',
+    taxa_entrega DOUBLE PRECISION DEFAULT 0,
+    local_retirada VARCHAR(500),
     data_pedido TIMESTAMPTZ DEFAULT NOW()
 );
 

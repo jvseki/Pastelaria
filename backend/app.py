@@ -73,6 +73,12 @@ def _migrate_db():
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN numero_dia INTEGER"))
         if "observacao" not in colunas:
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN observacao VARCHAR(2000)"))
+        if "tipo_entrega" not in colunas:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN tipo_entrega VARCHAR(20) DEFAULT 'entrega'"))
+        if "taxa_entrega" not in colunas:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN taxa_entrega FLOAT DEFAULT 0"))
+        if "local_retirada" not in colunas:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN local_retirada VARCHAR(500)"))
         conn.commit()
 
 

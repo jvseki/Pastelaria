@@ -5,9 +5,9 @@ from services.maps import gerar_link_maps, gerar_link_maps_endereco
 
 
 PAGAMENTO_LABELS = {
-    "pix": "Pix na entrega",
-    "dinheiro": "Dinheiro na entrega",
-    "cartao": "Cartao na entrega",
+    "pix": "Pix ao receber",
+    "dinheiro": "Dinheiro ao receber",
+    "cartao": "Cartao ao receber",
 }
 
 
@@ -20,20 +20,33 @@ def formatar_mensagem_motoboy(pedido: dict) -> str:
     usuario = pedido.get("usuario", {})
     endereco = pedido.get("endereco", {})
     itens = pedido.get("itens", [])
-    total = _calcular_total(itens)
+    taxa_entrega = pedido.get("taxa_entrega") or 0
+    total = _calcular_total(itens) + taxa_entrega
     pagamento = PAGAMENTO_LABELS.get(pedido.get("pagamento"), pedido.get("pagamento", ""))
+    tipo_entrega = pedido.get("tipo_entrega") or "entrega"
 
-    msg = f"*ENTREGA - Pedido #{num}*\n"
+    titulo = "RETIRADA" if tipo_entrega == "retirada" else "ENTREGA"
+    msg = f"*{titulo} - Pedido #{num}*\n"
     msg += "------------------------\n\n"
     msg += f"*Cliente:* {usuario.get('nome', 'N/A')}\n"
     msg += f"*Telefone:* {usuario.get('telefone', 'N/A')}\n\n"
     msg += "*Itens do pedido:*\n"
     for item in itens:
         msg += f"- {item['quantidade']}x {item.get('nome', 'Produto')}\n"
+    if taxa_entrega:
+        msg += f"\n*Taxa de entrega:* R$ {taxa_entrega:.2f}\n"
     msg += f"\n*Total:* R$ {total:.2f}\n"
     msg += f"*Pagamento:* {pagamento}\n"
     if pedido.get("troco"):
         msg += f"*Troco para:* R$ {pedido['troco']:.2f}\n"
+
+    if tipo_entrega == "retirada":
+        msg += "\n*Cliente vai retirar no local:*\n"
+        msg += f"{pedido.get('local_retirada') or 'Local da pastelaria'}\n"
+        msg += "\n------------------------\n"
+        msg += "Pastelaria Delivery"
+        return msg
+
     msg += "\n*Entregar em:*\n"
     msg += f"{endereco.get('rua', '')}, {endereco.get('numero', '')}\n"
     msg += f"{endereco.get('bairro', '')}\n"
