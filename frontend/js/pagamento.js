@@ -174,7 +174,10 @@ async function finalizarPedido() {
             if (precisaTroco === "sim") {
                 troco = parseFloat(document.getElementById("trocoPara").value);
                 if (!troco || troco <= calcularTotal()) {
-                    alert("Informe um valor valido para o troco (maior que o total)");
+                    mostrarAlerta("Informe um valor valido para o troco, maior que o total do pedido.", {
+                        titulo: "Troco inválido",
+                        tipo: "erro",
+                    });
                     return;
                 }
             }
@@ -205,7 +208,10 @@ async function finalizarPedido() {
         sessionStorage.removeItem("bebidasOferecidas");
         window.location.href = "pedido.html";
     } catch (error) {
-        alert("Erro ao finalizar pedido: " + error.message);
+        mostrarAlerta(error.message, {
+            titulo: "Erro ao finalizar pedido",
+            tipo: "erro",
+        });
         btn.disabled = false;
         btn.textContent = "Confirmar pagamento e finalizar pedido";
         atualizarBotaoFinalizar();

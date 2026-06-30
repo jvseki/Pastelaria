@@ -183,17 +183,108 @@ function formatarPreco(valor) {
     return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function mostrarToast(mensagem) {
+function mostrarToast(mensagem, tipo = "info") {
     let toast = document.getElementById("toast");
     if (!toast) {
         toast = document.createElement("div");
         toast.id = "toast";
         toast.className = "toast";
+        toast.innerHTML = `
+            <span class="toast-icon" aria-hidden="true"></span>
+            <span class="toast-message"></span>
+        `;
         document.body.appendChild(toast);
     }
-    toast.textContent = mensagem;
+
+    toast.className = `toast toast-${tipo}`;
+    toast.querySelector(".toast-icon").textContent = tipo === "erro" ? "!" : tipo === "sucesso" ? "✓" : "i";
+    toast.querySelector(".toast-message").textContent = mensagem;
     toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 2500);
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => toast.classList.remove("show"), 2800);
+}
+
+function criarAlertDialog() {
+    let overlay = document.getElementById("alertDialog");
+    if (overlay) return overlay;
+
+    overlay = document.createElement("div");
+    overlay.id = "alertDialog";
+    overlay.className = "alert-overlay";
+    overlay.innerHTML = `
+        <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+            <div class="alert-icon" aria-hidden="true"></div>
+            <div class="alert-content">
+                <h2 id="alertTitle"></h2>
+                <p id="alertMessage"></p>
+            </div>
+            <div class="alert-actions">
+                <button type="button" class="btn btn-secondary alert-cancel">Cancelar</button>
+                <button type="button" class="btn btn-primary alert-confirm">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+function mostrarAlerta(mensagem, opcoes = {}) {
+    const overlay = criarAlertDialog();
+    const tipo = opcoes.tipo || "info";
+    const titulo = opcoes.titulo || (tipo === "erro" ? "Atenção" : "Aviso");
+    const botao = opcoes.botao || "Entendi";
+
+    overlay.className = `alert-overlay alert-${tipo}`;
+    overlay.querySelector("#alertTitle").textContent = titulo;
+    overlay.querySelector("#alertMessage").textContent = mensagem;
+    overlay.querySelector(".alert-icon").textContent = tipo === "erro" ? "!" : tipo === "sucesso" ? "✓" : "i";
+    overlay.querySelector(".alert-cancel").style.display = "none";
+    overlay.querySelector(".alert-confirm").textContent = botao;
+
+    return new Promise((resolve) => {
+        const confirmar = overlay.querySelector(".alert-confirm");
+        const fechar = () => {
+            overlay.classList.remove("open");
+            confirmar.removeEventListener("click", fechar);
+            resolve(true);
+        };
+
+        confirmar.addEventListener("click", fechar);
+        requestAnimationFrame(() => overlay.classList.add("open"));
+        confirmar.focus();
+    });
+}
+
+function confirmarAcao(mensagem, opcoes = {}) {
+    const overlay = criarAlertDialog();
+    const tipo = opcoes.tipo || "aviso";
+
+    overlay.className = `alert-overlay alert-${tipo}`;
+    overlay.querySelector("#alertTitle").textContent = opcoes.titulo || "Confirmar ação";
+    overlay.querySelector("#alertMessage").textContent = mensagem;
+    overlay.querySelector(".alert-icon").textContent = "?";
+    overlay.querySelector(".alert-cancel").style.display = "";
+    overlay.querySelector(".alert-cancel").textContent = opcoes.cancelar || "Cancelar";
+    overlay.querySelector(".alert-confirm").textContent = opcoes.confirmar || "Confirmar";
+
+    return new Promise((resolve) => {
+        const confirmar = overlay.querySelector(".alert-confirm");
+        const cancelar = overlay.querySelector(".alert-cancel");
+
+        const fechar = (resultado) => {
+            overlay.classList.remove("open");
+            confirmar.removeEventListener("click", onConfirmar);
+            cancelar.removeEventListener("click", onCancelar);
+            resolve(resultado);
+        };
+        const onConfirmar = () => fechar(true);
+        const onCancelar = () => fechar(false);
+
+        confirmar.addEventListener("click", onConfirmar);
+        cancelar.addEventListener("click", onCancelar);
+        requestAnimationFrame(() => overlay.classList.add("open"));
+        confirmar.focus();
+    });
 }
 
 function getCarrinhoCount() {

@@ -170,10 +170,13 @@ function initAbas() {
 async function confirmarPagamento(pedidoId) {
     try {
         await api.confirmarPagamentoPedido(pedidoId);
-        mostrarToast("Pagamento confirmado!");
+        mostrarToast("Pagamento confirmado!", "sucesso");
         carregarPedidos();
     } catch (error) {
-        alert("Erro ao confirmar pagamento: " + error.message);
+        mostrarAlerta(error.message, {
+            titulo: "Erro ao confirmar pagamento",
+            tipo: "erro",
+        });
     }
 }
 
@@ -197,10 +200,13 @@ async function enviarParaMotoboy(pedidoId) {
 async function atualizarStatus(pedidoId, status) {
     try {
         await api.atualizarStatusPedido(pedidoId, status);
-        mostrarToast(`Status: ${STATUS_LABELS[status] || status}`);
+        mostrarToast(`Status: ${STATUS_LABELS[status] || status}`, "sucesso");
         carregarPedidos();
     } catch (error) {
-        alert("Erro ao atualizar status: " + error.message);
+        mostrarAlerta(error.message, {
+            titulo: "Erro ao atualizar status",
+            tipo: "erro",
+        });
     }
 }
 
@@ -436,26 +442,42 @@ async function fecharDia(forcar = false) {
                 ? "Nao ha pedidos ativos para arquivar."
                 : `Arquivar ${pedidos.length} pedido(s) na gaveta de hoje e reiniciar a numeracao (#001)?`;
         if (pedidos.length === 0) {
-            alert(msg);
+            await mostrarAlerta(msg, {
+                titulo: "Gaveta vazia",
+                tipo: "aviso",
+            });
             return;
         }
-        if (!confirm(msg)) return;
+        const confirmou = await confirmarAcao(msg, {
+            titulo: "Fechar dia",
+            tipo: "aviso",
+            confirmar: "Arquivar pedidos",
+        });
+        if (!confirmou) return;
     }
 
     try {
         const resultado = await api.fecharDia(forcar);
-        mostrarToast(resultado.mensagem || "Dia fechado! Proximo pedido sera #001.");
+        mostrarToast(resultado.mensagem || "Dia fechado! Proximo pedido sera #001.", "sucesso");
         await carregarPedidos();
         await carregarGavetas();
         trocarAba("gaveta");
     } catch (error) {
         if (error.message.includes("em aberto") || error.message.includes("aberto")) {
-            if (confirm(`${error.message}\n\nDeseja arquivar mesmo assim?`)) {
+            const confirmou = await confirmarAcao(`${error.message}\n\nDeseja arquivar mesmo assim?`, {
+                titulo: "Pedidos em aberto",
+                tipo: "aviso",
+                confirmar: "Arquivar mesmo assim",
+            });
+            if (confirmou) {
                 await fecharDia(true);
             }
             return;
         }
-        alert("Erro ao fechar dia: " + error.message);
+        mostrarAlerta(error.message, {
+            titulo: "Erro ao fechar dia",
+            tipo: "erro",
+        });
     }
 }
 

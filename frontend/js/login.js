@@ -108,10 +108,13 @@ async function handleGoogleLogin(response) {
 
     try {
         await api.loginGoogle(response.credential);
-        mostrarToast("Login realizado!");
+        mostrarToast("Login realizado!", "sucesso");
         setTimeout(redirecionarAposLogin, 400);
     } catch (error) {
-        alert("Erro ao fazer login: " + error.message);
+        mostrarAlerta(error.message, {
+            titulo: "Erro ao fazer login",
+            tipo: "erro",
+        });
         content.style.opacity = "1";
         content.style.pointerEvents = "auto";
     }
