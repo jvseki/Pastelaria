@@ -94,14 +94,18 @@ async function apiRequest(endpoint, options = {}) {
             } catch (_) {
                 detail = text || detail;
             }
-            throw new Error(detail);
+            const apiError = new Error(detail);
+            apiError.status = response.status;
+            throw apiError;
         }
 
         if (!text) return null;
         return JSON.parse(text);
     } catch (error) {
         if (error.message === "Failed to fetch") {
-            throw new Error("Não foi possível conectar ao servidor. Verifique se a API está rodando.");
+            const connectionError = new Error("Não foi possível conectar ao servidor. Verifique se a API está rodando.");
+            connectionError.status = 0;
+            throw connectionError;
         }
         throw error;
     }

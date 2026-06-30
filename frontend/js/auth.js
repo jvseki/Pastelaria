@@ -34,14 +34,19 @@ async function restaurarSessao() {
     try {
         const usuario = await api.getMe();
         setPersistedItem("usuario", JSON.stringify(usuario));
-        await api.getEndereco();
     } catch (error) {
-        if (error.message?.includes("conectar ao servidor")) {
-            return;
+        if ([401, 403, 404].includes(error.status)) {
+            removePersistedItem("token");
+            removePersistedItem("usuario");
+            localStorage.removeItem("endereco");
         }
-        removePersistedItem("token");
-        removePersistedItem("usuario");
-        localStorage.removeItem("endereco");
+        return;
+    }
+
+    try {
+        await api.getEndereco();
+    } catch (_) {
+        /* endereco nao pode derrubar a sessao do Google */
     }
 }
 
