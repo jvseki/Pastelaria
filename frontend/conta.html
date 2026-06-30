@@ -73,7 +73,7 @@
             try {
                 const user = await api.getMe();
                 if (user) {
-                    localStorage.setItem("usuario", JSON.stringify(user));
+                    setPersistedItem("usuario", JSON.stringify(user));
                     renderizarConta(user);
                     return;
                 }

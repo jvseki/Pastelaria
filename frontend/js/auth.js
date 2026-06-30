@@ -1,5 +1,10 @@
 function getUsuario() {
-    return JSON.parse(localStorage.getItem("usuario") || "null");
+    try {
+        return JSON.parse(getPersistedItem("usuario") || "null");
+    } catch (_) {
+        removePersistedItem("usuario");
+        return null;
+    }
 }
 
 function isAdmin() {
@@ -9,8 +14,8 @@ function isAdmin() {
 }
 
 function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
+    removePersistedItem("token");
+    removePersistedItem("usuario");
     localStorage.removeItem("endereco");
     window.location.href = "login.html";
 }
@@ -24,18 +29,18 @@ function protegerPaginaAdmin() {
 }
 
 async function restaurarSessao() {
-    if (!localStorage.getItem("token")) return;
+    if (!getPersistedItem("token")) return;
 
     try {
         const usuario = await api.getMe();
-        localStorage.setItem("usuario", JSON.stringify(usuario));
+        setPersistedItem("usuario", JSON.stringify(usuario));
         await api.getEndereco();
     } catch (error) {
         if (error.message?.includes("conectar ao servidor")) {
             return;
         }
-        localStorage.removeItem("token");
-        localStorage.removeItem("usuario");
+        removePersistedItem("token");
+        removePersistedItem("usuario");
         localStorage.removeItem("endereco");
     }
 }

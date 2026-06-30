@@ -1,4 +1,64 @@
 const API_BASE = window.API_URL || "http://localhost:8000";
+const AUTH_COOKIE_DAYS = 60;
+
+function cookieName(chave) {
+    return `pastelaria_${chave}`;
+}
+
+function setCookiePersistente(chave, valor) {
+    const maxAge = AUTH_COOKIE_DAYS * 24 * 60 * 60;
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `${cookieName(chave)}=${encodeURIComponent(valor)}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`;
+}
+
+function getCookiePersistente(chave) {
+    const nome = `${cookieName(chave)}=`;
+    const partes = document.cookie ? document.cookie.split("; ") : [];
+    const item = partes.find((parte) => parte.startsWith(nome));
+    return item ? decodeURIComponent(item.slice(nome.length)) : null;
+}
+
+function removerCookiePersistente(chave) {
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `${cookieName(chave)}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
+}
+
+function setPersistedItem(chave, valor) {
+    try {
+        localStorage.setItem(chave, valor);
+    } catch (_) {
+        /* alguns navegadores mobile bloqueiam storage persistente */
+    }
+    setCookiePersistente(chave, valor);
+}
+
+function getPersistedItem(chave) {
+    try {
+        const valor = localStorage.getItem(chave);
+        if (valor) return valor;
+    } catch (_) {
+        /* fallback para cookie */
+    }
+
+    const valorCookie = getCookiePersistente(chave);
+    if (valorCookie) {
+        try {
+            localStorage.setItem(chave, valorCookie);
+        } catch (_) {
+            /* cookie continua sendo a fonte de recuperacao */
+        }
+    }
+    return valorCookie;
+}
+
+function removePersistedItem(chave) {
+    try {
+        localStorage.removeItem(chave);
+    } catch (_) {
+        /* ignora storage indisponivel */
+    }
+    removerCookiePersistente(chave);
+}
 
 function parseApiError(detail) {
     if (typeof detail === "string") return detail;
@@ -14,7 +74,7 @@ function parseApiError(detail) {
 
 async function apiRequest(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
-    const token = localStorage.getItem("token");
+    const token = getPersistedItem("token");
 
     const headers = {
         "Content-Type": "application/json",
@@ -66,8 +126,8 @@ const api = {
             body: JSON.stringify({ credential }),
         });
 
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        setPersistedItem("token", data.access_token);
+        setPersistedItem("usuario", JSON.stringify(data.usuario));
 
         try {
             await api.getEndereco();
@@ -83,7 +143,7 @@ const api = {
             method: "POST",
             body: JSON.stringify(dados),
         });
-        localStorage.setItem("usuario", JSON.stringify(data));
+        setPersistedItem("usuario", JSON.stringify(data));
         return data;
     },
 
@@ -105,7 +165,7 @@ const api = {
         localStorage.setItem("endereco", JSON.stringify(enderecoCache));
 
         if (data.usuario) {
-            localStorage.setItem("usuario", JSON.stringify(data.usuario));
+            setPersistedItem("usuario", JSON.stringify(data.usuario));
         }
 
         return data;
@@ -305,7 +365,7 @@ function atualizarBadgeCarrinho() {
 }
 
 function estaLogado() {
-    return !!localStorage.getItem("token");
+    return !!getPersistedItem("token");
 }
 
 function temEndereco() {
