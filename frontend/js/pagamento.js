@@ -24,7 +24,6 @@ async function initPagamento() {
     document.getElementById("totalPedido").textContent = formatarPreco(calcularTotal());
     atualizarDetalhesTotal();
     renderizarResumoEntrega();
-    configurarPix();
     atualizarBotaoFinalizar();
 }
 
@@ -78,22 +77,6 @@ function renderizarResumoEntrega() {
     `;
 }
 
-function configurarPix() {
-    const chave = window.PIX_CHAVE || "";
-    const chaveTexto = document.getElementById("pixChaveTexto");
-    const pixLabel = document.querySelector(".pix-label");
-    const copiarBtn = document.querySelector(".pix-chave-box button");
-
-    if (chave) {
-        chaveTexto.textContent = chave;
-        return;
-    }
-
-    chaveTexto.textContent = "Chave Pix não configurada";
-    if (pixLabel) pixLabel.textContent = "Combine o Pix diretamente na retirada/entrega";
-    if (copiarBtn) copiarBtn.style.display = "none";
-}
-
 function montarObservacao() {
     const combos = carrinho.filter((item) => item.detalhes && item.comboEscolhas);
     if (!combos.length) return null;
@@ -132,7 +115,6 @@ function selecionarPagamento(tipo) {
 
     const presencialSection = document.getElementById("presencialSection");
     document.querySelectorAll('input[name="formaPresencial"]').forEach((r) => (r.checked = false));
-    document.getElementById("pixInfoBox")?.classList.remove("visible");
     document.getElementById("trocoSection")?.classList.remove("visible");
 
     if (tipo === "presencial") {
@@ -151,23 +133,14 @@ function selecionarFormaPresencial(forma) {
     const trocoSection = document.getElementById("trocoSection");
 
     if (forma === "pix") {
-        pixInfo.classList.add("visible");
+        pixInfo?.classList.remove("visible");
         trocoSection.classList.remove("visible");
     } else {
-        pixInfo.classList.remove("visible");
+        pixInfo?.classList.remove("visible");
         trocoSection.classList.add("visible");
     }
 
     atualizarBotaoFinalizar();
-}
-
-function copiarPix() {
-    const chave = window.PIX_CHAVE || "";
-    if (!chave) {
-        mostrarToast("Chave Pix ainda não configurada");
-        return;
-    }
-    navigator.clipboard.writeText(chave).then(() => mostrarToast("Chave Pix copiada!"));
 }
 
 function toggleTroco() {

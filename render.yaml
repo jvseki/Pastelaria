@@ -16,8 +16,6 @@ services:
         sync: false
       - key: MOTOBOY_WHATSAPP
         sync: false
-      - key: PIX_CHAVE
-        sync: false
       - key: FRONTEND_URL
         sync: false
       - key: GOOGLE_MAPS_API_KEY

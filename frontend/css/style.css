@@ -1731,31 +1731,41 @@ img {
     margin-top: 4px;
 }
 
+.pedido-historico-card {
+    margin-bottom: 16px;
+}
+
+.pedido-historico-topo {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.pedido-historico-topo h2 {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+}
+
+.pedido-historico-topo p,
+.pedido-historico-card p {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    margin-top: 5px;
+}
+
+.pedido-historico-itens {
+    margin: 0 0 12px;
+    padding-left: 18px;
+    color: var(--text);
+    line-height: 1.6;
+}
+
 .google-btn-wrap {
     display: flex;
     justify-content: center;
     min-height: 50px;
-}
-
-.login-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 22px 0;
-    color: var(--text-muted);
-    font-size: 0.82rem;
-}
-
-.login-divider::before,
-.login-divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-}
-
-.login-local-form .btn {
-    width: 100%;
 }
 
 .login-alert {

@@ -117,34 +117,6 @@ async function handleGoogleLogin(response) {
     }
 }
 
-async function handleLocalLogin(event) {
-    event.preventDefault();
-
-    const btn = document.getElementById("btnLoginLocal");
-    const erro = document.getElementById("loginLocalErro");
-    erro.style.display = "none";
-
-    const dados = {
-        nome: document.getElementById("loginNome").value.trim(),
-        telefone: document.getElementById("loginTelefone").value.trim(),
-        email: document.getElementById("loginEmail").value.trim() || null,
-    };
-
-    btn.disabled = true;
-    btn.textContent = "Entrando...";
-
-    try {
-        await api.loginLocal(dados);
-        mostrarToast("Login realizado!");
-        setTimeout(redirecionarAposLogin, 400);
-    } catch (error) {
-        erro.textContent = error.message;
-        erro.style.display = "block";
-        btn.disabled = false;
-        btn.textContent = "Entrar e continuar";
-    }
-}
-
 const params = new URLSearchParams(window.location.search);
 const redirect = params.get("redirect") || "index.html";
 

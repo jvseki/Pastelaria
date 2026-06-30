@@ -78,24 +78,6 @@ const api = {
         return data;
     },
 
-    async loginLocal(dados) {
-        const data = await apiRequest("/auth/local", {
-            method: "POST",
-            body: JSON.stringify(dados),
-        });
-
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
-
-        try {
-            await api.getEndereco();
-        } catch (_) {
-            /* sem endereço ainda */
-        }
-
-        return data;
-    },
-
     async salvarPerfil(dados) {
         const data = await apiRequest("/usuarios/perfil", {
             method: "POST",
@@ -144,6 +126,10 @@ const api = {
             method: "POST",
             body: JSON.stringify(pedido),
         });
+    },
+
+    async getMeusPedidos() {
+        return await apiRequest("/pedidos/me");
     },
 
     async getPedidosAdmin() {

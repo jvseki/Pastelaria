@@ -14,9 +14,8 @@
     // Deve ser IGUAL ao ADMIN_TOKEN configurado no Render
     window.ADMIN_TOKEN = "nt2YupsBtxuRhgnqSe6ybwH-XEsCOWDH03MEuT2CBpE";
     window.ADMIN_EMAIL = "joaovictorsekimantovani@gmail.com";
-    window.PIX_CHAVE = "";
     window.TAXA_ENTREGA = 5;
     window.LOJA_NOME = "Pastelaria Delivery";
-    window.LOJA_ENDERECO = "Rua da Pastelaria, 123 - Centro, Presidente Prudente";
-    window.LOJA_MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Pastelaria%20Delivery%20Presidente%20Prudente";
+    window.LOJA_ENDERECO = "Av. Ponta Pora, 2750 - Distrito Industrial, Tres Lagoas - MS";
+    window.LOJA_MAPS_URL = "https://www.google.com/maps/search/?api=1&query=AEMS%20Faculdades%20Integradas%20de%20Tres%20Lagoas%20Av.%20Ponta%20Pora%202750";
 })();

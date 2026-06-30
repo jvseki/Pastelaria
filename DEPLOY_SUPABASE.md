@@ -141,7 +141,6 @@ Em **Environment** → adicione:
 | `GOOGLE_CLIENT_ID` | Seu Client ID do Google OAuth |
 | `ADMIN_TOKEN` | Token secreto para o admin (ex: `pastel-admin-2025-xYz`) |
 | `MOTOBOY_WHATSAPP` | `5518997640335` |
-| `PIX_CHAVE` | Sua chave Pix |
 | `FRONTEND_URL` | URL da Vercel (preencha depois do passo 3) |
 
 ### 2.3 Deploy
