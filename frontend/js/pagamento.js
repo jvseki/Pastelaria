@@ -28,7 +28,7 @@ async function initPagamento() {
 }
 
 function getTipoEntrega() {
-    return localStorage.getItem("tipoEntrega") || "entrega";
+    return getPersistedItem("tipoEntrega") || "entrega";
 }
 
 function calcularSubtotal() {
@@ -57,7 +57,7 @@ function renderizarResumoEntrega() {
     const tipo = getTipoEntrega();
 
     if (tipo === "retirada") {
-        const local = JSON.parse(localStorage.getItem("localRetirada") || "null") || {
+        const local = parsePersistedJson("localRetirada") || {
             nome: window.LOJA_NOME || "Pastelaria Delivery",
             endereco: window.LOJA_ENDERECO || "Endereço da pastelaria",
             mapsUrl: window.LOJA_MAPS_URL || "",
@@ -70,7 +70,7 @@ function renderizarResumoEntrega() {
         return;
     }
 
-    const endereco = JSON.parse(localStorage.getItem("endereco") || "null") || {};
+    const endereco = parsePersistedJson("endereco", {}) || {};
     texto.innerHTML = `
         <strong>Entrega com motoboy</strong><br>
         ${endereco.rua || ""}, ${endereco.numero || ""} - ${endereco.bairro || ""}

@@ -190,11 +190,12 @@ async function enviarParaMotoboy(pedidoId) {
 
     const mensagem = gerarMensagemMotoboy(pedido);
     const url = `https://wa.me/${MOTOBOY_WHATSAPP}?text=${mensagem}`;
-    window.open(url, "_blank");
 
     if (pedido.status === "preparando") {
         await atualizarStatus(pedidoId, "entrega");
     }
+
+    abrirWhatsApp(url);
 }
 
 async function atualizarStatus(pedidoId, status) {

@@ -1,6 +1,6 @@
 function preencherFormulario() {
     const usuario = getUsuario() || {};
-    const endereco = JSON.parse(localStorage.getItem("endereco") || "null") || {};
+    const endereco = parsePersistedJson("endereco", {}) || {};
 
     if (usuario.nome) document.getElementById("nome").value = usuario.nome;
     if (usuario.telefone) document.getElementById("telefone").value = usuario.telefone;
@@ -11,7 +11,7 @@ function preencherFormulario() {
 }
 
 function getTipoEntrega() {
-    return localStorage.getItem("tipoEntrega") || "entrega";
+    return getPersistedItem("tipoEntrega") || "entrega";
 }
 
 function preencherInfoRetirada() {
@@ -22,7 +22,7 @@ function preencherInfoRetirada() {
 }
 
 function selecionarTipoEntrega(tipo) {
-    localStorage.setItem("tipoEntrega", tipo);
+    setPersistedItem("tipoEntrega", tipo);
 
     document.querySelectorAll('input[name="tipoEntrega"]').forEach((radio) => {
         radio.checked = radio.value === tipo;
@@ -58,11 +58,11 @@ async function salvarCadastro(event) {
     btn.textContent = "Salvando...";
 
     try {
-        localStorage.setItem("tipoEntrega", tipoEntrega);
+        setPersistedItem("tipoEntrega", tipoEntrega);
 
         if (tipoEntrega === "retirada") {
             await api.salvarPerfil({ nome: dados.nome, telefone: dados.telefone });
-            localStorage.setItem("localRetirada", JSON.stringify({
+            setPersistedItem("localRetirada", JSON.stringify({
                 nome: window.LOJA_NOME || "Pastelaria Delivery",
                 endereco: window.LOJA_ENDERECO || "Endereço da pastelaria",
                 mapsUrl: window.LOJA_MAPS_URL || "",

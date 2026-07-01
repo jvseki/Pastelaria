@@ -379,7 +379,7 @@ async function avancarCheckout() {
 
     await restaurarSessao();
 
-    if (localStorage.getItem("tipoEntrega") !== "retirada" && !temEndereco()) {
+    if (getPersistedItem("tipoEntrega") !== "retirada" && !temEndereco()) {
         window.location.href = "cadastro.html";
         return;
     }

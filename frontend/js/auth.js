@@ -18,7 +18,7 @@ function isAdmin() {
 function logout() {
     removePersistedItem("token");
     removePersistedItem("usuario");
-    localStorage.removeItem("endereco");
+    removePersistedItem("endereco");
     window.location.href = "login.html";
 }
 
@@ -40,7 +40,7 @@ async function restaurarSessao() {
         if ([401, 403, 404].includes(error.status)) {
             removePersistedItem("token");
             removePersistedItem("usuario");
-            localStorage.removeItem("endereco");
+            removePersistedItem("endereco");
         }
         return;
     }

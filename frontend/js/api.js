@@ -1,5 +1,19 @@
 const API_BASE = window.API_URL || "http://localhost:8000";
 const AUTH_COOKIE_DAYS = 60;
+const TAB_SESSION_KEYS = new Set(["token", "usuario", "endereco", "tipoEntrega", "localRetirada"]);
+
+function isTabSessionKey(chave) {
+    return TAB_SESSION_KEYS.has(chave);
+}
+
+function limparStorageCompartilhado(chave) {
+    try {
+        localStorage.removeItem(chave);
+    } catch (_) {
+        /* ignora storage indisponivel */
+    }
+    removerCookiePersistente(chave);
+}
 
 function cookieName(chave) {
     return `pastelaria_${chave}`;
@@ -24,6 +38,16 @@ function removerCookiePersistente(chave) {
 }
 
 function setPersistedItem(chave, valor) {
+    if (isTabSessionKey(chave)) {
+        try {
+            sessionStorage.setItem(chave, valor);
+        } catch (_) {
+            /* sessao por aba indisponivel */
+        }
+        limparStorageCompartilhado(chave);
+        return;
+    }
+
     try {
         localStorage.setItem(chave, valor);
     } catch (_) {
@@ -33,6 +57,16 @@ function setPersistedItem(chave, valor) {
 }
 
 function getPersistedItem(chave) {
+    if (isTabSessionKey(chave)) {
+        try {
+            const valor = sessionStorage.getItem(chave);
+            if (valor) return valor;
+        } catch (_) {
+            /* ignora storage indisponivel */
+        }
+        return null;
+    }
+
     try {
         const valor = localStorage.getItem(chave);
         if (valor) return valor;
@@ -52,12 +86,51 @@ function getPersistedItem(chave) {
 }
 
 function removePersistedItem(chave) {
+    if (isTabSessionKey(chave)) {
+        try {
+            sessionStorage.removeItem(chave);
+        } catch (_) {
+            /* ignora storage indisponivel */
+        }
+        limparStorageCompartilhado(chave);
+        return;
+    }
+
     try {
         localStorage.removeItem(chave);
     } catch (_) {
         /* ignora storage indisponivel */
     }
     removerCookiePersistente(chave);
+}
+
+function parsePersistedJson(chave, fallback = null) {
+    try {
+        const raw = getPersistedItem(chave);
+        return raw ? JSON.parse(raw) : fallback;
+    } catch (_) {
+        return fallback;
+    }
+}
+
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || (navigator.userAgent.includes("Macintosh") && "ontouchend" in document);
+}
+
+function abrirWhatsApp(url) {
+    if (isMobileDevice()) {
+        window.location.href = url;
+        return;
+    }
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 }
 
 function parseApiError(detail) {
@@ -166,7 +239,7 @@ const api = {
             latitude: data.latitude,
             longitude: data.longitude,
         };
-        localStorage.setItem("endereco", JSON.stringify(enderecoCache));
+        setPersistedItem("endereco", JSON.stringify(enderecoCache));
 
         if (data.usuario) {
             setPersistedItem("usuario", JSON.stringify(data.usuario));
@@ -178,10 +251,10 @@ const api = {
     async getEndereco() {
         const data = await apiRequest("/usuarios/endereco");
         if (data?.cadastrado) {
-            localStorage.setItem("endereco", JSON.stringify(data));
+            setPersistedItem("endereco", JSON.stringify(data));
             return data;
         }
-        localStorage.removeItem("endereco");
+        removePersistedItem("endereco");
         return null;
     },
 
@@ -373,7 +446,7 @@ function estaLogado() {
 }
 
 function temEndereco() {
-    const endereco = JSON.parse(localStorage.getItem("endereco") || "null");
+    const endereco = parsePersistedJson("endereco");
     return !!(endereco && endereco.rua);
 }
 
