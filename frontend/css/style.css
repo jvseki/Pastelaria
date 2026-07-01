@@ -3116,6 +3116,15 @@ body.no-bottom-nav .cart-fab {
     width: 100%;
 }
 
+.bebidas-mais-um-texto {
+    margin-bottom: 14px;
+    text-align: center;
+}
+
+.bebidas-mais-um-acoes {
+    margin-top: 16px;
+}
+
 .bebida-opcao {
     display: flex;
     flex-direction: column;

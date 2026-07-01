@@ -320,7 +320,7 @@ function mostrarBebidaMaisUm(produto) {
     document.getElementById("bebidasLista").style.display = "none";
     document.getElementById("bebidasMaisUm").style.display = "block";
     document.getElementById("modalBebidasTitulo").textContent = "Bebida adicionada!";
-    document.getElementById("modalBebidasTexto").textContent = `Deseja adicionar mais uma ${produto.nome}?`;
+    document.getElementById("bebidaMaisUmPergunta").textContent = `Deseja adicionar mais uma ${produto.nome}?`;
     document.getElementById("bebidaMaisUmImg").src = imagemProduto(produto);
     document.getElementById("bebidaMaisUmImg").alt = produto.nome;
     document.getElementById("bebidaMaisUmNome").textContent = produto.nome;

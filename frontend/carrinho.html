@@ -92,6 +92,7 @@
                     </div>
                 </div>
                 <div id="bebidasMaisUm" style="display:none">
+                    <p class="modal-text bebidas-mais-um-texto" id="bebidaMaisUmPergunta"></p>
                     <div class="modal-produto">
                         <img id="bebidaMaisUmImg" class="modal-produto-img-cartoon" src="" alt="">
                         <div class="modal-produto-info">
@@ -99,9 +100,9 @@
                             <p class="modal-qty" id="bebidaMaisUmQty"></p>
                         </div>
                     </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-primary" onclick="adicionarMaisBebida()">Adicionar mais uma</button>
-                        <button class="btn btn-secondary" onclick="concluirBebidas()">Continuar</button>
+                    <div class="modal-actions bebidas-mais-um-acoes">
+                        <button type="button" class="btn btn-primary" onclick="concluirBebidas()">Confirmar</button>
+                        <button type="button" class="btn btn-secondary" onclick="adicionarMaisBebida()">Adicionar mais uma</button>
                     </div>
                 </div>
             </div>
