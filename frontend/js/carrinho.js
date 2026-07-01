@@ -302,12 +302,14 @@ function mostrarListaBebidas() {
         .map(
             (b) => `
         <button type="button" class="bebida-opcao" onclick="escolherBebida(${b.id})">
-            <img src="${imagemProduto(b)}" alt="${b.nome}" loading="lazy">
-            <div class="bebida-opcao-info">
-                <strong>${b.nome}</strong>
-                <span>${b.descricao}</span>
+            <div class="bebida-opcao-media">
+                <img src="${imagemProduto(b)}" alt="${b.nome}" loading="lazy">
             </div>
-            <span class="bebida-opcao-preco">${formatarPreco(b.preco)}</span>
+            <div class="bebida-opcao-body">
+                <strong>${b.nome}</strong>
+                ${b.descricao ? `<span>${b.descricao}</span>` : ""}
+                <span class="bebida-opcao-preco">${formatarPreco(b.preco)}</span>
+            </div>
         </button>`
         )
         .join("");

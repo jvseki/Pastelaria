@@ -116,7 +116,13 @@
                     ${pedido.troco ? `<p><strong>Troco para:</strong> ${formatarPreco(pedido.troco)}</p>` : ""}
                 </div>
 
-                <a href="cardapio.html" class="btn btn-primary">Fazer novo pedido</a>`;
+                <div class="page-actions pedido-acoes">
+                    <a href="meus-pedidos.html" class="btn btn-primary btn-lg btn-acompanhar-pedido">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Acompanhar seu pedido
+                    </a>
+                    <a href="cardapio.html" class="btn btn-secondary">Fazer novo pedido</a>
+                </div>`;
         }
     </script>
 </body>

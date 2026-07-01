@@ -78,16 +78,18 @@
     </nav>
 
     <div class="modal-overlay" id="modalBebidas">
-        <div class="modal-box">
-            <div class="modal-header">
+        <div class="modal-box modal-box--bebidas">
+            <div class="modal-header modal-header--bebidas">
                 <div class="modal-header-kanji">飲み物</div>
                 <h3 id="modalBebidasTitulo">Quer adicionar uma bebida?</h3>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-body--bebidas">
                 <div id="bebidasLista">
-                    <p class="modal-text" id="modalBebidasTexto">Seu pedido ficou ainda melhor com um refri gelado ou uma agua!</p>
+                    <p class="bebidas-intro" id="modalBebidasTexto">Seu pedido ficou ainda melhor com um refri gelado ou uma agua!</p>
                     <div class="bebida-opcoes" id="bebidasOpcoes"></div>
-                    <button class="btn btn-secondary" onclick="pularBebidas()">Nao, obrigado</button>
+                    <div class="bebidas-modal-footer">
+                        <button type="button" class="btn btn-secondary btn-bebidas-pular" onclick="pularBebidas()">Não, obrigado</button>
+                    </div>
                 </div>
                 <div id="bebidasMaisUm" style="display:none">
                     <div class="modal-produto">
