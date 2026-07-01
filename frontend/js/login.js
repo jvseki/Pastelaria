@@ -48,26 +48,51 @@ async function obterGoogleClientId() {
     return null;
 }
 
+function renderizarUltimaConta() {
+    const card = document.getElementById("ultimaContaCard");
+    if (!card) return;
+
+    const conta = getUltimaConta();
+    if (!conta?.email_google) {
+        card.style.display = "none";
+        return;
+    }
+
+    const inicial = (conta.nome || conta.email_google)[0].toUpperCase();
+    document.getElementById("ultimaContaAvatar").textContent = inicial;
+    document.getElementById("ultimaContaNome").textContent = conta.nome || "Sua conta";
+    document.getElementById("ultimaContaEmail").textContent = conta.email_google;
+    card.style.display = "block";
+}
+
 function renderizarEstadoLogin({ clientId, scriptOk }) {
     const container = document.getElementById("googleLoginBtn");
+    renderizarUltimaConta();
 
     if (isGoogleClientIdValid(clientId) && scriptOk) {
+        const temUltimaConta = !!getUltimaConta()?.email_google;
+
         google.accounts.id.initialize({
             client_id: clientId,
             callback: handleGoogleLogin,
-            auto_select: false,
+            auto_select: temUltimaConta,
             cancel_on_tap_outside: true,
             use_fedcm_for_prompt: false,
+            itp_support: true,
         });
 
         google.accounts.id.renderButton(container, {
             theme: "filled_blue",
             size: "large",
             width: Math.min(container.offsetWidth || 360, 400),
-            text: "continue_with",
+            text: temUltimaConta ? "continue_with" : "signin_with",
             locale: "pt-BR",
             shape: "pill",
         });
+
+        if (temUltimaConta) {
+            google.accounts.id.prompt();
+        }
 
         return;
     }

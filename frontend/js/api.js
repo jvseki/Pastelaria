@@ -133,6 +133,33 @@ function abrirWhatsApp(url) {
     link.remove();
 }
 
+const ULTIMA_CONTA_KEY = "ultimaConta";
+
+function salvarUltimaConta(usuario) {
+    if (!usuario?.email_google) return;
+
+    try {
+        localStorage.setItem(
+            ULTIMA_CONTA_KEY,
+            JSON.stringify({
+                nome: usuario.nome || "",
+                email_google: usuario.email_google,
+                salvo_em: Date.now(),
+            })
+        );
+    } catch (_) {
+        /* ignora storage indisponivel */
+    }
+}
+
+function getUltimaConta() {
+    try {
+        return JSON.parse(localStorage.getItem(ULTIMA_CONTA_KEY) || "null");
+    } catch (_) {
+        return null;
+    }
+}
+
 function parseApiError(detail) {
     if (typeof detail === "string") return detail;
     if (detail && typeof detail === "object" && !Array.isArray(detail)) {
@@ -205,6 +232,7 @@ const api = {
 
         setPersistedItem("token", data.access_token);
         setPersistedItem("usuario", JSON.stringify(data.usuario));
+        salvarUltimaConta(data.usuario);
 
         try {
             await api.getEndereco();

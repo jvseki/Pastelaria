@@ -12,6 +12,13 @@ const STATUS_CLASSES = {
     finalizado: "status-finalizado",
 };
 
+const STAT_CONFIG = {
+    pendente: { label: "Aguardando", icon: "⏳", tone: "pendente" },
+    preparando: { label: "Em preparo", icon: "👨‍🍳", tone: "preparando" },
+    entrega: { label: "Em entrega", icon: "🛵", tone: "entrega" },
+    finalizado: { label: "Finalizados", icon: "✅", tone: "finalizado" },
+};
+
 const PAGAMENTO_LABELS = {
     pix: "Pix ao receber",
     dinheiro: "Dinheiro ao receber",
@@ -164,7 +171,7 @@ function initAbas() {
         year: "numeric",
     });
     const el = document.getElementById("dataHojeAdmin");
-    if (el) el.textContent = `Hoje: ${dataHoje} · numeracao reinicia ao fechar a gaveta`;
+    if (el) el.textContent = `${dataHoje} · numeração reinicia ao fechar a gaveta`;
 }
 
 async function confirmarPagamento(pedidoId) {
@@ -254,13 +261,15 @@ function renderizarStats() {
 
     const container = document.getElementById("adminStats");
     container.innerHTML = Object.entries(stats)
-        .map(
-            ([key, val]) => `
-        <div class="stat-card">
+        .map(([key, val]) => {
+            const cfg = STAT_CONFIG[key] || { label: key, icon: "•", tone: key };
+            return `
+        <div class="stat-card stat-card--${cfg.tone}">
+            <span class="stat-card-icon" aria-hidden="true">${cfg.icon}</span>
             <div class="stat-num">${val}</div>
-            <div class="stat-label">${STATUS_LABELS[key]}</div>
-        </div>`
-        )
+            <div class="stat-label">${cfg.label}</div>
+        </div>`;
+        })
         .join("");
 }
 
@@ -292,31 +301,32 @@ function renderizarPedidos() {
             const tipoEntrega = pedido.tipo_entrega || "entrega";
 
             return `
-            <article class="pedido-admin-card">
+            <article class="pedido-admin-card pedido-admin-card--${statusKey}">
                 <div class="pedido-admin-header">
-                    <div>
-                        <h2>Pedido #${num}</h2>
-                        <p class="pedido-admin-meta">${formatarDataHoraBR(pedido.data_pedido)}</p>
+                    <div class="pedido-admin-ident">
+                        <span class="pedido-admin-num">#${num}</span>
+                        <h2>${usuario.nome || "Cliente"}</h2>
+                        <p class="pedido-admin-meta">${formatarDataHoraBR(pedido.data_pedido)} · ${tipoEntrega === "retirada" ? "Retirada" : "Entrega"}</p>
                     </div>
                     <span class="status-badge ${statusClass}">${STATUS_LABELS[statusKey] || pedido.status}</span>
                 </div>
 
                 <div class="pedido-admin-body">
-                    <div class="pedido-admin-section">
+                    <div class="pedido-admin-section pedido-admin-section--cliente">
                         <h4>Cliente</h4>
                         <p>${usuario.nome || "N/A"}</p>
-                        <p>${usuario.telefone || ""}</p>
+                        <p>${usuario.telefone || "Sem telefone"}</p>
                     </div>
 
-                    <div class="pedido-admin-section">
+                    <div class="pedido-admin-section pedido-admin-section--produtos">
                         <h4>Produtos</h4>
                         <ul>${itens.map((i) => `<li>${i.quantidade}x ${i.nome || "Produto"}</li>`).join("")}</ul>
                         ${pedido.observacao ? `<p class="pedido-observacao"><strong>Combo:</strong> ${pedido.observacao.replace(/\n/g, "<br>")}</p>` : ""}
                         ${pedido.taxa_entrega ? `<p>Taxa de entrega: ${formatarPreco(pedido.taxa_entrega)}</p>` : ""}
-                        <p><strong>Total:</strong> ${formatarPreco(total)}</p>
+                        <p class="pedido-admin-total">Total: ${formatarPreco(total)}</p>
                     </div>
 
-                    <div class="pedido-admin-section">
+                    <div class="pedido-admin-section pedido-admin-section--pagamento">
                         <h4>Pagamento</h4>
                         <p>${PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento}</p>
                         ${pedido.troco ? `<p>Troco para: ${formatarPreco(pedido.troco)}</p>` : ""}
@@ -325,7 +335,7 @@ function renderizarPedidos() {
                         </p>
                     </div>
 
-                    <div class="pedido-admin-section">
+                    <div class="pedido-admin-section pedido-admin-section--endereco">
                         <h4>${tipoEntrega === "retirada" ? "Retirada" : "Endereço"}</h4>
                         ${
                             tipoEntrega === "retirada"

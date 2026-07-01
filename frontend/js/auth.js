@@ -36,6 +36,7 @@ async function restaurarSessao() {
     try {
         const usuario = await api.getMe();
         setPersistedItem("usuario", JSON.stringify(usuario));
+        salvarUltimaConta(usuario);
     } catch (error) {
         if ([401, 403, 404].includes(error.status)) {
             removePersistedItem("token");
