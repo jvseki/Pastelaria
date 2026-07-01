@@ -22,7 +22,7 @@
         </div>
     </header>
 
-    <div class="page-title">
+    <div class="page-title" id="contaPageTitle">
         <a href="index.html" class="page-back">Voltar ao início</a>
         <h1>Minha conta</h1>
     </div>
@@ -54,22 +54,82 @@
         }
 
         const container = document.getElementById("contaConteudo");
+        const pageTitle = document.getElementById("contaPageTitle");
         const usuario = getUsuario();
 
-        function renderizarConta(user) {
+        function renderizarContaCliente(user) {
+            pageTitle.innerHTML = `
+                <a href="index.html" class="page-back">Voltar ao início</a>
+                <h1>Minha conta</h1>
+                <p>Seus pedidos e dados de entrega</p>`;
+
             container.innerHTML = `
-                <div class="form-card conta-card">
+                <div class="form-card conta-card conta-card--cliente">
                     <div class="conta-avatar">${(user.nome || "U")[0].toUpperCase()}</div>
                     <h2>${user.nome}</h2>
                     <p class="conta-email">${user.email_google || ""}</p>
                     ${user.telefone ? `<p class="conta-tel">${user.telefone}</p>` : ""}
                 </div>
-                <div class="page-actions">
-                    ${isAdmin() ? '<a href="admin.html" class="btn btn-secondary">Painel Admin</a>' : ""}
+                <div class="page-actions conta-actions--cliente">
                     <a href="meus-pedidos.html" class="btn btn-primary">Meus pedidos</a>
                     <a href="cadastro.html" class="btn btn-secondary">Editar endereço</a>
                     <button class="btn btn-danger" onclick="logout()">Sair da conta</button>
                 </div>`;
+        }
+
+        function renderizarContaAdmin(user) {
+            document.body.classList.add("is-admin");
+            pageTitle.innerHTML = `
+                <a href="admin.html" class="page-back">Voltar ao painel</a>
+                <h1>Área do funcionário</h1>
+                <p>Gerencie pedidos ou teste o app como cliente</p>`;
+
+            const inicial = (user.nome || "U")[0].toUpperCase();
+            container.innerHTML = `
+                <div class="conta-card conta-card--admin">
+                    <div class="conta-admin-hero">
+                        <div class="conta-admin-topo">
+                            <div class="conta-avatar conta-avatar--admin">${inicial}</div>
+                            <div class="conta-admin-identidade">
+                                <span class="conta-admin-badge">Equipe · Modo funcionário</span>
+                                <h2>${user.nome}</h2>
+                                <p class="conta-email conta-email--admin">${user.email_google || ""}</p>
+                            </div>
+                        </div>
+                        <p class="conta-admin-desc">Use o painel para operar pedidos. Abra o cardápio para simular a experiência do cliente.</p>
+                    </div>
+                    <div class="conta-admin-grid">
+                        <a href="admin.html" class="conta-admin-tile conta-admin-tile--primary">
+                            <span class="conta-admin-tile-icon">📋</span>
+                            <strong>Pedidos de hoje</strong>
+                            <small>Painel e gaveta</small>
+                        </a>
+                        <a href="cardapio.html" class="conta-admin-tile">
+                            <span class="conta-admin-tile-icon">🥟</span>
+                            <strong>Ver como cliente</strong>
+                            <small>Testar cardápio</small>
+                        </a>
+                        <a href="meus-pedidos.html" class="conta-admin-tile">
+                            <span class="conta-admin-tile-icon">🧾</span>
+                            <strong>Meus pedidos</strong>
+                            <small>Histórico pessoal</small>
+                        </a>
+                        <a href="cadastro.html" class="conta-admin-tile">
+                            <span class="conta-admin-tile-icon">📍</span>
+                            <strong>Endereço</strong>
+                            <small>Dados de entrega</small>
+                        </a>
+                    </div>
+                </div>
+                <div class="page-actions conta-actions--admin">
+                    <a href="admin.html" class="btn btn-admin">Abrir painel administrativo</a>
+                    <button class="btn btn-danger btn-outline-admin" onclick="logout()">Sair da conta</button>
+                </div>`;
+        }
+
+        function renderizarConta(user) {
+            if (isAdmin()) renderizarContaAdmin(user);
+            else renderizarContaCliente(user);
         }
 
         async function carregarConta() {
