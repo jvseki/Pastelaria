@@ -32,7 +32,9 @@
     --radius-lg: 20px;
     --radius-full: 999px;
     --header-height: 68px;
-    --nav-height: 72px;
+    --nav-base-height: 64px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --nav-height: calc(var(--nav-base-height) + var(--safe-bottom));
     --max-width: 1180px;
     --font-display: 'Shippori Mincho', 'Noto Sans JP', serif;
     --font-body: 'Inter', 'Noto Sans JP', sans-serif;
@@ -46,6 +48,8 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -56,13 +60,17 @@ body {
         radial-gradient(circle at 90% 80%, rgba(184, 134, 11, 0.05) 0%, transparent 35%);
     color: var(--text);
     min-height: 100vh;
-    padding-bottom: calc(var(--nav-height) + 16px);
+    min-height: 100dvh;
+    padding-bottom: calc(var(--nav-height) + 20px);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body.no-bottom-nav {
-    padding-bottom: 32px;
+    padding-bottom: calc(24px + var(--safe-bottom));
 }
 
 a {
@@ -83,6 +91,7 @@ img {
     backdrop-filter: blur(16px);
     border-bottom: 2px solid var(--primary);
     box-shadow: var(--shadow-xs);
+    overflow: hidden;
 }
 
 .site-header-inner {
@@ -635,10 +644,10 @@ img {
     backdrop-filter: blur(16px);
     border-top: 1px solid var(--border-light);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-around;
     z-index: 200;
-    padding: 0 8px;
+    padding: 8px 8px var(--safe-bottom);
     box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.06);
 }
 
@@ -1732,6 +1741,14 @@ img {
     color: var(--text-secondary);
     font-size: 0.9rem;
     margin-top: 4px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.conta-acoes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .pedido-historico-card {
@@ -1786,7 +1803,7 @@ img {
 /* ========== TOAST / LOADING ========== */
 .toast {
     position: fixed;
-    bottom: calc(var(--nav-height) + 16px);
+    bottom: calc(var(--nav-height) + 12px);
     left: 50%;
     transform: translateX(-50%) translateY(24px) scale(0.96);
     display: flex;
@@ -1835,6 +1852,14 @@ img {
 .toast.show {
     transform: translateX(-50%) translateY(0) scale(1);
     opacity: 1;
+}
+
+body.no-bottom-nav .toast {
+    bottom: calc(20px + var(--safe-bottom));
+}
+
+body.no-bottom-nav .cart-fab {
+    bottom: calc(20px + var(--safe-bottom));
 }
 
 .alert-overlay {
@@ -2544,6 +2569,115 @@ img {
 }
 
 /* ========== RESPONSIVE ========== */
+@media (max-width: 767px) {
+    .site-header-inner {
+        padding: 0 12px;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .brand {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .brand-text {
+        font-size: 0.92rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .brand-text span {
+        display: none;
+    }
+
+    .header-actions {
+        flex-shrink: 0;
+        gap: 6px;
+        max-width: 46%;
+        justify-content: flex-end;
+    }
+
+    .header-btn-pedidos,
+    .header-btn-admin {
+        display: none;
+    }
+
+    .header-btn {
+        padding: 8px 11px;
+        font-size: 0.78rem;
+    }
+
+    .header-btn-user {
+        max-width: 68px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .container {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-bottom: calc(28px + var(--safe-bottom));
+    }
+
+    .page-title {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .page-title h1 {
+        font-size: 1.35rem;
+    }
+
+    .form-card {
+        padding: 20px 16px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        font-size: 16px;
+    }
+
+    .conta-card h2 {
+        font-size: 1.1rem;
+        word-break: break-word;
+    }
+
+    .pedido-historico-topo {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 4px;
+        padding-bottom: var(--safe-bottom);
+    }
+
+    .page-actions .btn {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    main > .btn,
+    main > .btn-lg,
+    main > a.btn {
+        margin-bottom: 0;
+    }
+
+    main > .btn + .btn,
+    main > a.btn + .btn,
+    main > .btn + a.btn {
+        margin-top: 10px;
+    }
+}
+
 @media (max-width: 600px) {
     .produtos-grid {
         grid-template-columns: 1fr;
@@ -2571,8 +2705,7 @@ img {
 
     .carrinho-lista,
     .carrinho-total-box,
-    #btnContinuar,
-    #btnVoltarCardapio {
+    .page-actions {
         max-width: 680px;
         margin-left: auto;
         margin-right: auto;
@@ -2597,8 +2730,8 @@ img {
 .cart-fab {
     position: fixed;
     z-index: 250;
-    right: 20px;
-    bottom: calc(var(--nav-height) + 16px);
+    right: 16px;
+    bottom: calc(var(--nav-height) + 12px);
     width: 58px;
     height: 58px;
     border-radius: 50%;

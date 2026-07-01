@@ -64,8 +64,8 @@ function atualizarHeader() {
 
     if (usuario) {
         const nome = usuario.nome.split(" ")[0];
-        html += `<a href="meus-pedidos.html" class="header-btn header-btn-login">Meus pedidos</a>`;
-        html += `<a href="conta.html" class="header-btn header-btn-user">${nome}</a>`;
+        html += `<a href="meus-pedidos.html" class="header-btn header-btn-login header-btn-pedidos">Meus pedidos</a>`;
+        html += `<a href="conta.html" class="header-btn header-btn-user header-btn-conta">${nome}</a>`;
     } else if (paginaAtual !== "login.html") {
         html += `<a href="login.html" class="header-btn header-btn-login">Entrar</a>`;
     }

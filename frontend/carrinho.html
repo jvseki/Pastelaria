@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <title>Carrinho - Pastelaria Delivery</title>
     <link rel="stylesheet" href="css/style.css">
@@ -51,13 +51,15 @@
             <p class="total-valor" id="total">R$ 0,00</p>
         </div>
 
-        <button class="btn btn-primary btn-lg" id="btnContinuar" style="display:none" onclick="continuarPedido()">
-            Continuar pedido
-        </button>
+        <div class="page-actions">
+            <button class="btn btn-primary btn-lg" id="btnContinuar" style="display:none" onclick="continuarPedido()">
+                Continuar pedido
+            </button>
 
-        <a href="cardapio.html" class="btn btn-secondary" id="btnVoltarCardapio" style="display:none; margin-top:12px">
-            Voltar ao cardápio
-        </a>
+            <a href="cardapio.html" class="btn btn-secondary" id="btnVoltarCardapio" style="display:none">
+                Voltar ao cardápio
+            </a>
+        </div>
     </main>
 
     <nav class="bottom-nav">

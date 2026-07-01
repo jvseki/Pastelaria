@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <title>Pagamento - Pastelaria Delivery</title>
     <link rel="stylesheet" href="css/style.css">
@@ -109,9 +109,11 @@
             </label>
         </div>
 
-        <button class="btn btn-primary btn-lg" id="btnFinalizar" onclick="finalizarPedido()" disabled>
-            Confirmar pagamento e finalizar pedido
-        </button>
+        <div class="page-actions">
+            <button class="btn btn-primary btn-lg" id="btnFinalizar" onclick="finalizarPedido()" disabled>
+                Confirmar pagamento e finalizar pedido
+            </button>
+        </div>
     </main>
 
     <nav class="bottom-nav">
