@@ -65,6 +65,7 @@
                     ${user.telefone ? `<p class="conta-tel">${user.telefone}</p>` : ""}
                 </div>
                 <div class="page-actions">
+                    ${isAdmin() ? '<a href="admin.html" class="btn btn-secondary">Painel Admin</a>' : ""}
                     <a href="meus-pedidos.html" class="btn btn-primary">Meus pedidos</a>
                     <a href="cadastro.html" class="btn btn-secondary">Editar endereço</a>
                     <button class="btn btn-danger" onclick="logout()">Sair da conta</button>
