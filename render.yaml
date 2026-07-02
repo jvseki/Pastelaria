@@ -18,5 +18,13 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_PUBLIC_KEY
+        sync: false
+      - key: MERCADOPAGO_SANDBOX
+        sync: false
       - key: GOOGLE_MAPS_API_KEY
         sync: false
