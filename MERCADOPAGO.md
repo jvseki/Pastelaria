@@ -199,6 +199,24 @@ Pagamento na entrega (Pix/Dinheiro/Cartão) continua funcionando como antes.
 | Console: `tokenization 422` | Credenciais erradas: use **Credenciais de teste** no Render (`TEST-...` se existir) |
 | "Não é possível pagar com este cartão" | Troque token no Render + tente Visa ou login **TESTUSER** com saldo |
 | Erros CSP / favicon 404 no console | São da página do MP; ignore. Desative extensões (AdBlock) ou use anônimo |
+| **"Uma das partes é de teste"** (tela fatal) | Conta **real** do MP aberta no navegador. Veja seção abaixo |
+
+### Erro fatal: "Uma das partes com as quais você está tentando efetuar o pagamento é de teste"
+
+A API está funcionando (`/pagamentos/status` com `api_ok: true`). Esse erro é no **checkout do MP**, quando mistura:
+
+- vendedor **teste** (suas credenciais de teste) + comprador **real** (você logado no MP no Chrome)
+
+**Como testar corretamente:**
+
+1. Feche abas do Mercado Pago ou use **janela anônima** (`Ctrl+Shift+N`)
+2. **Não** entre na sua conta real do Mercado Pago nessa janela
+3. No site da Pastelaria: faça login Google e o pedido normalmente
+4. No checkout MP, escolha **Cartão** (como convidado) **ou** login com **TESTUSER comprador** do painel
+5. Cartão Visa teste: `4235 6477 2802 5682`, nome `APRO`, CPF `12345678909`, validade `11/30`, CVV `123`
+6. **Não** use cartão salvo, Google Pay ou "Entrar com minha conta" se abrir sua conta real
+
+Se ainda falhar: no painel MP → **Contas de teste** → comprador → adicione **saldo fictício** e pague com **Saldo em conta** (mais estável que cartão).
 
 ### Erro 422 em `card-form/tokenization` (console F12)
 
