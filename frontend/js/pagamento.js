@@ -1,5 +1,6 @@
 let pagamentoSelecionado = null;
 let formaPresencial = null;
+let mercadoPagoHabilitado = false;
 const carrinho = JSON.parse(localStorage.getItem("carrinho") || "[]");
 const TAXA_ENTREGA = Number(window.TAXA_ENTREGA || 0);
 
@@ -21,10 +22,33 @@ async function initPagamento() {
         return;
     }
 
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mp") === "failure") {
+        mostrarAlerta("O pagamento não foi concluído. Tente novamente ou escolha pagar na entrega.", {
+            titulo: "Pagamento cancelado",
+            tipo: "aviso",
+        });
+        window.history.replaceState({}, "", "pagamento.html");
+    }
+
     document.getElementById("totalPedido").textContent = formatarPreco(calcularTotal());
     atualizarDetalhesTotal();
     renderizarResumoEntrega();
+    await carregarMercadoPago();
     atualizarBotaoFinalizar();
+}
+
+async function carregarMercadoPago() {
+    try {
+        const cfg = await api.getMercadoPagoConfig();
+        mercadoPagoHabilitado = !!cfg.habilitado;
+        const opcao = document.getElementById("opcaoMercadoPago");
+        if (opcao && mercadoPagoHabilitado) {
+            opcao.style.display = "";
+        }
+    } catch (_) {
+        mercadoPagoHabilitado = false;
+    }
 }
 
 function getTipoEntrega() {
@@ -89,10 +113,41 @@ function montarObservacao() {
         .join("\n");
 }
 
+function montarPayloadPedido(pagamentoFinal, troco = null) {
+    return {
+        pagamento: pagamentoFinal,
+        troco,
+        tipo_entrega: getTipoEntrega(),
+        taxa_entrega: calcularTaxaEntrega(),
+        local_retirada: window.LOJA_ENDERECO || null,
+        observacao: montarObservacao(),
+        itens: carrinho.map((item) => ({
+            produto_id: item.id,
+            quantidade: item.quantidade,
+        })),
+    };
+}
+
 function pagamentoEstaCompleto() {
     if (!pagamentoSelecionado) return false;
     if (pagamentoSelecionado === "presencial") return !!formaPresencial;
     return true;
+}
+
+function atualizarTextoConfirmacao() {
+    const titulo = document.getElementById("confirmarPagamentoTitulo");
+    const desc = document.getElementById("confirmarPagamentoDesc");
+    const btn = document.getElementById("btnFinalizar");
+
+    if (pagamentoSelecionado === "mercadopago") {
+        if (titulo) titulo.textContent = "Confirmo e irei pagar no Mercado Pago";
+        if (desc) desc.textContent = "Voce sera redirecionado para concluir o pagamento online (Pix ou cartão).";
+        if (btn) btn.textContent = "Ir para o Mercado Pago";
+    } else {
+        if (titulo) titulo.textContent = "Confirmo o pagamento na entrega";
+        if (desc) desc.textContent = "Estou ciente de que pagarei ao receber o pedido conforme a forma selecionada acima.";
+        if (btn) btn.textContent = "Confirmar pagamento e finalizar pedido";
+    }
 }
 
 function atualizarBotaoFinalizar() {
@@ -123,20 +178,18 @@ function selecionarPagamento(tipo) {
         presencialSection.classList.remove("visible");
     }
 
+    atualizarTextoConfirmacao();
     atualizarBotaoFinalizar();
 }
 
 function selecionarFormaPresencial(forma) {
     formaPresencial = forma;
 
-    const pixInfo = document.getElementById("pixInfoBox");
     const trocoSection = document.getElementById("trocoSection");
 
     if (forma === "pix") {
-        pixInfo?.classList.remove("visible");
         trocoSection.classList.remove("visible");
     } else {
-        pixInfo?.classList.remove("visible");
         trocoSection.classList.add("visible");
     }
 
@@ -155,7 +208,16 @@ async function finalizarPedido() {
     }
 
     if (!document.getElementById("confirmarPagamento").checked) {
-        mostrarToast("Confirme o pagamento ao receber para continuar");
+        mostrarToast(pagamentoSelecionado === "mercadopago" ? "Confirme para ir ao Mercado Pago" : "Confirme o pagamento ao receber");
+        return;
+    }
+
+    const btn = document.getElementById("btnFinalizar");
+    btn.disabled = true;
+    btn.textContent = pagamentoSelecionado === "mercadopago" ? "Abrindo Mercado Pago..." : "Enviando pedido...";
+
+    if (pagamentoSelecionado === "mercadopago") {
+        await finalizarComMercadoPago(btn);
         return;
     }
 
@@ -165,6 +227,9 @@ async function finalizarPedido() {
     if (pagamentoSelecionado === "presencial") {
         if (!formaPresencial) {
             mostrarToast("Escolha Pix ou Dinheiro ao receber");
+            btn.disabled = false;
+            atualizarTextoConfirmacao();
+            atualizarBotaoFinalizar();
             return;
         }
         pagamentoFinal = formaPresencial;
@@ -178,42 +243,45 @@ async function finalizarPedido() {
                         titulo: "Troco inválido",
                         tipo: "erro",
                     });
+                    btn.disabled = false;
+                    atualizarTextoConfirmacao();
+                    atualizarBotaoFinalizar();
                     return;
                 }
             }
         }
     }
 
-    const btn = document.getElementById("btnFinalizar");
-    btn.disabled = true;
-    btn.textContent = "Enviando pedido...";
-
-    const pedido = {
-        pagamento: pagamentoFinal,
-        troco: troco,
-        tipo_entrega: getTipoEntrega(),
-        taxa_entrega: calcularTaxaEntrega(),
-        local_retirada: window.LOJA_ENDERECO || null,
-        observacao: montarObservacao(),
-        itens: carrinho.map((item) => ({
-            produto_id: item.id,
-            quantidade: item.quantidade,
-        })),
-    };
-
     try {
-        const resultado = await api.criarPedido(pedido);
+        const resultado = await api.criarPedido(montarPayloadPedido(pagamentoFinal, troco));
         localStorage.setItem("ultimoPedido", JSON.stringify(resultado));
         localStorage.removeItem("carrinho");
         sessionStorage.removeItem("bebidasOferecidas");
         window.location.href = "pedido.html";
     } catch (error) {
-        mostrarAlerta(error.message, {
-            titulo: "Erro ao finalizar pedido",
-            tipo: "erro",
-        });
+        mostrarAlerta(error.message, { titulo: "Erro ao finalizar pedido", tipo: "erro" });
         btn.disabled = false;
-        btn.textContent = "Confirmar pagamento e finalizar pedido";
+        atualizarTextoConfirmacao();
+        atualizarBotaoFinalizar();
+    }
+}
+
+async function finalizarComMercadoPago(btn) {
+    try {
+        const resultado = await api.iniciarCheckoutMercadoPago(montarPayloadPedido("mercadopago"));
+        localStorage.setItem("ultimoPedido", JSON.stringify(resultado));
+        localStorage.removeItem("carrinho");
+        sessionStorage.removeItem("bebidasOferecidas");
+
+        if (!resultado.checkout_url) {
+            throw new Error("Mercado Pago não retornou link de pagamento");
+        }
+
+        window.location.href = resultado.checkout_url;
+    } catch (error) {
+        mostrarAlerta(error.message, { titulo: "Erro no Mercado Pago", tipo: "erro" });
+        btn.disabled = false;
+        atualizarTextoConfirmacao();
         atualizarBotaoFinalizar();
     }
 }

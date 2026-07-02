@@ -20,6 +20,8 @@ class Pedido(Base):
     taxa_entrega = Column(Float, default=0)
     local_retirada = Column(String(500))
     observacao = Column(String(2000))
+    mp_preference_id = Column(String(100))
+    mp_payment_id = Column(String(100))
     data_pedido = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="pedidos")

@@ -1148,6 +1148,12 @@ body.is-admin .bottom-nav {
     box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.08);
 }
 
+.pagamento-opcao--mp.selected {
+    border-color: #009ee3;
+    background: rgba(0, 158, 227, 0.08);
+    box-shadow: 0 0 0 3px rgba(0, 158, 227, 0.12);
+}
+
 .pagamento-opcao input[type="radio"] {
     width: 18px;
     height: 18px;

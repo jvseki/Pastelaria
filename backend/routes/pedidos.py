@@ -7,7 +7,7 @@ from database import get_db
 from models import Pedido, ItemPedido, Produto, Endereco
 from routes.usuarios import get_current_user
 from models import Usuario
-from services.numeracao_pedidos import proximo_numero_dia
+from services.pedido_service import criar_pedido_no_banco, serializar_pedido_criado
 
 router = APIRouter(prefix="/pedidos", tags=["pedidos"])
 
@@ -84,69 +84,18 @@ def criar_pedido(
     usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not body.itens:
-        raise HTTPException(status_code=400, detail="Pedido sem itens")
-
-    tipo_entrega = body.tipo_entrega if body.tipo_entrega in ("entrega", "retirada") else "entrega"
-    taxa_entrega = max(body.taxa_entrega or 0, 0)
-    endereco = db.query(Endereco).filter(Endereco.usuario_id == usuario.id).first()
-    if tipo_entrega == "entrega" and not endereco:
-        raise HTTPException(status_code=400, detail="Cadastre seu endereço antes de pedir")
-
-    pedido = Pedido(
-        usuario_id=usuario.id,
+    pedido, itens_resposta, endereco = criar_pedido_no_banco(
+        db,
+        usuario,
         pagamento=body.pagamento,
         troco=body.troco,
-        tipo_entrega=tipo_entrega,
-        taxa_entrega=taxa_entrega if tipo_entrega == "entrega" else 0,
-        local_retirada=body.local_retirada if tipo_entrega == "retirada" else None,
+        tipo_entrega=body.tipo_entrega,
+        taxa_entrega=body.taxa_entrega,
+        local_retirada=body.local_retirada,
         observacao=body.observacao,
+        itens_req=body.itens,
         status="pendente",
-        numero_dia=proximo_numero_dia(db),
     )
-    db.add(pedido)
-    db.flush()
-
-    itens_resposta = []
-    for item in body.itens:
-        produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
-        if not produto:
-            raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
-
-        db.add(ItemPedido(pedido_id=pedido.id, produto_id=item.produto_id, quantidade=item.quantidade))
-        itens_resposta.append({
-            "produto_id": produto.id,
-            "nome": produto.nome,
-            "preco": produto.preco,
-            "quantidade": item.quantidade,
-        })
-
     db.commit()
     db.refresh(pedido)
-
-    return {
-        "id": pedido.id,
-        "numero_dia": pedido.numero_dia,
-        "pagamento": pedido.pagamento,
-        "troco": pedido.troco,
-        "tipo_entrega": pedido.tipo_entrega,
-        "taxa_entrega": pedido.taxa_entrega,
-        "local_retirada": pedido.local_retirada,
-        "status": pedido.status,
-        "pagamento_confirmado": bool(pedido.pagamento_confirmado),
-        "data_pedido": pedido.data_pedido.isoformat() if pedido.data_pedido else None,
-        "usuario": {
-            "id": usuario.id,
-            "nome": usuario.nome,
-            "telefone": usuario.telefone,
-        },
-        "endereco": {
-            "rua": endereco.rua if endereco else "",
-            "numero": endereco.numero if endereco else "",
-            "bairro": endereco.bairro if endereco else "",
-            "referencia": endereco.referencia if endereco else "",
-            "latitude": endereco.latitude if endereco else None,
-            "longitude": endereco.longitude if endereco else None,
-        },
-        "itens": itens_resposta,
-    }
+    return serializar_pedido_criado(pedido, usuario, itens_resposta, endereco)

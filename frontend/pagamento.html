@@ -53,6 +53,14 @@
             <h3 class="section-title">Forma de pagamento</h3>
 
             <div class="pagamento-opcoes">
+                <label class="pagamento-opcao pagamento-opcao--mp" id="opcaoMercadoPago" style="display:none" onclick="selecionarPagamento('mercadopago')">
+                    <input type="radio" name="pagamento" value="mercadopago">
+                    <div class="opcao-info">
+                        <div class="opcao-titulo">Mercado Pago</div>
+                        <div class="opcao-desc">Pix ou cartão online — pagamento na hora</div>
+                    </div>
+                </label>
+
                 <label class="pagamento-opcao" onclick="selecionarPagamento('presencial')">
                     <input type="radio" name="pagamento" value="presencial">
                     <div class="opcao-info">
@@ -102,16 +110,16 @@
         <div class="form-card confirmar-pagamento-box">
             <label class="confirmar-pagamento-label">
                 <input type="checkbox" id="confirmarPagamento" onchange="atualizarBotaoFinalizar()">
-                <span>
-                    <strong>Confirmo o pagamento na entrega</strong>
-                    <small>Estou ciente de que pagarei ao receber o pedido conforme a forma selecionada acima.</small>
+                <span id="confirmarPagamentoTexto">
+                    <strong id="confirmarPagamentoTitulo">Confirmo o pagamento na entrega</strong>
+                    <small id="confirmarPagamentoDesc">Estou ciente de que pagarei ao receber o pedido conforme a forma selecionada acima.</small>
                 </span>
             </label>
         </div>
 
         <div class="page-actions">
             <button class="btn btn-primary btn-lg" id="btnFinalizar" onclick="finalizarPedido()" disabled>
-                Confirmar pagamento e finalizar pedido
+                Finalizar pedido
             </button>
         </div>
     </main>

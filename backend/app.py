@@ -5,7 +5,7 @@ from sqlalchemy import inspect, text
 from config import settings
 from database import engine, Base, SessionLocal
 from models import Produto
-from routes import auth, usuarios, produtos, pedidos, admin
+from routes import auth, usuarios, produtos, pedidos, admin, pagamentos
 
 
 def _cors_origins() -> list[str]:
@@ -37,6 +37,7 @@ app.include_router(usuarios.router)
 app.include_router(produtos.router)
 app.include_router(pedidos.router)
 app.include_router(admin.router)
+app.include_router(pagamentos.router)
 
 
 @app.on_event("startup")
@@ -79,6 +80,10 @@ def _migrate_db():
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN taxa_entrega FLOAT DEFAULT 0"))
         if "local_retirada" not in colunas:
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN local_retirada VARCHAR(500)"))
+        if "mp_preference_id" not in colunas:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN mp_preference_id VARCHAR(100)"))
+        if "mp_payment_id" not in colunas:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN mp_payment_id VARCHAR(100)"))
         conn.commit()
 
 
@@ -169,6 +174,20 @@ CATALOGO_PRODUTOS = [
         "preco": 45.0,
         "imagem": "images/produtos/combo.svg",
         "categoria": "Combos",
+    },
+    {
+        "nome": "Teste MP 1 centavo",
+        "descricao": "Produto de teste para pagamento Mercado Pago (R$ 0,01)",
+        "preco": 0.01,
+        "imagem": "images/produtos/padrao.svg",
+        "categoria": "Teste MP",
+    },
+    {
+        "nome": "Teste MP 50 centavos",
+        "descricao": "Produto de teste para pagamento Mercado Pago (R$ 0,50)",
+        "preco": 0.50,
+        "imagem": "images/produtos/padrao.svg",
+        "categoria": "Teste MP",
     },
 ]
 

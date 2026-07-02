@@ -139,6 +139,10 @@ Resumo:
 | `MOTOBOY_WHATSAPP` | Número do motoboy (ex: 5511999999999) |
 | `GOOGLE_MAPS_API_KEY` | Geocodificação de endereços |
 
+### Mercado Pago (pagamento online)
+
+Guia completo: **[MERCADOPAGO.md](MERCADOPAGO.md)**
+
 ### Login com Google
 
 Siga o guia **[GOOGLE_SETUP.md](GOOGLE_SETUP.md)** — leva cerca de 5 minutos.

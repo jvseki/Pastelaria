@@ -1,8 +1,10 @@
 const STATUS_LABELS = {
     pendente: "Aguardando aceite",
+    aguardando_pagamento: "Aguardando pagamento MP",
     preparando: "Em preparo",
     entrega: "Saiu para entrega",
     finalizado: "Finalizado",
+    cancelado: "Cancelado",
 };
 
 const STATUS_CLASSES = {
@@ -23,6 +25,7 @@ const PAGAMENTO_LABELS = {
     pix: "Pix ao receber",
     dinheiro: "Dinheiro ao receber",
     cartao: "Cartao ao receber",
+    mercadopago: "Mercado Pago (online)",
 };
 
 const MOTOBOY_WHATSAPP = window.MOTOBOY_WHATSAPP || "5518997640335";

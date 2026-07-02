@@ -11,6 +11,8 @@ const IMAGENS_PRODUTOS = {
     "Caldo de Cana": "images/produtos/caldo-cana.svg",
     "Combo Familia": "images/produtos/combo.svg",
     "Combo Família": "images/produtos/combo.svg",
+    "Teste MP 1 centavo": "images/produtos/padrao.svg",
+    "Teste MP 50 centavos": "images/produtos/padrao.svg",
 };
 
 function imagemProduto(produto) {

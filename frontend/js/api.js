@@ -293,6 +293,17 @@ const api = {
         });
     },
 
+    async getMercadoPagoConfig() {
+        return await apiRequest("/pagamentos/config");
+    },
+
+    async iniciarCheckoutMercadoPago(pedido) {
+        return await apiRequest("/pagamentos/checkout", {
+            method: "POST",
+            body: JSON.stringify(pedido),
+        });
+    },
+
     async getMeusPedidos() {
         return await apiRequest("/pedidos/me");
     },

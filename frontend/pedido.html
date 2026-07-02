@@ -72,6 +72,7 @@
                 pix: "Pix ao receber",
                 dinheiro: "Dinheiro ao receber",
                 cartao: "Cartao ao receber",
+                mercadopago: "Mercado Pago (online)",
             };
             const itens = pedido.itens || [];
             const taxaEntrega = pedido.taxa_entrega || 0;
@@ -80,17 +81,35 @@
 
             const statusLabels = {
                 pendente: "Aguardando confirmação",
+                aguardando_pagamento: "Aguardando pagamento",
                 preparando: "Em preparo",
                 entrega: "Saiu para entrega",
                 finalizado: "Entregue",
+                cancelado: "Cancelado",
             };
             const statusClass = {
                 pendente: "status-pendente",
+                aguardando_pagamento: "status-pendente",
                 preparando: "status-preparando",
                 entrega: "status-entrega",
                 finalizado: "status-finalizado",
+                cancelado: "status-pendente",
             };
             const st = pedido.status || "pendente";
+            const params = new URLSearchParams(window.location.search);
+            const mpStatus = params.get("mp");
+            const isMp = pedido.pagamento === "mercadopago";
+
+            let msgExtra = "";
+            if (isMp && mpStatus === "success") {
+                msgExtra = `<p style="margin-top:12px;color:var(--success,#16a34a);font-size:0.9rem">Pagamento aprovado! Seu pedido ja entrou na fila da pastelaria.</p>`;
+            } else if (isMp && mpStatus === "pending") {
+                msgExtra = `<p style="margin-top:12px;color:var(--text-muted);font-size:0.9rem">Pagamento em processamento. Avisaremos quando for confirmado.</p>`;
+            } else if (st === "pendente" && !isMp) {
+                msgExtra = `<p style="margin-top:12px;color:var(--text-muted);font-size:0.9rem">Aguardando confirmacao da pastelaria. Pagamento na entrega.</p>`;
+            } else if (isMp && st === "aguardando_pagamento") {
+                msgExtra = `<p style="margin-top:12px;color:var(--text-muted);font-size:0.9rem">Aguardando confirmacao do pagamento online.</p>`;
+            }
 
             container.innerHTML = `
                 <div class="pedido-sucesso">
@@ -100,7 +119,7 @@
                     <h2>Pedido recebido</h2>
                     <p class="pedido-numero">Pedido #${numPedido}</p>
                     <span class="status-badge ${statusClass[st] || "status-pendente"}">${statusLabels[st] || st}</span>
-                    ${st === "pendente" ? `<p style="margin-top:12px;color:var(--text-muted);font-size:0.9rem">Aguardando confirmacao da pastelaria. Pagamento na entrega.</p>` : ""}
+                    ${msgExtra}
                 </div>
 
                 <div class="pedido-detalhes">
@@ -112,7 +131,9 @@
                     <p><strong>Recebimento:</strong> ${tipoEntrega === "retirada" ? "Retirar no local" : "Entrega com motoboy"}</p>
                     ${tipoEntrega === "retirada" ? `<p style="font-size:0.88rem;color:var(--text-secondary)">${pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria"}</p>` : ""}
                     <p><strong>Pagamento:</strong> ${pagamentoLabels[pedido.pagamento] || pedido.pagamento}</p>
-                    <p style="font-size:0.88rem;color:var(--text-secondary)">Voce confirmou o pagamento ao receber ao finalizar o pedido.</p>
+                    ${isMp
+                        ? `<p style="font-size:0.88rem;color:var(--text-secondary)">Pagamento online via Mercado Pago.</p>`
+                        : `<p style="font-size:0.88rem;color:var(--text-secondary)">Voce confirmou o pagamento ao receber ao finalizar o pedido.</p>`}
                     ${pedido.troco ? `<p><strong>Troco para:</strong> ${formatarPreco(pedido.troco)}</p>` : ""}
                 </div>
 
