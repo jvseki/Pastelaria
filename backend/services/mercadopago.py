@@ -68,3 +68,33 @@ def buscar_pagamento(payment_id: str) -> dict:
         response = client.get(f"{MP_API}/v1/payments/{payment_id}", headers=_headers())
         response.raise_for_status()
         return response.json()
+
+
+def buscar_pagamentos_por_pedido(pedido_id: int) -> list[dict]:
+    with httpx.Client(timeout=30.0) as client:
+        response = client.get(
+            f"{MP_API}/v1/payments/search",
+            headers=_headers(),
+            params={
+                "sort": "date_created",
+                "criteria": "desc",
+                "external_reference": str(pedido_id),
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data.get("results") or []
+
+
+def aplicar_status_pagamento(pedido, payment: dict) -> str:
+    """Atualiza pedido conforme status do MP. Retorna o status MP."""
+    status_mp = payment.get("status") or ""
+    pedido.mp_payment_id = str(payment.get("id") or pedido.mp_payment_id or "")
+
+    if status_mp == "approved":
+        pedido.pagamento_confirmado = True
+        pedido.status = "pendente"
+    elif status_mp in ("rejected", "cancelled", "refunded"):
+        pedido.status = "cancelado"
+
+    return status_mp

@@ -304,6 +304,12 @@ const api = {
         });
     },
 
+    async confirmarPagamentoMercadoPago(pedidoId) {
+        return await apiRequest(`/pagamentos/confirmar/${pedidoId}`, {
+            method: "POST",
+        });
+    },
+
     async getMeusPedidos() {
         return await apiRequest("/pedidos/me");
     },
