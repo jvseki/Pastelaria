@@ -44,7 +44,11 @@ def criar_preferencia(
     }
 
     if payer_email:
-        body["payer"] = {"email": payer_email}
+        email = payer_email
+        if settings.MERCADOPAGO_SANDBOX:
+            # Evita conflito conta real x sandbox no checkout
+            email = "test@testuser.com"
+        body["payer"] = {"email": email}
 
     with httpx.Client(timeout=30.0) as client:
         response = client.post(f"{MP_API}/checkout/preferences", headers=_headers(), json=body)
