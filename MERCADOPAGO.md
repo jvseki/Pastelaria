@@ -164,8 +164,23 @@ Pagamento na entrega (Pix/Dinheiro/Cartão) continua funcionando como antes.
 | Erro 502 ao pagar | Token inválido ou credencial de produção em sandbox (ou vice-versa) |
 | Webhook não chega localmente | Normal em localhost; use retorno `back_urls` ou deploy na Render |
 | Valor R$ 0,01 rejeitado | Teste com R$ 0,50 ou use cartão Visa `4235...` com nome `APRO` |
+| Console: `tokenization 422` | Credenciais erradas: use **Credenciais de teste** no Render (`TEST-...` se existir) |
+| "Não é possível pagar com este cartão" | Troque token no Render + tente Visa ou login **TESTUSER** com saldo |
+| Erros CSP / favicon 404 no console | São da página do MP; ignore. Desative extensões (AdBlock) ou use anônimo |
 
----
+### Erro 422 em `card-form/tokenization` (console F12)
+
+Isso aparece **dentro do checkout do Mercado Pago**, não no seu código. Significa que o MP **não conseguiu validar o cartão** com as credenciais do vendedor.
+
+**Correção:**
+
+1. Painel MP → sua app → **Credenciais de teste** (não produção da conta real)
+2. Copie Access Token + Public Key de **teste** para o Render
+3. `MERCADOPAGO_SANDBOX=true`
+4. Redeploy → **pedido novo** em janela anônima
+5. Alternativa: **Entrar com a minha conta** → TESTUSER → pagar com **saldo** (sem cartão)
+
+O `preference-id` começando com `3512365761-...` só indica que a preferência foi criada; o pagamento falha na etapa seguinte por ambiente/credencial.
 
 ## Segurança
 
