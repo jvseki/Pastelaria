@@ -127,30 +127,43 @@ O endpoint `/pagamentos/config` só mostra se as variáveis existem; **`/pagamen
 
 ---
 
-## Passo 4 — Testar o fluxo
+## Passo 4 — Testar o fluxo (jeito que o MP documenta)
 
-1. Faça login com Google
+> Use **janela anônima** (`Ctrl+Shift+N`). Login Google no site **sim**; conta real do MP **não**.
+
+1. Faça login com **Google** no site da Pastelaria
 2. Cadastre endereço (ou escolha retirada)
 3. No cardápio, filtre **Teste MP**
-4. Adicione **Teste MP 1 centavo** ou **50 centavos** ao carrinho
-5. Vá ao carrinho → continuar → pagamento
-6. Selecione **Mercado Pago**
-7. Marque a confirmação → **Ir para o Mercado Pago**
-8. Na página do MP (sandbox), escolha **Cartão** (sem conta) e use:
+4. Adicione **Teste MP 50 centavos** (evite R$ 0,01 no primeiro teste)
+5. Carrinho → continuar → pagamento → **Mercado Pago** → **Ir para o Mercado Pago**
+6. Na página do MP (faixa **Sandbox**), faça **login com o comprador de teste**:
 
 | Campo | Valor |
 |-------|-------|
-| Número | `4235 6477 2802 5682` (Visa — recomendado no sandbox BR) |
-| Nome do titular | `APRO` (aprovado) |
+| Usuário | `TESTUSER9055251759889005892` |
+| Senha | `zPXYzdffNQ` |
+| Código (se pedir) | `366047` (ou últimos 6 dígitos do User ID no painel) |
+
+7. Depois de logado, escolha **uma** forma:
+
+**A) Saldo em conta (mais fácil)** — no painel MP: Contas de teste → Comprador → **Adicionar saldo fictício** → no checkout pague com saldo.
+
+**B) Cartão de teste** — após login TESTUSER:
+
+| Campo | Valor |
+|-------|-------|
+| Número | `4235 6477 2802 5682` (Visa) |
+| Nome do titular | `APRO` (só isso, sem sobrenome) |
 | Validade | `11/30` |
 | CVV | `123` |
 | CPF | `12345678909` |
+| Parcelas | **1x** (à vista) |
 
-> Se o Visa falhar, tente Mastercard: `5031 4332 1540 6351` (mesmos CVV, validade e nome `APRO`).
+> O MP recomenda **comprador teste logado** + cartão teste. Pagar só como convidado costuma falhar no Checkout Pro sandbox.
 
 Documentação: [testar compras](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/integration-test/test-purchases)
 
-9. Após pagar, você volta para `pedido.html` com confirmação
+8. Após pagar, você volta para `pedido.html` com confirmação
 
 ---
 
@@ -217,6 +230,20 @@ A API está funcionando (`/pagamentos/status` com `api_ok: true`). Esse erro é 
 6. **Não** use cartão salvo, Google Pay ou "Entrar com minha conta" se abrir sua conta real
 
 Se ainda falhar: no painel MP → **Contas de teste** → comprador → adicione **saldo fictício** e pague com **Saldo em conta** (mais estável que cartão).
+
+### Erro: "Não foi possível processar seu pagamento"
+
+Você já passou do erro de conta mista — o MP **tentou** cobrar e **rejeitou**. Causas comuns:
+
+| Causa | O que fazer |
+|-------|-------------|
+| Cartão sem login TESTUSER | Entre com comprador teste antes de pagar |
+| Nome do titular errado | Use exatamente `APRO` (aprovado) |
+| Valor muito baixo | Teste com **R$ 0,50**, não R$ 0,01 |
+| Parcelas | Use **1x** à vista |
+| Sem saldo | Adicione saldo fictício no painel e use saldo em conta |
+
+Clique em **Pagar com outro meio** → **Saldo em conta** (com TESTUSER logado) é o caminho mais confiável.
 
 ### Erro 422 em `card-form/tokenization` (console F12)
 
