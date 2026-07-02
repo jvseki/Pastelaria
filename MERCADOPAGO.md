@@ -24,6 +24,23 @@ Use esses itens para testar pagamentos com valores baixos.
 
 > **Nunca** cole o Access Token no chat, no GitHub ou no `config.js` do frontend.
 
+> **Nunca** cole o Access Token no chat, no GitHub ou no `config.js` do frontend.
+
+---
+
+## Login Google x conta de teste do MP
+
+Sao coisas **diferentes**:
+
+| Onde | Para que serve |
+|------|----------------|
+| **Google** no site | Entrar na Pastelaria, pedido, endereco |
+| **Conta comprador** no MP | So na tela de pagamento do Mercado Pago (sandbox) |
+
+Voce **nao** coloca usuario/senha do comprador teste no site nem no Render — so usa quando o checkout do MP pedir login.
+
+No painel: **Contas de teste → Comprador** → Usuario, Senha e Codigo (6 digitos).
+
 ---
 
 ## Passo 2 — Configurar o backend local
