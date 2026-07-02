@@ -13,6 +13,47 @@ def mercadopago_habilitado() -> bool:
     return bool(settings.MERCADOPAGO_ACCESS_TOKEN.strip())
 
 
+def verificar_conexao() -> dict:
+    """Testa o Access Token chamando a API do Mercado Pago."""
+    if not mercadopago_habilitado():
+        return {
+            "api_ok": False,
+            "erro": "MERCADOPAGO_ACCESS_TOKEN não configurado",
+        }
+
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            response = client.get(f"{MP_API}/users/me", headers=_headers())
+            response.raise_for_status()
+            data = response.json()
+    except httpx.HTTPStatusError as exc:
+        detail = "Token inválido ou sem permissão"
+        if exc.response.status_code == 401:
+            detail = "Access Token inválido ou expirado"
+        return {
+            "api_ok": False,
+            "erro": detail,
+            "status_http": exc.response.status_code,
+        }
+    except httpx.RequestError:
+        return {
+            "api_ok": False,
+            "erro": "Não foi possível conectar à API do Mercado Pago",
+        }
+
+    public_key = settings.MERCADOPAGO_PUBLIC_KEY.strip()
+    pk_prefix = public_key.split("-", 1)[0] if public_key else ""
+
+    return {
+        "api_ok": True,
+        "mp_user_id": data.get("id"),
+        "mp_nickname": data.get("nickname"),
+        "sandbox": settings.MERCADOPAGO_SANDBOX,
+        "public_key_configurada": bool(public_key),
+        "public_key_prefix": pk_prefix or None,
+    }
+
+
 def _headers() -> dict:
     return {
         "Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}",

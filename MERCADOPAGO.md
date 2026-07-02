@@ -93,6 +93,38 @@ Abra a URL que aparecer (ex.: `http://localhost:3000` ou `http://localhost:5500`
 
 Se usar porta diferente de 5500, ajuste `FRONTEND_URL` no `.env` e reinicie a API.
 
+### Verificar se a API do Mercado Pago está respondendo
+
+Abra no navegador (substitua pela URL da sua API):
+
+```
+https://pastelaria-geu7.onrender.com/pagamentos/status
+```
+
+| Campo | Significado |
+|-------|-------------|
+| `habilitado` | Token configurado no servidor |
+| `sandbox` | Modo teste (`true`) ou produção (`false`) |
+| `api_ok` | **`true`** = Access Token válido e MP respondeu |
+| `mp_user_id` | ID da conta vendedor ligada ao token |
+| `erro` | Motivo se `api_ok` for `false` |
+
+Exemplo de sucesso:
+
+```json
+{
+  "habilitado": true,
+  "sandbox": true,
+  "api_ok": true,
+  "mp_user_id": 3512365761,
+  "mp_nickname": "TESTUSER...",
+  "public_key_configurada": true,
+  "public_key_prefix": "APP_USR"
+}
+```
+
+O endpoint `/pagamentos/config` só mostra se as variáveis existem; **`/pagamentos/status`** testa de verdade a conexão com o Mercado Pago.
+
 ---
 
 ## Passo 4 — Testar o fluxo

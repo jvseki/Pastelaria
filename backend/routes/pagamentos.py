@@ -16,6 +16,7 @@ from services.mercadopago import (
     criar_preferencia,
     mercadopago_habilitado,
     obter_url_checkout,
+    verificar_conexao,
 )
 from services.pedido_service import criar_pedido_no_banco, serializar_pedido_criado
 
@@ -30,6 +31,17 @@ def config_mercadopago():
         "habilitado": mercadopago_habilitado(),
         "public_key": settings.MERCADOPAGO_PUBLIC_KEY if mercadopago_habilitado() else "",
         "sandbox": settings.MERCADOPAGO_SANDBOX,
+    }
+
+
+@router.get("/status")
+def status_mercadopago():
+    """Verifica se o Access Token consegue falar com a API do Mercado Pago."""
+    resultado = verificar_conexao()
+    return {
+        "habilitado": mercadopago_habilitado(),
+        "sandbox": settings.MERCADOPAGO_SANDBOX,
+        **resultado,
     }
 
 
