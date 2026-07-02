@@ -104,14 +104,17 @@ Se usar porta diferente de 5500, ajuste `FRONTEND_URL` no `.env` e reinicie a AP
 5. Vá ao carrinho → continuar → pagamento
 6. Selecione **Mercado Pago**
 7. Marque a confirmação → **Ir para o Mercado Pago**
-8. Na página do MP (sandbox), use **cartão de teste**:
+8. Na página do MP (sandbox), escolha **Cartão** (sem conta) e use:
 
 | Campo | Valor |
 |-------|-------|
-| Número | `5031 4332 1540 6351` (Mastercard) |
-| CVV | `123` |
+| Número | `4235 6477 2802 5682` (Visa — recomendado no sandbox BR) |
+| Nome do titular | `APRO` (aprovado) |
 | Validade | `11/30` |
-| Nome | `APRO` (aprovado) |
+| CVV | `123` |
+| CPF | `12345678909` |
+
+> Se o Visa falhar, tente Mastercard: `5031 4332 1540 6351` (mesmos CVV, validade e nome `APRO`).
 
 Documentação: [testar compras](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/integration-test/test-purchases)
 
@@ -160,7 +163,7 @@ Pagamento na entrega (Pix/Dinheiro/Cartão) continua funcionando como antes.
 | Opção Mercado Pago não aparece | Confira `MERCADOPAGO_ACCESS_TOKEN` no `.env` e reinicie a API |
 | Erro 502 ao pagar | Token inválido ou credencial de produção em sandbox (ou vice-versa) |
 | Webhook não chega localmente | Normal em localhost; use retorno `back_urls` ou deploy na Render |
-| Valor R$ 0,01 rejeitado | Teste com R$ 0,50 ou use sandbox com cartão `APRO` |
+| Valor R$ 0,01 rejeitado | Teste com R$ 0,50 ou use cartão Visa `4235...` com nome `APRO` |
 
 ---
 
