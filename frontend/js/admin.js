@@ -194,6 +194,34 @@ async function aceitarPedido(pedidoId) {
     await atualizarStatus(pedidoId, "preparando");
 }
 
+async function recusarPedido(pedidoId) {
+    const pedido = pedidos.find((p) => p.id === pedidoId);
+    const pagoOnline = pedido?.pagamento === "mercadopago" && pedido?.pagamento_confirmado;
+    const msg = pagoOnline
+        ? "Recusar este pedido? O valor pago via Pix será estornado automaticamente no Mercado Pago."
+        : "Recusar este pedido? O cliente será notificado pelo status cancelado.";
+
+    const confirmar = await confirmarAcao(msg, {
+        titulo: "Recusar pedido",
+        confirmar: "Recusar",
+        cancelar: "Voltar",
+        tipo: "erro",
+    });
+    if (!confirmar) return;
+
+    try {
+        const resultado = await api.cancelarPedidoAdmin(pedidoId);
+        if (resultado.estornado) {
+            mostrarToast("Pedido recusado e Pix estornado.", "sucesso");
+        } else {
+            mostrarToast("Pedido recusado.", "sucesso");
+        }
+        carregarPedidos();
+    } catch (error) {
+        mostrarAlerta(error.message, { titulo: "Erro ao recusar pedido", tipo: "erro" });
+    }
+}
+
 async function enviarParaMotoboy(pedidoId) {
     const pedido = pedidos.find((p) => p.id === pedidoId);
     if (!pedido) return;
@@ -230,7 +258,12 @@ function renderizarAcoes(pedido) {
         return pago;
     }
     if (pedido.status === "pendente") {
-        return `<button class="btn btn-success" onclick="aceitarPedido(${pedido.id})">Aceitar pedido</button>`;
+        return `
+            <button class="btn btn-success" onclick="aceitarPedido(${pedido.id})">Aceitar pedido</button>
+            <button class="btn btn-danger" style="margin-top:8px" onclick="recusarPedido(${pedido.id})">Recusar pedido</button>`;
+    }
+    if (pedido.status === "aguardando_pagamento") {
+        return `<p class="admin-aguardando-pix">Cliente ainda não finalizou o Pix online.</p>`;
     }
     if (pedido.status === "preparando") {
         if ((pedido.tipo_entrega || "entrega") === "retirada") {
@@ -259,6 +292,10 @@ function renderizarStats() {
 
     pedidos.forEach((p) => {
         const key = p.status === "aceito" ? "preparando" : p.status;
+        if (key === "aguardando_pagamento") {
+            stats.pendente += 1;
+            return;
+        }
         if (stats[key] !== undefined) stats[key]++;
     });
 

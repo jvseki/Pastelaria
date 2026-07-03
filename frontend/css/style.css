@@ -4439,3 +4439,176 @@ body[data-fab="false"] .cart-fab {
         padding-bottom: 8px;
     }
 }
+
+/* Pagamentos pendentes — meus pedidos */
+.pedidos-pendentes-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 1px solid #fdba74;
+    border-radius: var(--radius);
+    color: #9a3412;
+}
+
+.pedidos-pendentes-banner-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 50%;
+    border: 1px solid #fdba74;
+}
+
+.pedidos-pendentes-banner-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.9rem;
+}
+
+.pedidos-pendentes-banner-texto strong {
+    font-size: 1rem;
+}
+
+.pedido-pix-pendente-card {
+    background: var(--surface);
+    border: 2px solid #f97316;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.12);
+}
+
+.pedido-pix-pendente-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.pedido-pix-pendente-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.pedido-pix-pendente-valor {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.pedido-pix-pendente-card h2 {
+    margin: 0 0 8px;
+    font-size: 1.2rem;
+}
+
+.pedido-pix-pendente-desc {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.pedido-pix-cpf {
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+.pedidos-historico-titulo {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 8px 0 14px;
+    font-weight: 600;
+}
+
+.status-pagamento-pendente {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fdba74;
+}
+
+.status-cancelado {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.pedido-pago-online {
+    margin-top: 8px;
+    font-size: 0.88rem;
+    color: var(--success, #16a34a);
+    font-weight: 600;
+}
+
+.header-btn-pedidos {
+    position: relative;
+}
+
+.header-pedidos-badge,
+.conta-pedidos-badge,
+.pedidos-pendentes-badge {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.header-pedidos-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    box-shadow: 0 0 0 2px var(--surface, #fff);
+}
+
+.conta-tile-pedidos {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.conta-tile-pedidos.tem-pendencia,
+.header-btn-pedidos.tem-pendencia {
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.35);
+}
+
+.nav-conta .pedidos-pendentes-badge {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+}
+
+.nav-conta {
+    position: relative;
+}
+
+.admin-aguardando-pix {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 0;
+}

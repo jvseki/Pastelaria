@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo
 from database import get_db
 from models import Pedido, Endereco, ItemPedido, GavetaDiaria
 from config import settings
+from services.mercadopago import estornar_pagamento, mensagem_erro_mp
+import httpx
 from services.whatsapp import formatar_mensagem_motoboy, gerar_link_whatsapp
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -119,6 +121,49 @@ def atualizar_status(
     db.refresh(pedido)
 
     return serializar_pedido(pedido, db)
+
+
+@router.post("/pedidos/{pedido_id}/cancelar")
+def cancelar_pedido(
+    pedido_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verificar_admin),
+):
+    """Recusa pedido e estorna Pix online se já foi pago."""
+    pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+
+    if pedido.status in ("finalizado", "cancelado"):
+        raise HTTPException(status_code=400, detail="Este pedido não pode ser cancelado")
+
+    estornado = False
+    if (
+        pedido.pagamento == "mercadopago"
+        and pedido.pagamento_confirmado
+        and pedido.mp_payment_id
+        and not pedido.mp_payment_id.startswith("SIM-")
+        and not settings.MERCADOPAGO_SANDBOX
+    ):
+        try:
+            estornar_pagamento(pedido.mp_payment_id)
+            estornado = True
+        except httpx.HTTPStatusError as exc:
+            detail = mensagem_erro_mp(exc)
+            raise HTTPException(
+                status_code=502,
+                detail=f"Não foi possível estornar no Mercado Pago: {detail}",
+            ) from exc
+
+    pedido.status = "cancelado"
+    if estornado:
+        pedido.pagamento_confirmado = False
+    db.commit()
+    db.refresh(pedido)
+
+    dados = serializar_pedido(pedido, db)
+    dados["estornado"] = estornado
+    return dados
 
 
 @router.patch("/pedidos/{pedido_id}/pagamento")

@@ -131,3 +131,18 @@ Em **produção**, o site pede o **CPF do pagador** (com máscara automática `0
 - Access Token só no backend (Render)
 - Não commitar `.env`
 - Regenerar token se exposto
+
+## Devolução do dinheiro (pedido recusado)
+
+Se o cliente **já pagou via Pix online** e você **recusar o pedido** no painel admin:
+
+1. Clique em **Recusar pedido** no pedido com status *Aguardando aceite*
+2. O sistema chama a API do Mercado Pago e faz o **estorno automático**
+3. O pedido vai para status **Cancelado**
+4. O valor volta para a conta do cliente (prazo depende do banco, geralmente minutos a 1 dia útil)
+
+> Estorno automático só em **produção** (`SANDBOX=false`) com Pix real pago. No simulador de teste não há dinheiro real.
+
+### Pedido sem pagamento finalizado
+
+Se o cliente **não pagou** (status *Pagamento pendente*), não há o que estornar — o pedido expira sozinho. O cliente pode retomar em **Meus pedidos** → **Finalizar pagamento Pix**.

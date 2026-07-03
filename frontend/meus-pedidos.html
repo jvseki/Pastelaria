@@ -25,7 +25,7 @@
     <div class="page-title">
         <a href="conta.html" class="page-back">Voltar à conta</a>
         <h1>Meus pedidos</h1>
-        <p>Histórico do que você já pediu</p>
+        <p>Histórico e pagamentos pendentes</p>
     </div>
 
     <main class="container container-narrow" id="meusPedidosConteudo">
@@ -47,6 +47,7 @@
         <a href="conta.html" class="nav-item nav-conta active">
             <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
             <span class="nav-label">Conta</span>
+            <span class="nav-badge pedidos-pendentes-badge" style="display:none">0</span>
         </a>
     </nav>
 
@@ -54,100 +55,6 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/layout.js"></script>
-    <script>
-        if (!estaLogado()) {
-            window.location.href = "login.html?redirect=meus-pedidos.html";
-        }
-
-        const container = document.getElementById("meusPedidosConteudo");
-        const statusLabels = {
-            pendente: "Aguardando confirmação",
-            preparando: "Em preparo",
-            entrega: "Saiu para entrega",
-            finalizado: "Finalizado",
-        };
-        const statusClass = {
-            pendente: "status-pendente",
-            preparando: "status-preparando",
-            entrega: "status-entrega",
-            finalizado: "status-finalizado",
-        };
-        const pagamentoLabels = {
-            pix: "Pix ao receber",
-            dinheiro: "Dinheiro ao receber",
-            cartao: "Cartão ao receber",
-        };
-
-        function formatarData(iso) {
-            if (!iso) return "";
-            return new Date(iso).toLocaleString("pt-BR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            });
-        }
-
-        function totalPedido(pedido) {
-            const itens = pedido.itens || [];
-            return itens.reduce((sum, item) => sum + item.preco * item.quantidade, 0) + (pedido.taxa_entrega || 0);
-        }
-
-        function renderizarPedidos(pedidos) {
-            if (!pedidos.length) {
-                container.innerHTML = `
-                    <div class="carrinho-vazio">
-                        <div class="empty-icon">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12v20l-6-3-6 3z"/></svg>
-                        </div>
-                        <h2>Você ainda não fez pedidos</h2>
-                        <p>Quando finalizar um pedido, ele aparece aqui.</p>
-                        <a href="cardapio.html" class="btn btn-primary" style="margin-top:20px">Ver cardápio</a>
-                    </div>`;
-                return;
-            }
-
-            container.innerHTML = pedidos.map((pedido) => {
-                const numero = String(pedido.numero_dia ?? pedido.id).padStart(3, "0");
-                const status = pedido.status || "pendente";
-                const tipoEntrega = pedido.tipo_entrega === "retirada" ? "Retirada no local" : "Entrega com motoboy";
-                const itensHtml = (pedido.itens || [])
-                    .map((item) => `<li>${item.quantidade}x ${item.nome} — ${formatarPreco(item.preco * item.quantidade)}</li>`)
-                    .join("");
-
-                return `
-                    <article class="form-card pedido-historico-card">
-                        <div class="pedido-historico-topo">
-                            <div>
-                                <h2>Pedido #${numero}</h2>
-                                <p>${formatarData(pedido.data_pedido)}</p>
-                            </div>
-                            <span class="status-badge ${statusClass[status] || "status-pendente"}">${statusLabels[status] || status}</span>
-                        </div>
-                        <ul class="pedido-historico-itens">${itensHtml}</ul>
-                        ${pedido.taxa_entrega ? `<p>Taxa de entrega: ${formatarPreco(pedido.taxa_entrega)}</p>` : ""}
-                        <p><strong>Total:</strong> ${formatarPreco(totalPedido(pedido))}</p>
-                        <p><strong>Recebimento:</strong> ${tipoEntrega}</p>
-                        <p><strong>Pagamento:</strong> ${pagamentoLabels[pedido.pagamento] || pedido.pagamento}</p>
-                    </article>`;
-            }).join("");
-        }
-
-        async function carregarMeusPedidos() {
-            try {
-                const pedidos = await api.getMeusPedidos();
-                renderizarPedidos(pedidos);
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="form-card">
-                        <h2>Não foi possível carregar seus pedidos</h2>
-                        <p>${error.message}</p>
-                    </div>`;
-            }
-        }
-
-        carregarMeusPedidos();
-    </script>
+    <script src="js/meus-pedidos.js"></script>
 </body>
 </html>

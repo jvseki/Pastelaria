@@ -98,7 +98,10 @@ function atualizarHeader() {
     if (usuario) {
         const nome = usuario.nome.split(" ")[0];
 
-        html += `<a href="meus-pedidos.html" class="header-btn header-btn-login header-btn-pedidos">Meus pedidos</a>`;
+        html += `<a href="meus-pedidos.html" class="header-btn header-btn-login header-btn-pedidos">
+            Meus pedidos
+            <span class="header-pedidos-badge pedidos-pendentes-badge" style="display:none">0</span>
+        </a>`;
 
         if (isAdmin()) {
             html += `<div class="header-user-cluster">`;
@@ -189,4 +192,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     atualizarNavUsuario();
     atualizarBannerAdmin();
     atualizarBadgeCarrinho();
+    await atualizarBadgePedidosPendentes();
 });

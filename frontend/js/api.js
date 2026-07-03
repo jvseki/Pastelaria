@@ -316,6 +316,17 @@ const api = {
         });
     },
 
+    async getPagamentosPendentes() {
+        return await apiRequest("/pagamentos/pendentes");
+    },
+
+    async retomarPagamentoPix(pedidoId, cpf = null) {
+        return await apiRequest(`/pagamentos/retomar/${pedidoId}`, {
+            method: "POST",
+            body: JSON.stringify(cpf ? { cpf } : {}),
+        });
+    },
+
     async getMeusPedidos() {
         return await apiRequest("/pedidos/me");
     },
@@ -340,6 +351,14 @@ const api = {
         const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest(`/admin/pedidos/${id}/pagamento`, {
             method: "PATCH",
+            headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
+        });
+    },
+
+    async cancelarPedidoAdmin(id) {
+        const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
+        return await apiRequest(`/admin/pedidos/${id}/cancelar`, {
+            method: "POST",
             headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
     },
@@ -537,13 +556,42 @@ function getCarrinhoCount() {
 
 function atualizarBadgeCarrinho() {
     const count = getCarrinhoCount();
-    document.querySelectorAll(".nav-badge, .cart-fab-badge").forEach((badge) => {
+    document.querySelectorAll(".cart-fab-badge").forEach((badge) => {
         if (count > 0) {
             badge.textContent = count;
             badge.style.display = "flex";
         } else {
             badge.style.display = "none";
         }
+    });
+}
+
+async function atualizarBadgePedidosPendentes() {
+    if (!estaLogado()) return;
+
+    let quantidade = 0;
+    try {
+        const data = await api.getPagamentosPendentes();
+        quantidade = Number(data?.quantidade || 0);
+    } catch {
+        return;
+    }
+
+    document.querySelectorAll(".pedidos-pendentes-badge").forEach((badge) => {
+        if (quantidade > 0) {
+            badge.textContent = quantidade > 9 ? "9+" : String(quantidade);
+            badge.style.display = "flex";
+        } else {
+            badge.style.display = "none";
+        }
+    });
+
+    document.querySelectorAll(".header-btn-pedidos").forEach((link) => {
+        link.classList.toggle("tem-pendencia", quantidade > 0);
+    });
+
+    document.querySelectorAll(".conta-tile-pedidos").forEach((tile) => {
+        tile.classList.toggle("tem-pendencia", quantidade > 0);
     });
 }
 

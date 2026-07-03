@@ -90,6 +90,7 @@ def criar_pagamento_pix(
     payer_nome: str | None,
     payer_cpf: str | None,
     descricao: str,
+    idempotency_suffix: str | None = None,
 ) -> dict:
     """Cria cobrança Pix real via API do Mercado Pago."""
     cpf = validar_cpf(payer_cpf)
@@ -115,9 +116,12 @@ def criar_pagamento_pix(
     }
 
     with httpx.Client(timeout=30.0) as client:
+        idem = f"pastelaria-pix-{pedido_id}"
+        if idempotency_suffix:
+            idem = f"{idem}-{idempotency_suffix}"
         response = client.post(
             f"{MP_API}/v1/payments",
-            headers=_headers(idempotency_key=f"pastelaria-pix-{pedido_id}"),
+            headers=_headers(idempotency_key=idem),
             json=body,
         )
         response.raise_for_status()
@@ -183,3 +187,24 @@ def confirmar_pix_simulado(pedido) -> None:
     pedido.pagamento_confirmado = True
     pedido.status = "pendente"
     pedido.mp_payment_id = pedido.mp_payment_id or f"SIM-{pedido.id}"
+
+
+def estornar_pagamento(payment_id: str) -> dict:
+    """Estorna pagamento Pix aprovado no Mercado Pago."""
+    with httpx.Client(timeout=30.0) as client:
+        response = client.post(
+            f"{MP_API}/v1/payments/{payment_id}/refunds",
+            headers=_headers(idempotency_key=f"pastelaria-refund-{payment_id}"),
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+def obter_pix_de_pagamento_existente(payment: dict) -> dict | None:
+    """Retorna dados Pix se o pagamento ainda estiver pendente."""
+    status = payment.get("status")
+    if status not in ("pending", "in_process", "authorized"):
+        return None
+    dados = extrair_dados_pix(payment)
+    return dados if dados.get("copia_cola") else None
+

@@ -1,12 +1,14 @@
 import logging
+import time
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from sqlalchemy.orm import Session, joinedload
 
 from config import settings
 from database import get_db
-from models import Pedido, Usuario
+from models import Pedido, Usuario, ItemPedido, Endereco
 from routes.pedidos import PedidoRequest
 from routes.usuarios import get_current_user
 from services.mercadopago import (
@@ -19,6 +21,7 @@ from services.mercadopago import (
     gerar_pix_simulado,
     mensagem_erro_mp,
     mercadopago_habilitado,
+    obter_pix_de_pagamento_existente,
     validar_cpf,
 )
 from services.pedido_service import criar_pedido_no_banco, serializar_pedido_criado
@@ -26,6 +29,69 @@ from services.pedido_service import criar_pedido_no_banco, serializar_pedido_cri
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/pagamentos", tags=["pagamentos"])
+
+
+class RetomarPixRequest(BaseModel):
+    cpf: str | None = None
+
+
+def _itens_resposta(pedido: Pedido) -> list[dict]:
+    itens = []
+    for item in pedido.itens:
+        produto = item.produto
+        itens.append({
+            "produto_id": item.produto_id,
+            "nome": produto.nome if produto else "Produto",
+            "preco": produto.preco if produto else 0,
+            "quantidade": item.quantidade,
+        })
+    return itens
+
+
+def _valor_pedido(pedido: Pedido, itens_resposta: list[dict]) -> float:
+    return sum(float(i["preco"]) * i["quantidade"] for i in itens_resposta) + float(pedido.taxa_entrega or 0)
+
+
+def _gerar_pix_pedido(
+    *,
+    pedido: Pedido,
+    usuario: Usuario,
+    cpf: str | None,
+    itens_resposta: list[dict],
+) -> dict:
+    valor = _valor_pedido(pedido, itens_resposta)
+    if valor <= 0:
+        raise ValueError("Valor do pedido inválido para pagamento")
+
+    if settings.MERCADOPAGO_SANDBOX:
+        pedido.mp_payment_id = pedido.mp_payment_id or f"SIM-{pedido.id}"
+        return gerar_pix_simulado(pedido_id=pedido.id, valor=valor)
+
+    if not settings.MERCADOPAGO_ACCESS_TOKEN.strip():
+        raise ValueError("Access Token do Mercado Pago não configurado")
+
+    payment_id = (pedido.mp_payment_id or "").strip()
+    if payment_id and not payment_id.startswith("SIM-"):
+        try:
+            payment = buscar_pagamento(payment_id)
+            pix = obter_pix_de_pagamento_existente(payment)
+            if pix:
+                return pix
+        except httpx.HTTPStatusError:
+            logger.info("Pagamento MP %s indisponível para retomada; gerando novo Pix", payment_id)
+
+    cpf_validado = validar_cpf(cpf)
+    payment = criar_pagamento_pix(
+        pedido_id=pedido.id,
+        valor=valor,
+        payer_email=usuario.email_google,
+        payer_nome=usuario.nome,
+        payer_cpf=cpf_validado,
+        descricao=f"Pedido #{pedido.numero_dia or pedido.id} — Pastelaria",
+        idempotency_suffix=str(int(time.time())),
+    )
+    pedido.mp_payment_id = str(payment.get("id") or "")
+    return extrair_dados_pix(payment)
 
 
 @router.get("/config")
@@ -66,28 +132,12 @@ def iniciar_pagamento_pix(
         raise HTTPException(status_code=400, detail="Valor do pedido inválido para pagamento")
 
     try:
-        if settings.MERCADOPAGO_SANDBOX:
-            pix = gerar_pix_simulado(pedido_id=pedido.id, valor=valor)
-            pedido.mp_payment_id = f"SIM-{pedido.id}"
-        else:
-            if not settings.MERCADOPAGO_ACCESS_TOKEN.strip():
-                db.rollback()
-                raise HTTPException(status_code=503, detail="Access Token do Mercado Pago não configurado")
-            try:
-                cpf = validar_cpf(body.cpf)
-            except ValueError as exc:
-                db.rollback()
-                raise HTTPException(status_code=400, detail=str(exc)) from exc
-            payment = criar_pagamento_pix(
-                pedido_id=pedido.id,
-                valor=valor,
-                payer_email=usuario.email_google,
-                payer_nome=usuario.nome,
-                payer_cpf=cpf,
-                descricao=f"Pedido #{pedido.numero_dia or pedido.id} — Pastelaria",
-            )
-            pedido.mp_payment_id = str(payment.get("id") or "")
-            pix = extrair_dados_pix(payment)
+        pix = _gerar_pix_pedido(
+            pedido=pedido,
+            usuario=usuario,
+            cpf=body.cpf,
+            itens_resposta=itens_resposta,
+        )
     except ValueError as exc:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -101,6 +151,75 @@ def iniciar_pagamento_pix(
     db.refresh(pedido)
 
     dados = serializar_pedido_criado(pedido, usuario, itens_resposta, endereco)
+    dados["pix"] = pix
+    return dados
+
+
+@router.get("/pendentes")
+def contar_pagamentos_pendentes(
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    quantidade = (
+        db.query(Pedido)
+        .filter(
+            Pedido.usuario_id == usuario.id,
+            Pedido.pagamento == "mercadopago",
+            Pedido.status == "aguardando_pagamento",
+            Pedido.pagamento_confirmado == False,  # noqa: E712
+        )
+        .count()
+    )
+    return {"quantidade": quantidade}
+
+
+@router.post("/retomar/{pedido_id}")
+def retomar_pagamento_pix(
+    pedido_id: int,
+    body: RetomarPixRequest,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Retoma Pix de pedido com pagamento não finalizado."""
+    if not mercadopago_habilitado():
+        raise HTTPException(status_code=503, detail="Pix online não configurado na API")
+
+    pedido = (
+        db.query(Pedido)
+        .filter(Pedido.id == pedido_id, Pedido.usuario_id == usuario.id)
+        .options(joinedload(Pedido.itens).joinedload(ItemPedido.produto))
+        .first()
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    if pedido.pagamento != "mercadopago":
+        raise HTTPException(status_code=400, detail="Pedido não é Pix online")
+    if pedido.pagamento_confirmado:
+        raise HTTPException(status_code=400, detail="Este pedido já foi pago")
+    if pedido.status != "aguardando_pagamento":
+        raise HTTPException(status_code=400, detail="Este pedido não está aguardando pagamento")
+
+    itens_resposta = _itens_resposta(pedido)
+
+    try:
+        pix = _gerar_pix_pedido(
+            pedido=pedido,
+            usuario=usuario,
+            cpf=body.cpf,
+            itens_resposta=itens_resposta,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except httpx.HTTPStatusError as exc:
+        detail = mensagem_erro_mp(exc)
+        logger.error("Erro MP retomar Pix pedido %s: %s", pedido_id, exc.response.text)
+        raise HTTPException(status_code=502, detail=detail) from exc
+
+    db.commit()
+    db.refresh(pedido)
+
+    endereco_db = db.query(Endereco).filter(Endereco.usuario_id == usuario.id).first()
+    dados = serializar_pedido_criado(pedido, usuario, itens_resposta, endereco_db)
     dados["pix"] = pix
     return dados
 

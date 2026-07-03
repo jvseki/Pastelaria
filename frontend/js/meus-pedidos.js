@@ -1,0 +1,217 @@
+/**
+ * Meus pedidos — histórico e retomada de Pix pendente.
+ */
+
+let pixProducao = false;
+
+const STATUS_LABELS = {
+    pendente: "Aguardando confirmação",
+    aguardando_pagamento: "Pagamento pendente",
+    preparando: "Em preparo",
+    entrega: "Saiu para entrega",
+    finalizado: "Finalizado",
+    cancelado: "Cancelado",
+};
+
+const STATUS_CLASS = {
+    pendente: "status-pendente",
+    aguardando_pagamento: "status-pagamento-pendente",
+    preparando: "status-preparando",
+    entrega: "status-entrega",
+    finalizado: "status-finalizado",
+    cancelado: "status-cancelado",
+};
+
+const PAGAMENTO_LABELS = {
+    pix: "Pix ao receber",
+    dinheiro: "Dinheiro ao receber",
+    cartao: "Cartão ao receber",
+    mercadopago: "Pix online",
+};
+
+function formatarDataPedido(iso) {
+    if (!iso) return "";
+    return new Date(iso).toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function totalPedido(pedido) {
+    const itens = pedido.itens || [];
+    return itens.reduce((sum, item) => sum + item.preco * item.quantidade, 0) + (pedido.taxa_entrega || 0);
+}
+
+function pedidoAguardandoPix(pedido) {
+    return pedido.pagamento === "mercadopago"
+        && pedido.status === "aguardando_pagamento"
+        && !pedido.pagamento_confirmado;
+}
+
+function renderBannerPendentes(pendentes) {
+    if (!pendentes.length) return "";
+
+    const total = pendentes.reduce((s, p) => s + totalPedido(p), 0);
+    return `
+        <section class="pedidos-pendentes-banner" id="pedidosPendentesBanner">
+            <div class="pedidos-pendentes-banner-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
+            <div class="pedidos-pendentes-banner-texto">
+                <strong>${pendentes.length === 1 ? "1 pagamento pendente" : `${pendentes.length} pagamentos pendentes`}</strong>
+                <span>Total em aberto: ${formatarPreco(total)} · finalize o Pix para confirmar o pedido</span>
+            </div>
+        </section>`;
+}
+
+function renderCardPagamentoPendente(pedido) {
+    const numero = String(pedido.numero_dia ?? pedido.id).padStart(3, "0");
+    const cpfField = pixProducao ? `
+        <div class="form-group pedido-pix-cpf">
+            <label for="cpfPix-${pedido.id}">CPF do pagador</label>
+            <input type="text" id="cpfPix-${pedido.id}" inputmode="numeric" maxlength="14"
+                placeholder="000.000.000-00" oninput="mascararCpfPix(this)">
+        </div>` : "";
+
+    return `
+        <article class="pedido-pix-pendente-card" id="pedido-pendente-${pedido.id}">
+            <div class="pedido-pix-pendente-header">
+                <span class="pedido-pix-pendente-badge">Pix não finalizado</span>
+                <span class="pedido-pix-pendente-valor">${formatarPreco(totalPedido(pedido))}</span>
+            </div>
+            <h2>Pedido #${numero}</h2>
+            <p class="pedido-pix-pendente-desc">
+                Você iniciou este pedido mas não concluiu o pagamento. Gere o QR Code novamente para finalizar.
+            </p>
+            ${cpfField}
+            <button type="button" class="btn btn-primary btn-lg btn-block"
+                onclick="finalizarPagamentoPendente(${pedido.id})">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M20 17h1v4h-4v-1"/>
+                </svg>
+                Finalizar pagamento Pix
+            </button>
+        </article>`;
+}
+
+function renderCardPedido(pedido) {
+    const numero = String(pedido.numero_dia ?? pedido.id).padStart(3, "0");
+    const status = pedido.status || "pendente";
+    const tipoEntrega = pedido.tipo_entrega === "retirada" ? "Retirada no local" : "Entrega com motoboy";
+    const itensHtml = (pedido.itens || [])
+        .map((item) => `<li>${item.quantidade}x ${item.nome} — ${formatarPreco(item.preco * item.quantidade)}</li>`)
+        .join("");
+
+    return `
+        <article class="form-card pedido-historico-card">
+            <div class="pedido-historico-topo">
+                <div>
+                    <h2>Pedido #${numero}</h2>
+                    <p>${formatarDataPedido(pedido.data_pedido)}</p>
+                </div>
+                <span class="status-badge ${STATUS_CLASS[status] || "status-pendente"}">${STATUS_LABELS[status] || status}</span>
+            </div>
+            <ul class="pedido-historico-itens">${itensHtml}</ul>
+            ${pedido.taxa_entrega ? `<p>Taxa de entrega: ${formatarPreco(pedido.taxa_entrega)}</p>` : ""}
+            <p><strong>Total:</strong> ${formatarPreco(totalPedido(pedido))}</p>
+            <p><strong>Recebimento:</strong> ${tipoEntrega}</p>
+            <p><strong>Pagamento:</strong> ${PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento}</p>
+            ${pedido.pagamento_confirmado && pedido.pagamento === "mercadopago"
+                ? `<p class="pedido-pago-online">Pagamento Pix confirmado</p>` : ""}
+        </article>`;
+}
+
+function renderizarPedidos(pedidos) {
+    const container = document.getElementById("meusPedidosConteudo");
+    if (!pedidos.length) {
+        container.innerHTML = `
+            <div class="carrinho-vazio">
+                <div class="empty-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12v20l-6-3-6 3z"/></svg>
+                </div>
+                <h2>Você ainda não fez pedidos</h2>
+                <p>Quando finalizar um pedido, ele aparece aqui.</p>
+                <a href="cardapio.html" class="btn btn-primary" style="margin-top:20px">Ver cardápio</a>
+            </div>`;
+        return;
+    }
+
+    const pendentes = pedidos.filter(pedidoAguardandoPix);
+    const demais = pedidos.filter((p) => !pedidoAguardandoPix(p));
+
+    container.innerHTML = `
+        ${renderBannerPendentes(pendentes)}
+        ${pendentes.map(renderCardPagamentoPendente).join("")}
+        ${demais.length ? `<h2 class="pedidos-historico-titulo">${pendentes.length ? "Histórico" : ""}</h2>` : ""}
+        ${demais.map(renderCardPedido).join("")}
+    `;
+
+    if (pendentes.length) {
+        document.getElementById("pedidosPendentesBanner")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+async function finalizarPagamentoPendente(pedidoId) {
+    const btn = document.querySelector(`#pedido-pendente-${pedidoId} .btn-primary`);
+    const cpfInput = document.getElementById(`cpfPix-${pedidoId}`);
+    const cpf = cpfInput ? normalizarCpf(cpfInput.value) : null;
+
+    if (pixProducao && (!cpf || cpf.length !== 11)) {
+        mostrarAlerta("Informe um CPF válido para gerar o Pix.", { titulo: "CPF obrigatório", tipo: "aviso" });
+        cpfInput?.focus();
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Gerando Pix...";
+    }
+
+    try {
+        const resultado = await api.retomarPagamentoPix(pedidoId, cpf);
+        localStorage.setItem("ultimoPedido", JSON.stringify(resultado));
+        window.location.href = "pix-pagamento.html";
+    } catch (error) {
+        mostrarAlerta(error.message, { titulo: "Erro ao retomar pagamento", tipo: "erro" });
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M20 17h1v4h-4v-1"/>
+                </svg>
+                Finalizar pagamento Pix`;
+        }
+    }
+}
+
+async function carregarMeusPedidos() {
+    const container = document.getElementById("meusPedidosConteudo");
+    try {
+        const cfg = await api.getMercadoPagoConfig();
+        pixProducao = cfg.modo === "pix_mercadopago";
+        const pedidos = await api.getMeusPedidos();
+        renderizarPedidos(pedidos);
+        await atualizarBadgePedidosPendentes();
+    } catch (error) {
+        container.innerHTML = `
+            <div class="form-card">
+                <h2>Não foi possível carregar seus pedidos</h2>
+                <p>${error.message}</p>
+            </div>`;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (!estaLogado()) {
+        window.location.href = "login.html?redirect=meus-pedidos.html";
+        return;
+    }
+    carregarMeusPedidos();
+});

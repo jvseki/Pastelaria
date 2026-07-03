@@ -71,7 +71,10 @@
                     ${user.telefone ? `<p class="conta-tel">${user.telefone}</p>` : ""}
                 </div>
                 <div class="page-actions conta-actions--cliente">
-                    <a href="meus-pedidos.html" class="btn btn-primary">Meus pedidos</a>
+                    <a href="meus-pedidos.html" class="btn btn-primary conta-tile-pedidos">
+                        Meus pedidos
+                        <span class="conta-pedidos-badge pedidos-pendentes-badge" style="display:none">0</span>
+                    </a>
                     <a href="cadastro.html" class="btn btn-secondary">Editar endereço</a>
                     <button class="btn btn-danger" onclick="logout()">Sair da conta</button>
                 </div>`;
@@ -143,6 +146,7 @@
             } catch (_) {}
 
             if (usuario) renderizarConta(usuario);
+            await atualizarBadgePedidosPendentes();
         }
 
         carregarConta();
