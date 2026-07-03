@@ -68,6 +68,9 @@ Sem webhook, o site ainda tenta confirmar a cada 5 segundos na tela do Pix.
 
 | Erro | Solução |
 |------|---------|
+| Erro na tela | Solução |
+|--------------|---------|
+| **Unauthorized use of live credentials** | Token de **teste** com `SANDBOX=false`. Use token de **produção** ou volte `SANDBOX=true` |
 | 502 ao clicar “Gerar Pix” | Token inválido, CPF faltando ou conta sem chave Pix |
 | QR vazio | Conta sem chave Pix cadastrada no MP |
 | Pagou e não confirmou | Confira webhook e `API_PUBLIC_URL` no Render |
