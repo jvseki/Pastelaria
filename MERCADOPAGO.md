@@ -9,15 +9,23 @@ Pagamento **Pix** integrado na Pastelaria Delivery.
 | `true` (padrão) | **Simulador Pix** no próprio site — sem redirect, sem cartão, sem conta MP |
 | `false` | Pix **real** via API do Mercado Pago (produção) |
 
-## Testar agora (sandbox)
+## Testar agora (modo simulador — sem credenciais MP)
+
+Com `MERCADOPAGO_SANDBOX=true` e **sem** Access Token / Public Key, Pix e cartão funcionam como **teste fictício** no próprio site. Não cobra nada de verdade.
 
 1. Janela anônima → login Google no site
-2. Cardápio → **Teste MP** → **Teste MP 50 centavos**
-3. Pagamento → **Pix online** → **Gerar Pix e pagar**
-4. Na tela do QR Code → **Simular pagamento aprovado**
-5. Pedido confirmado na fila da pastelaria
+2. Cardápio → adicione qualquer item ao carrinho
+3. Pagamento → **Pagar agora**
 
-Não precisa de credenciais do Mercado Pago em sandbox.
+**Pix (teste):**
+4. Sub-aba **Pix** → marque a confirmação → **Gerar Pix e pagar**
+5. Na tela do QR → **Simular pagamento aprovado**
+
+**Cartão (teste):**
+4. Sub-aba **Cartão** → marque a confirmação → **Simular pagamento com cartão**
+5. Pedido confirmado na hora (sem formulário de cartão real)
+
+Não precisa de credenciais do Mercado Pago para esse modo.
 
 ## Produção — QR Code Pix verdadeiro
 
@@ -36,6 +44,7 @@ Com `MERCADOPAGO_SANDBOX=false`, o site chama a API do Mercado Pago e exibe o **
 
 ```env
 MERCADOPAGO_ACCESS_TOKEN=APP_USR-...   # token de PRODUÇÃO
+MERCADOPAGO_PUBLIC_KEY=APP_USR-...     # Public Key de PRODUÇÃO (para cartão online)
 MERCADOPAGO_SANDBOX=false
 FRONTEND_URL=https://pastelaria-mu.vercel.app
 API_PUBLIC_URL=https://pastelaria-geu7.onrender.com
@@ -114,6 +123,7 @@ Em **produção**, o site pede o **CPF do pagador** (com máscara automática `0
 |------|--------|
 | `GET /pagamentos/config` | Se Pix online está habilitado |
 | `POST /pagamentos/checkout` | Cria pedido + dados do Pix |
+| `POST /pagamentos/checkout-cartao` | Cria pedido + cobrança no cartão |
 | `POST /pagamentos/simular/{id}` | Sandbox: confirma pagamento fictício |
 | `POST /pagamentos/confirmar/{id}` | Produção: consulta status no MP |
 | `POST /pagamentos/webhook` | Produção: notificação do MP |
@@ -123,6 +133,7 @@ Em **produção**, o site pede o **CPF do pagador** (com máscara automática `0
 | Opção | Quando |
 |-------|--------|
 | **Pix online** | Paga agora (simulado ou real) |
+| **Cartão online** | Paga agora com cartão (requer Public Key + Access Token) |
 | Pix / Dinheiro ao receber | Presencial na entrega |
 | Cartão ao receber | Presencial na entrega |
 

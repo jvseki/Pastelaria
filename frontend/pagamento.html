@@ -64,7 +64,7 @@
                     </span>
                     <span class="pagamento-tab-text">
                         <strong>Pagar agora</strong>
-                        <small>Pix com QR Code</small>
+                        <small>Pix ou cartão online</small>
                     </span>
                 </button>
                 <button type="button" class="pagamento-tab" id="tabPagarEntrega" role="tab"
@@ -83,23 +83,45 @@
             </div>
 
             <div class="pagamento-panel" id="panelPagarAgora" role="tabpanel" aria-labelledby="tabPagarAgora">
-                <div class="pix-info-box visible">
-                    <div class="pix-info-header">
-                        <span class="pix-info-badge">Confirmação imediata</span>
-                    </div>
-                    <p class="pix-info-desc">
-                        Na próxima tela você verá o <strong>QR Code Pix</strong> para pagar pelo app do banco.
-                        O pedido só entra na fila depois que o pagamento for confirmado.
-                    </p>
+                <div class="pagamento-agora-subtabs" id="agoraSubtabs" role="tablist" aria-label="Pagar agora">
+                    <button type="button" class="pagamento-agora-subtab active" id="subtabPix"
+                        onclick="selecionarFormaAgora('pix')">Pix</button>
+                    <button type="button" class="pagamento-agora-subtab" id="subtabCartao"
+                        onclick="selecionarFormaAgora('cartao')" style="display:none">Cartão</button>
                 </div>
 
-                <div class="presencial-section" id="cpfPixSection">
-                    <div class="form-group">
-                        <label for="cpfPix">CPF do pagador</label>
-                        <input type="text" id="cpfPix" inputmode="numeric" maxlength="14"
-                            placeholder="000.000.000-00" oninput="mascararCpfPix(this); atualizarBotaoFinalizar()">
-                        <p class="form-hint">Obrigatório para gerar o Pix no Mercado Pago.</p>
+                <div class="pagamento-agora-conteudo" id="agoraConteudoPix">
+                    <div class="pix-info-box visible">
+                        <div class="pix-info-header">
+                            <span class="pix-info-badge">Confirmação imediata</span>
+                        </div>
+                        <p class="pix-info-desc">
+                            Na próxima tela você verá o <strong>QR Code Pix</strong> para pagar pelo app do banco.
+                            O pedido só entra na fila depois que o pagamento for confirmado.
+                        </p>
                     </div>
+
+                    <div class="presencial-section" id="cpfPixSection">
+                        <div class="form-group">
+                            <label for="cpfPix">CPF do pagador</label>
+                            <input type="text" id="cpfPix" inputmode="numeric" maxlength="14"
+                                placeholder="000.000.000-00" oninput="mascararCpfPix(this); atualizarBotaoFinalizar()">
+                            <p class="form-hint">Obrigatório para gerar o Pix no Mercado Pago.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pagamento-agora-conteudo" id="agoraConteudoCartao" style="display:none">
+                    <div class="pix-info-box visible">
+                        <p class="pix-info-desc">
+                            Pague com <strong>cartão de crédito ou débito</strong> de forma segura pelo Mercado Pago.
+                            O pedido é confirmado assim que o pagamento for aprovado.
+                        </p>
+                    </div>
+                    <div id="cardPaymentBrick_container" class="card-brick-wrap"></div>
+                    <p class="form-hint card-brick-hint" id="cardBrickHint">
+                        Marque a confirmação abaixo e preencha o cartão para pagar.
+                    </p>
                 </div>
             </div>
 

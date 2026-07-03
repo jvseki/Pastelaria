@@ -1,7 +1,12 @@
 let abaPagamento = null;
+let formaAgora = "pix";
 let formaEntrega = null;
 let mercadoPagoHabilitado = false;
+let cartaoOnlineHabilitado = false;
 let pixProducao = false;
+let mpPublicKey = "";
+let cardBrickController = null;
+let mpSdkCarregando = null;
 const carrinho = JSON.parse(localStorage.getItem("carrinho") || "[]");
 const TAXA_ENTREGA = Number(window.TAXA_ENTREGA || 0);
 
@@ -25,7 +30,7 @@ async function initPagamento() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("mp") === "failure") {
-        mostrarAlerta("O pagamento Pix não foi concluído. Tente novamente ou escolha pagar ao receber.", {
+        mostrarAlerta("O pagamento não foi concluído. Tente novamente ou escolha pagar ao receber.", {
             titulo: "Pagamento cancelado",
             tipo: "aviso",
         });
@@ -44,14 +49,27 @@ async function carregarMercadoPago() {
     try {
         const cfg = await api.getMercadoPagoConfig();
         mercadoPagoHabilitado = !!cfg.habilitado;
+        cartaoOnlineHabilitado = !!cfg.cartao_habilitado;
         pixProducao = cfg.modo === "pix_mercadopago";
+        mpPublicKey = cfg.public_key || "";
     } catch (_) {
         mercadoPagoHabilitado = false;
+        cartaoOnlineHabilitado = false;
         pixProducao = false;
+        mpPublicKey = "";
     }
 
     const tabs = document.getElementById("pagamentoTabs");
     const tabAgora = document.getElementById("tabPagarAgora");
+    const subtabCartao = document.getElementById("subtabCartao");
+    const agoraSubtabs = document.getElementById("agoraSubtabs");
+
+    if (subtabCartao) {
+        subtabCartao.style.display = cartaoOnlineHabilitado ? "" : "none";
+    }
+    if (agoraSubtabs) {
+        agoraSubtabs.style.display = cartaoOnlineHabilitado ? "" : "none";
+    }
 
     if (!mercadoPagoHabilitado) {
         tabAgora.style.display = "none";
@@ -60,7 +78,156 @@ async function carregarMercadoPago() {
         return;
     }
 
+    if (cartaoOnlineHabilitado) {
+        await carregarSdkMercadoPago();
+    }
+
     selecionarAbaPagamento("agora");
+}
+
+function carregarSdkMercadoPago() {
+    if (window.MercadoPago) return Promise.resolve(true);
+    if (mpSdkCarregando) return mpSdkCarregando;
+
+    mpSdkCarregando = new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.src = "https://sdk.mercadopago.com/js/v2";
+        script.async = true;
+        script.onload = () => resolve(!!window.MercadoPago);
+        script.onerror = () => resolve(false);
+        document.head.appendChild(script);
+    });
+
+    return mpSdkCarregando;
+}
+
+function waitForMercadoPagoSdk(timeoutMs = 10000) {
+    return new Promise((resolve) => {
+        if (window.MercadoPago) {
+            resolve(true);
+            return;
+        }
+        const started = Date.now();
+        const interval = setInterval(() => {
+            if (window.MercadoPago) {
+                clearInterval(interval);
+                resolve(true);
+                return;
+            }
+            if (Date.now() - started >= timeoutMs) {
+                clearInterval(interval);
+                resolve(false);
+            }
+        }, 100);
+    });
+}
+
+async function destruirCardBrick() {
+    if (cardBrickController?.unmount) {
+        try {
+            await cardBrickController.unmount();
+        } catch (_) {
+            /* brick já removido */
+        }
+    }
+    cardBrickController = null;
+    const container = document.getElementById("cardPaymentBrick_container");
+    if (container) container.innerHTML = "";
+}
+
+async function montarCardBrick() {
+    const hint = document.getElementById("cardBrickHint");
+    if (!cartaoOnlineHabilitado || !mpPublicKey) {
+        if (hint) {
+            hint.textContent = "Cartão online não configurado. Use Pix ou pague na entrega.";
+        }
+        return;
+    }
+
+    await carregarSdkMercadoPago();
+    const sdkOk = await waitForMercadoPagoSdk();
+    if (!sdkOk) {
+        if (hint) hint.textContent = "Não foi possível carregar o formulário de cartão. Recarregue a página.";
+        return;
+    }
+
+    await destruirCardBrick();
+
+    const mp = new MercadoPago(mpPublicKey, { locale: "pt-BR" });
+    const bricksBuilder = mp.bricks();
+    const amount = calcularTotal();
+
+    cardBrickController = await bricksBuilder.create("cardPayment", "cardPaymentBrick_container", {
+        initialization: { amount },
+        customization: {
+            visual: { style: { theme: "default" } },
+        },
+        callbacks: {
+            onReady: () => {},
+            onSubmit: (cardFormData) => new Promise((resolve, reject) => {
+                processarPagamentoCartao(cardFormData).then(resolve).catch(reject);
+            }),
+            onError: (error) => {
+                console.error("Card Brick:", error);
+            },
+        },
+    });
+}
+
+function extrairCpfDoBrick(cardFormData) {
+    const payer = cardFormData?.payer || {};
+    const id = payer.identification || cardFormData?.identification || {};
+    return normalizarCpf(id.number || id.identificationNumber || "");
+}
+
+async function processarPagamentoCartao(cardFormData) {
+    if (!document.getElementById("confirmarPagamento")?.checked) {
+        mostrarAlerta("Marque a confirmação abaixo antes de pagar com cartão.", {
+            titulo: "Confirmação necessária",
+            tipo: "aviso",
+        });
+        throw new Error("Confirmação não marcada");
+    }
+
+    const cpf = extrairCpfDoBrick(cardFormData);
+    if (cpf.length !== 11) {
+        mostrarAlerta("Informe um CPF válido no formulário do cartão.", {
+            titulo: "CPF obrigatório",
+            tipo: "aviso",
+        });
+        throw new Error("CPF inválido");
+    }
+
+    const payload = {
+        ...montarPayloadPedido("mercadopago"),
+        cpf,
+        token: cardFormData.token,
+        payment_method_id: cardFormData.payment_method_id,
+        installments: cardFormData.installments || 1,
+        issuer_id: cardFormData.issuer_id ? String(cardFormData.issuer_id) : null,
+    };
+
+    try {
+        const resultado = await api.iniciarCheckoutCartao(payload);
+        localStorage.setItem("ultimoPedido", JSON.stringify(resultado));
+        localStorage.removeItem("carrinho");
+        sessionStorage.removeItem("bebidasOferecidas");
+
+        if (resultado.pagamento_confirmado || resultado.cartao?.status === "approved") {
+            mostrarToast("Pagamento aprovado!", "sucesso");
+            window.location.href = "pedido.html";
+            return;
+        }
+
+        mostrarAlerta("Pagamento em análise. Acompanhe em Meus pedidos.", {
+            titulo: "Aguardando confirmação",
+            tipo: "aviso",
+        });
+        window.location.href = "meus-pedidos.html";
+    } catch (error) {
+        mostrarAlerta(error.message, { titulo: "Pagamento recusado", tipo: "erro" });
+        throw error;
+    }
 }
 
 function getTipoEntrega() {
@@ -157,7 +324,7 @@ function montarPayloadPedido(pagamentoFinal, troco = null) {
             quantidade: item.quantidade,
         })),
     };
-    if (pagamentoFinal === "mercadopago" && pixProducao) {
+    if (pagamentoFinal === "mercadopago" && pixProducao && formaAgora === "pix") {
         payload.cpf = normalizarCpf(document.getElementById("cpfPix")?.value);
     }
     return payload;
@@ -166,6 +333,7 @@ function montarPayloadPedido(pagamentoFinal, troco = null) {
 function pagamentoEstaCompleto() {
     if (abaPagamento === "agora") {
         if (!mercadoPagoHabilitado) return false;
+        if (formaAgora === "cartao") return true;
         if (pixProducao) {
             return normalizarCpf(document.getElementById("cpfPix")?.value).length === 11;
         }
@@ -175,6 +343,12 @@ function pagamentoEstaCompleto() {
     return false;
 }
 
+function atualizarVisibilidadeFinalizar() {
+    const actions = document.querySelector(".page-actions");
+    const usarBrick = abaPagamento === "agora" && formaAgora === "cartao" && cartaoOnlineHabilitado;
+    if (actions) actions.style.display = usarBrick ? "none" : "";
+}
+
 function atualizarTextoConfirmacao() {
     const titulo = document.getElementById("confirmarPagamentoTitulo");
     const desc = document.getElementById("confirmarPagamentoDesc");
@@ -182,21 +356,56 @@ function atualizarTextoConfirmacao() {
     const aoReceber = isRetirada() ? "na retirada" : "na entrega";
 
     if (abaPagamento === "agora") {
-        if (titulo) titulo.textContent = "Confirmo e irei pagar com Pix agora";
-        if (desc) desc.textContent = "Você verá o QR Code Pix na próxima tela para concluir o pagamento.";
-        if (btn) btn.textContent = "Gerar Pix e pagar";
+        if (formaAgora === "cartao") {
+            if (titulo) titulo.textContent = "Confirmo o pagamento com cartão";
+            if (desc) desc.textContent = "Autorizo a cobrança no cartão preenchido acima via Mercado Pago.";
+        } else {
+            if (titulo) titulo.textContent = "Confirmo e irei pagar com Pix agora";
+            if (desc) desc.textContent = "Você verá o QR Code Pix na próxima tela para concluir o pagamento.";
+            if (btn) btn.textContent = "Gerar Pix e pagar";
+        }
     } else {
         if (titulo) titulo.textContent = `Confirmo o pagamento ${aoReceber}`;
         if (desc) desc.textContent = `Estou ciente de que pagarei ao receber o pedido ${aoReceber}, conforme a forma selecionada.`;
         if (btn) btn.textContent = "Confirmar e finalizar pedido";
     }
+
+    atualizarVisibilidadeFinalizar();
 }
 
 function atualizarBotaoFinalizar() {
     const confirmado = document.getElementById("confirmarPagamento")?.checked;
     const btn = document.getElementById("btnFinalizar");
     if (!btn) return;
+    const usarBrick = abaPagamento === "agora" && formaAgora === "cartao" && cartaoOnlineHabilitado;
+    if (usarBrick) return;
     btn.disabled = !(confirmado && pagamentoEstaCompleto());
+}
+
+async function selecionarFormaAgora(forma) {
+    formaAgora = forma;
+
+    document.getElementById("subtabPix")?.classList.toggle("active", forma === "pix");
+    document.getElementById("subtabCartao")?.classList.toggle("active", forma === "cartao");
+
+    const pixConteudo = document.getElementById("agoraConteudoPix");
+    const cartaoConteudo = document.getElementById("agoraConteudoCartao");
+    if (pixConteudo) pixConteudo.style.display = forma === "pix" ? "" : "none";
+    if (cartaoConteudo) cartaoConteudo.style.display = forma === "cartao" ? "" : "none";
+
+    const cpfSection = document.getElementById("cpfPixSection");
+    if (cpfSection) {
+        cpfSection.classList.toggle("visible", forma === "pix" && pixProducao);
+    }
+
+    if (forma === "cartao") {
+        await montarCardBrick();
+    } else {
+        await destruirCardBrick();
+    }
+
+    atualizarTextoConfirmacao();
+    atualizarBotaoFinalizar();
 }
 
 function selecionarAbaPagamento(aba) {
@@ -218,16 +427,16 @@ function selecionarAbaPagamento(aba) {
     });
     document.getElementById("trocoSection")?.classList.remove("visible");
 
-    const cpfSection = document.getElementById("cpfPixSection");
-    if (cpfSection) {
-        cpfSection.classList.toggle("visible", aba === "agora" && pixProducao);
-    }
-
     const checkbox = document.getElementById("confirmarPagamento");
     if (checkbox) checkbox.checked = false;
 
-    atualizarTextoConfirmacao();
-    atualizarBotaoFinalizar();
+    if (aba === "agora") {
+        selecionarFormaAgora(formaAgora || "pix");
+    } else {
+        destruirCardBrick();
+        atualizarTextoConfirmacao();
+        atualizarBotaoFinalizar();
+    }
 }
 
 function selecionarFormaEntrega(forma) {
@@ -256,6 +465,11 @@ function toggleTroco() {
 async function finalizarPedido() {
     if (!abaPagamento) {
         mostrarToast("Selecione uma forma de pagamento");
+        return;
+    }
+
+    if (abaPagamento === "agora" && formaAgora === "cartao") {
+        mostrarToast("Use o botão Pagar no formulário do cartão.");
         return;
     }
 

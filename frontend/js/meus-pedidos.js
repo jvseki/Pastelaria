@@ -26,7 +26,7 @@ const PAGAMENTO_LABELS = {
     pix: "Pix ao receber",
     dinheiro: "Dinheiro ao receber",
     cartao: "Cartão ao receber",
-    mercadopago: "Pix online",
+    mercadopago: "Pagamento online",
 };
 
 function formatarDataPedido(iso) {
