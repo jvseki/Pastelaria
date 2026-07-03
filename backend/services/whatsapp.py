@@ -6,6 +6,7 @@ from services.maps import gerar_link_maps, gerar_link_maps_endereco
 
 PAGAMENTO_LABELS = {
     "pix": "Pix ao receber",
+    "mercadopago": "Pix online",
     "dinheiro": "Dinheiro ao receber",
     "cartao": "Cartao ao receber",
 }

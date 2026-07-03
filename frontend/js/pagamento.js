@@ -24,7 +24,7 @@ async function initPagamento() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("mp") === "failure") {
-        mostrarAlerta("O pagamento não foi concluído. Tente novamente ou escolha pagar na entrega.", {
+        mostrarAlerta("O pagamento Pix não foi concluído. Tente novamente ou escolha pagar na entrega.", {
             titulo: "Pagamento cancelado",
             tipo: "aviso",
         });
@@ -140,9 +140,9 @@ function atualizarTextoConfirmacao() {
     const btn = document.getElementById("btnFinalizar");
 
     if (pagamentoSelecionado === "mercadopago") {
-        if (titulo) titulo.textContent = "Confirmo e irei pagar no Mercado Pago";
-        if (desc) desc.textContent = "Voce sera redirecionado para concluir o pagamento online (Pix ou cartão).";
-        if (btn) btn.textContent = "Ir para o Mercado Pago";
+        if (titulo) titulo.textContent = "Confirmo e irei pagar com Pix";
+        if (desc) desc.textContent = "Voce vera o QR Code Pix na proxima tela para concluir o pagamento.";
+        if (btn) btn.textContent = "Gerar Pix e pagar";
     } else {
         if (titulo) titulo.textContent = "Confirmo o pagamento na entrega";
         if (desc) desc.textContent = "Estou ciente de que pagarei ao receber o pedido conforme a forma selecionada acima.";
@@ -208,16 +208,16 @@ async function finalizarPedido() {
     }
 
     if (!document.getElementById("confirmarPagamento").checked) {
-        mostrarToast(pagamentoSelecionado === "mercadopago" ? "Confirme para ir ao Mercado Pago" : "Confirme o pagamento ao receber");
+        mostrarToast(pagamentoSelecionado === "mercadopago" ? "Confirme para gerar o Pix" : "Confirme o pagamento ao receber");
         return;
     }
 
     const btn = document.getElementById("btnFinalizar");
     btn.disabled = true;
-    btn.textContent = pagamentoSelecionado === "mercadopago" ? "Abrindo Mercado Pago..." : "Enviando pedido...";
+    btn.textContent = pagamentoSelecionado === "mercadopago" ? "Gerando Pix..." : "Enviando pedido...";
 
     if (pagamentoSelecionado === "mercadopago") {
-        await finalizarComMercadoPago(btn);
+        await finalizarComPix(btn);
         return;
     }
 
@@ -266,20 +266,20 @@ async function finalizarPedido() {
     }
 }
 
-async function finalizarComMercadoPago(btn) {
+async function finalizarComPix(btn) {
     try {
         const resultado = await api.iniciarCheckoutMercadoPago(montarPayloadPedido("mercadopago"));
         localStorage.setItem("ultimoPedido", JSON.stringify(resultado));
         localStorage.removeItem("carrinho");
         sessionStorage.removeItem("bebidasOferecidas");
 
-        if (!resultado.checkout_url) {
-            throw new Error("Mercado Pago não retornou link de pagamento");
+        if (!resultado.pix?.copia_cola) {
+            throw new Error("Não foi possível gerar o Pix");
         }
 
-        window.location.href = resultado.checkout_url;
+        window.location.href = "pix-pagamento.html";
     } catch (error) {
-        mostrarAlerta(error.message, { titulo: "Erro no Mercado Pago", tipo: "erro" });
+        mostrarAlerta(error.message, { titulo: "Erro no Pix", tipo: "erro" });
         btn.disabled = false;
         atualizarTextoConfirmacao();
         atualizarBotaoFinalizar();

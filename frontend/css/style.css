@@ -4306,3 +4306,68 @@ body[data-fab="false"] .cart-fab {
         grid-template-columns: 1fr;
     }
 }
+
+/* Pix online */
+.pix-sandbox-banner {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    color: #92400e;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.pix-card {
+    text-align: center;
+}
+
+.pix-qr-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0 16px;
+}
+
+.pix-qr {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: #fff;
+}
+
+.pix-instrucao {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+.pix-copia-cola {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 12px;
+    text-align: left;
+    max-height: 120px;
+    overflow: auto;
+}
+
+.pix-copia-cola code {
+    font-size: 0.72rem;
+    word-break: break-all;
+    color: var(--text);
+}
+
+.pix-ajuda {
+    margin-top: 12px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.pix-aguardando p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.btn-block {
+    width: 100%;
+}

@@ -52,7 +52,7 @@ function renderPedido(pedido, mpStatus, container) {
         pix: "Pix ao receber",
         dinheiro: "Dinheiro ao receber",
         cartao: "Cartao ao receber",
-        mercadopago: "Mercado Pago (online)",
+        mercadopago: "Pix online",
     };
     const itens = pedido.itens || [];
     const taxaEntrega = pedido.taxa_entrega || 0;
@@ -82,7 +82,7 @@ function renderPedido(pedido, mpStatus, container) {
     if (isMp && pedido.pagamento_confirmado) {
         msgExtra = `<p style="margin-top:12px;color:var(--success,#16a34a);font-size:0.9rem">Pagamento aprovado! Seu pedido ja entrou na fila da pastelaria.</p>`;
     } else if (isMp && st === "aguardando_pagamento") {
-        msgExtra = `<p style="margin-top:12px;color:var(--text-muted);font-size:0.9rem">Pagamento ainda nao confirmado. Se voce nao concluiu no Mercado Pago, faca um novo pedido.</p>`;
+        msgExtra = `<p style="margin-top:12px;color:var(--text-muted);font-size:0.9rem">Pagamento Pix ainda nao confirmado. <a href="pix-pagamento.html">Voltar ao Pix</a></p>`;
     } else if (isMp && mpStatus === "pending") {
         msgExtra = `<p style="margin-top:12px;color:var(--text-muted);font-size:0.9rem">Pagamento em processamento. Avisaremos quando for confirmado.</p>`;
     } else if (st === "pendente" && !isMp) {
@@ -110,7 +110,7 @@ function renderPedido(pedido, mpStatus, container) {
             ${tipoEntrega === "retirada" ? `<p style="font-size:0.88rem;color:var(--text-secondary)">${pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria"}</p>` : ""}
             <p><strong>Pagamento:</strong> ${pagamentoLabels[pedido.pagamento] || pedido.pagamento}</p>
             ${isMp
-                ? `<p style="font-size:0.88rem;color:var(--text-secondary)">Pagamento online via Mercado Pago.</p>`
+                ? `<p style="font-size:0.88rem;color:var(--text-secondary)">Pagamento via Pix online.</p>`
                 : `<p style="font-size:0.88rem;color:var(--text-secondary)">Voce confirmou o pagamento ao receber ao finalizar o pedido.</p>`}
             ${pedido.troco ? `<p><strong>Troco para:</strong> ${formatarPreco(pedido.troco)}</p>` : ""}
         </div>

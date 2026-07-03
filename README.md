@@ -139,9 +139,9 @@ Resumo:
 | `MOTOBOY_WHATSAPP` | Número do motoboy (ex: 5511999999999) |
 | `GOOGLE_MAPS_API_KEY` | Geocodificação de endereços |
 
-### Mercado Pago (pagamento online)
+### Pix online
 
-Guia completo: **[MERCADOPAGO.md](MERCADOPAGO.md)**
+Guia: **[MERCADOPAGO.md](MERCADOPAGO.md)** — em sandbox usa **simulador Pix** no site (sem cartão nem redirect do MP).
 
 ### Login com Google
 

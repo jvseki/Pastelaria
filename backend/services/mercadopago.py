@@ -1,4 +1,4 @@
-"""Integração Mercado Pago Checkout Pro."""
+"""Integração Mercado Pago — Pix (simulador sandbox + API em produção)."""
 
 from __future__ import annotations
 
@@ -10,48 +10,9 @@ MP_API = "https://api.mercadopago.com"
 
 
 def mercadopago_habilitado() -> bool:
+    if settings.MERCADOPAGO_SANDBOX:
+        return True
     return bool(settings.MERCADOPAGO_ACCESS_TOKEN.strip())
-
-
-def verificar_conexao() -> dict:
-    """Testa o Access Token chamando a API do Mercado Pago."""
-    if not mercadopago_habilitado():
-        return {
-            "api_ok": False,
-            "erro": "MERCADOPAGO_ACCESS_TOKEN não configurado",
-        }
-
-    try:
-        with httpx.Client(timeout=15.0) as client:
-            response = client.get(f"{MP_API}/users/me", headers=_headers())
-            response.raise_for_status()
-            data = response.json()
-    except httpx.HTTPStatusError as exc:
-        detail = "Token inválido ou sem permissão"
-        if exc.response.status_code == 401:
-            detail = "Access Token inválido ou expirado"
-        return {
-            "api_ok": False,
-            "erro": detail,
-            "status_http": exc.response.status_code,
-        }
-    except httpx.RequestError:
-        return {
-            "api_ok": False,
-            "erro": "Não foi possível conectar à API do Mercado Pago",
-        }
-
-    public_key = settings.MERCADOPAGO_PUBLIC_KEY.strip()
-    pk_prefix = public_key.split("-", 1)[0] if public_key else ""
-
-    return {
-        "api_ok": True,
-        "mp_user_id": data.get("id"),
-        "mp_nickname": data.get("nickname"),
-        "sandbox": settings.MERCADOPAGO_SANDBOX,
-        "public_key_configurada": bool(public_key),
-        "public_key_prefix": pk_prefix or None,
-    }
 
 
 def _headers() -> dict:
@@ -61,51 +22,61 @@ def _headers() -> dict:
     }
 
 
-def criar_preferencia(
-    *,
-    pedido_id: int,
-    itens: list[dict],
-    payer_email: str | None = None,
-) -> dict:
-    """Cria preferência Checkout Pro e retorna resposta da API."""
-    frontend = settings.FRONTEND_URL.rstrip("/")
-    api_base = settings.API_PUBLIC_URL.rstrip("/") or settings.FRONTEND_URL.rstrip("/")
+def _api_base_url() -> str:
+    return settings.API_PUBLIC_URL.rstrip("/") or settings.FRONTEND_URL.rstrip("/")
 
-    body: dict = {
-        "items": itens,
-        "external_reference": str(pedido_id),
-        "back_urls": {
-            "success": f"{frontend}/pedido.html?mp=success&pedido_id={pedido_id}",
-            "failure": f"{frontend}/pagamento.html?mp=failure",
-            "pending": f"{frontend}/pedido.html?mp=pending&pedido_id={pedido_id}",
-        },
-        "auto_return": "approved",
-        "notification_url": f"{api_base}/pagamentos/webhook",
-        "statement_descriptor": "PASTELARIA",
+
+def gerar_pix_simulado(*, pedido_id: int, valor: float) -> dict:
+    """Pix fictício para testes locais — não chama a API do MP."""
+    valor_fmt = f"{valor:.2f}".replace(".", "")
+    copia_cola = (
+        f"00020126580014br.gov.bcb.pix0136pastelaria-sandbox-p{pedido_id}"
+        f"52040000530398654{valor_fmt}5802BR5925PASTELARIA DELIVERY6009SAO PAULO"
+        f"62070503***6304{pedido_id % 10000:04d}"
+    )
+    return {
+        "simulado": True,
+        "copia_cola": copia_cola,
+        "valor": valor,
+        "pedido_id": pedido_id,
     }
 
-    if payer_email:
-        email = payer_email
-        if settings.MERCADOPAGO_SANDBOX:
-            # Evita conflito conta real x sandbox no checkout
-            email = "test@testuser.com"
-        body["payer"] = {"email": email}
+
+def criar_pagamento_pix(
+    *,
+    pedido_id: int,
+    valor: float,
+    payer_email: str | None,
+    descricao: str,
+) -> dict:
+    """Cria cobrança Pix real via API do Mercado Pago."""
+    body: dict = {
+        "transaction_amount": round(valor, 2),
+        "description": descricao[:256],
+        "payment_method_id": "pix",
+        "payer": {"email": payer_email or "comprador@pastelaria.com"},
+        "external_reference": str(pedido_id),
+        "notification_url": f"{_api_base_url()}/pagamentos/webhook",
+    }
 
     with httpx.Client(timeout=30.0) as client:
-        response = client.post(f"{MP_API}/checkout/preferences", headers=_headers(), json=body)
+        response = client.post(f"{MP_API}/v1/payments", headers=_headers(), json=body)
         response.raise_for_status()
         return response.json()
 
 
-def obter_url_checkout(preference: dict) -> str:
-    """Retorna URL de checkout (sandbox ou produção)."""
-    if settings.MERCADOPAGO_SANDBOX:
-        url = preference.get("sandbox_init_point") or preference.get("init_point")
-    else:
-        url = preference.get("init_point") or preference.get("sandbox_init_point")
-    if not url:
-        raise ValueError("Mercado Pago não retornou URL de checkout")
-    return url
+def extrair_dados_pix(payment: dict) -> dict:
+    """Extrai QR e copia-e-cola de um pagamento Pix do MP."""
+    tx = (payment.get("point_of_interaction") or {}).get("transaction_data") or {}
+    return {
+        "simulado": False,
+        "copia_cola": tx.get("qr_code") or "",
+        "qr_code_base64": tx.get("qr_code_base64") or "",
+        "valor": payment.get("transaction_amount"),
+        "pedido_id": int(payment.get("external_reference") or 0),
+        "payment_id": str(payment.get("id") or ""),
+        "status": payment.get("status"),
+    }
 
 
 def buscar_pagamento(payment_id: str) -> dict:
@@ -143,3 +114,10 @@ def aplicar_status_pagamento(pedido, payment: dict) -> str:
         pedido.status = "cancelado"
 
     return status_mp
+
+
+def confirmar_pix_simulado(pedido) -> None:
+    """Marca pagamento sandbox como aprovado."""
+    pedido.pagamento_confirmado = True
+    pedido.status = "pendente"
+    pedido.mp_payment_id = pedido.mp_payment_id or f"SIM-{pedido.id}"

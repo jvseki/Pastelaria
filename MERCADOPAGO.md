@@ -1,266 +1,61 @@
-# Mercado Pago — guia passo a passo
+# Pix online — guia
 
-Integração **Checkout Pro** na Pastelaria Delivery: o cliente paga online (Pix ou cartão) e é redirecionado de volta ao site.
+Pagamento **Pix** integrado na Pastelaria Delivery.
 
-## Produtos de teste no cardápio
+## Modos
 
-| Produto | Preço | Categoria |
-|---------|-------|-----------|
-| Teste MP 1 centavo | R$ 0,01 | Teste MP |
-| Teste MP 50 centavos | R$ 0,50 | Teste MP |
+| `MERCADOPAGO_SANDBOX` | Comportamento |
+|----------------------|---------------|
+| `true` (padrão) | **Simulador Pix** no próprio site — sem redirect, sem cartão, sem conta MP |
+| `false` | Pix **real** via API do Mercado Pago (produção) |
 
-Use esses itens para testar pagamentos com valores baixos.
+## Testar agora (sandbox)
 
----
+1. Janela anônima → login Google no site
+2. Cardápio → **Teste MP** → **Teste MP 50 centavos**
+3. Pagamento → **Pix online** → **Gerar Pix e pagar**
+4. Na tela do QR Code → **Simular pagamento aprovado**
+5. Pedido confirmado na fila da pastelaria
 
-## Passo 1 — Credenciais no painel
+Não precisa de credenciais do Mercado Pago em sandbox.
 
-1. Acesse [Suas integrações](https://www.mercadopago.com.br/developers/panel/app)
-2. Abra a aplicação **Checkout Pro**
-3. Vá em **Credenciais de teste** (recomendado para começar)
-4. Copie:
-   - **Public Key** → chave curta (frontend)
-   - **Access Token** → chave longa (**segredo**, só no backend)
+## Produção (dinheiro real)
 
-> **Nunca** cole o Access Token no chat, no GitHub ou no `config.js` do frontend.
+No [painel Mercado Pago](https://www.mercadopago.com.br/developers/panel/app):
 
-> **Nunca** cole o Access Token no chat, no GitHub ou no `config.js` do frontend.
-
----
-
-## Login Google x conta de teste do MP
-
-Sao coisas **diferentes**:
-
-| Onde | Para que serve |
-|------|----------------|
-| **Google** no site | Entrar na Pastelaria, pedido, endereco |
-| **Conta comprador** no MP | So na tela de pagamento do Mercado Pago (sandbox) |
-
-Voce **nao** coloca usuario/senha do comprador teste no site nem no Render — so usa quando o checkout do MP pedir login.
-
-No painel: **Contas de teste → Comprador** → Usuario, Senha e Codigo (6 digitos).
-
----
-
-## Passo 2 — Configurar o backend local
-
-```powershell
-cd backend
-Copy-Item .env.example .env
-```
-
-Edite `backend/.env` e adicione:
+1. Copie o **Access Token** de **Credenciais de produção**
+2. No Render:
 
 ```env
-MERCADOPAGO_ACCESS_TOKEN=APP_USR-seu-access-token-aqui
-MERCADOPAGO_PUBLIC_KEY=APP_USR-sua-public-key-aqui
-MERCADOPAGO_SANDBOX=true
-FRONTEND_URL=http://localhost:5500
-API_PUBLIC_URL=http://localhost:8000
-```
-
-| Variável | O que é |
-|----------|---------|
-| `MERCADOPAGO_ACCESS_TOKEN` | Token longo — **só no backend** |
-| `MERCADOPAGO_PUBLIC_KEY` | Chave pública (reservada para uso futuro no frontend) |
-| `MERCADOPAGO_SANDBOX` | `true` = usa ambiente de teste do MP |
-| `FRONTEND_URL` | URL do site (para voltar após pagar) |
-| `API_PUBLIC_URL` | URL pública da API (webhooks em produção) |
-
----
-
-## Passo 3 — Rodar API e frontend
-
-**Terminal 1 — API:**
-
-```powershell
-cd backend
-pip install -r requirements.txt
-uvicorn app:app --reload
-```
-
-API em `http://localhost:8000`
-
-**Terminal 2 — Site:**
-
-```powershell
-cd frontend
-npx serve .
-```
-
-Abra a URL que aparecer (ex.: `http://localhost:3000` ou `http://localhost:5500`).
-
-Se usar porta diferente de 5500, ajuste `FRONTEND_URL` no `.env` e reinicie a API.
-
-### Verificar se a API do Mercado Pago está respondendo
-
-Abra no navegador (substitua pela URL da sua API):
-
-```
-https://pastelaria-geu7.onrender.com/pagamentos/status
-```
-
-| Campo | Significado |
-|-------|-------------|
-| `habilitado` | Token configurado no servidor |
-| `sandbox` | Modo teste (`true`) ou produção (`false`) |
-| `api_ok` | **`true`** = Access Token válido e MP respondeu |
-| `mp_user_id` | ID da conta vendedor ligada ao token |
-| `erro` | Motivo se `api_ok` for `false` |
-
-Exemplo de sucesso:
-
-```json
-{
-  "habilitado": true,
-  "sandbox": true,
-  "api_ok": true,
-  "mp_user_id": 3512365761,
-  "mp_nickname": "TESTUSER...",
-  "public_key_configurada": true,
-  "public_key_prefix": "APP_USR"
-}
-```
-
-O endpoint `/pagamentos/config` só mostra se as variáveis existem; **`/pagamentos/status`** testa de verdade a conexão com o Mercado Pago.
-
----
-
-## Passo 4 — Testar o fluxo (jeito que o MP documenta)
-
-> Use **janela anônima** (`Ctrl+Shift+N`). Login Google no site **sim**; conta real do MP **não**.
-
-1. Faça login com **Google** no site da Pastelaria
-2. Cadastre endereço (ou escolha retirada)
-3. No cardápio, filtre **Teste MP**
-4. Adicione **Teste MP 50 centavos** (evite R$ 0,01 no primeiro teste)
-5. Carrinho → continuar → pagamento → **Mercado Pago** → **Ir para o Mercado Pago**
-6. Na página do MP (faixa **Sandbox**), faça **login com o comprador de teste**:
-
-| Campo | Valor |
-|-------|-------|
-| Usuário | `TESTUSER9055251759889005892` |
-| Senha | `zPXYzdffNQ` |
-| Código (se pedir) | `366047` (ou últimos 6 dígitos do User ID no painel) |
-
-7. Depois de logado, escolha **uma** forma:
-
-**A) Saldo em conta (mais fácil)** — no painel MP: Contas de teste → Comprador → **Adicionar saldo fictício** → no checkout pague com saldo.
-
-**B) Cartão de teste** — após login TESTUSER:
-
-| Campo | Valor |
-|-------|-------|
-| Número | `4235 6477 2802 5682` (Visa) |
-| Nome do titular | `APRO` (só isso, sem sobrenome) |
-| Validade | `11/30` |
-| CVV | `123` |
-| CPF | `12345678909` |
-| Parcelas | **1x** (à vista) |
-
-> O MP recomenda **comprador teste logado** + cartão teste. Pagar só como convidado costuma falhar no Checkout Pro sandbox.
-
-Documentação: [testar compras](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/integration-test/test-purchases)
-
-8. Após pagar, você volta para `pedido.html` com confirmação
-
----
-
-## Passo 5 — Produção (Render + Vercel)
-
-No **Render** (variáveis da API), adicione:
-
-```env
-MERCADOPAGO_ACCESS_TOKEN=...
-MERCADOPAGO_PUBLIC_KEY=...
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-...
 MERCADOPAGO_SANDBOX=false
 FRONTEND_URL=https://pastelaria-mu.vercel.app
 API_PUBLIC_URL=https://pastelaria-geu7.onrender.com
 ```
 
-Use credenciais de **produção** só quando for receber dinheiro real.
+3. Cliente vê QR Code Pix real e paga no app do banco
+4. Webhook `/pagamentos/webhook` confirma automaticamente
 
----
+## Endpoints da API
 
-## Como funciona no código
+| Rota | Função |
+|------|--------|
+| `GET /pagamentos/config` | Se Pix online está habilitado |
+| `POST /pagamentos/checkout` | Cria pedido + dados do Pix |
+| `POST /pagamentos/simular/{id}` | Sandbox: confirma pagamento fictício |
+| `POST /pagamentos/confirmar/{id}` | Produção: consulta status no MP |
+| `POST /pagamentos/webhook` | Produção: notificação do MP |
 
-```
-Cliente → Pagamento → POST /pagamentos/checkout
-         → Cria pedido (status: aguardando_pagamento)
-         → Cria preferência no MP
-         → Redireciona para checkout_url
+## Formas de pagamento no site
 
-MP aprova → Webhook POST /pagamentos/webhook
-         → pedido.status = pendente
-         → pagamento_confirmado = true
-         → Admin vê o pedido
-```
-
-Pagamento na entrega (Pix/Dinheiro/Cartão) continua funcionando como antes.
-
----
-
-## Problemas comuns
-
-| Problema | Solução |
-|----------|---------|
-| Opção Mercado Pago não aparece | Confira `MERCADOPAGO_ACCESS_TOKEN` no `.env` e reinicie a API |
-| Erro 502 ao pagar | Token inválido ou credencial de produção em sandbox (ou vice-versa) |
-| Webhook não chega localmente | Normal em localhost; use retorno `back_urls` ou deploy na Render |
-| Valor R$ 0,01 rejeitado | Teste com R$ 0,50 ou use cartão Visa `4235...` com nome `APRO` |
-| Console: `tokenization 422` | Credenciais erradas: use **Credenciais de teste** no Render (`TEST-...` se existir) |
-| "Não é possível pagar com este cartão" | Troque token no Render + tente Visa ou login **TESTUSER** com saldo |
-| Erros CSP / favicon 404 no console | São da página do MP; ignore. Desative extensões (AdBlock) ou use anônimo |
-| **"Uma das partes é de teste"** (tela fatal) | Conta **real** do MP aberta no navegador. Veja seção abaixo |
-
-### Erro fatal: "Uma das partes com as quais você está tentando efetuar o pagamento é de teste"
-
-A API está funcionando (`/pagamentos/status` com `api_ok: true`). Esse erro é no **checkout do MP**, quando mistura:
-
-- vendedor **teste** (suas credenciais de teste) + comprador **real** (você logado no MP no Chrome)
-
-**Como testar corretamente:**
-
-1. Feche abas do Mercado Pago ou use **janela anônima** (`Ctrl+Shift+N`)
-2. **Não** entre na sua conta real do Mercado Pago nessa janela
-3. No site da Pastelaria: faça login Google e o pedido normalmente
-4. No checkout MP, escolha **Cartão** (como convidado) **ou** login com **TESTUSER comprador** do painel
-5. Cartão Visa teste: `4235 6477 2802 5682`, nome `APRO`, CPF `12345678909`, validade `11/30`, CVV `123`
-6. **Não** use cartão salvo, Google Pay ou "Entrar com minha conta" se abrir sua conta real
-
-Se ainda falhar: no painel MP → **Contas de teste** → comprador → adicione **saldo fictício** e pague com **Saldo em conta** (mais estável que cartão).
-
-### Erro: "Não foi possível processar seu pagamento"
-
-Você já passou do erro de conta mista — o MP **tentou** cobrar e **rejeitou**. Causas comuns:
-
-| Causa | O que fazer |
-|-------|-------------|
-| Cartão sem login TESTUSER | Entre com comprador teste antes de pagar |
-| Nome do titular errado | Use exatamente `APRO` (aprovado) |
-| Valor muito baixo | Teste com **R$ 0,50**, não R$ 0,01 |
-| Parcelas | Use **1x** à vista |
-| Sem saldo | Adicione saldo fictício no painel e use saldo em conta |
-
-Clique em **Pagar com outro meio** → **Saldo em conta** (com TESTUSER logado) é o caminho mais confiável.
-
-### Erro 422 em `card-form/tokenization` (console F12)
-
-Isso aparece **dentro do checkout do Mercado Pago**, não no seu código. Significa que o MP **não conseguiu validar o cartão** com as credenciais do vendedor.
-
-**Correção:**
-
-1. Painel MP → sua app → **Credenciais de teste** (não produção da conta real)
-2. Copie Access Token + Public Key de **teste** para o Render
-3. `MERCADOPAGO_SANDBOX=true`
-4. Redeploy → **pedido novo** em janela anônima
-5. Alternativa: **Entrar com a minha conta** → TESTUSER → pagar com **saldo** (sem cartão)
-
-O `preference-id` começando com `3512365761-...` só indica que a preferência foi criada; o pagamento falha na etapa seguinte por ambiente/credencial.
+| Opção | Quando |
+|-------|--------|
+| **Pix online** | Paga agora (simulado ou real) |
+| Pix / Dinheiro ao receber | Presencial na entrega |
+| Cartão ao receber | Presencial na entrega |
 
 ## Segurança
 
-- Regenerar Access Token se ele foi exposto
+- Access Token só no backend (Render)
 - Não commitar `.env`
-- `MERCADOPAGO_SANDBOX=true` enquanto estiver testando
+- Regenerar token se exposto

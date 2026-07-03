@@ -176,15 +176,8 @@ CATALOGO_PRODUTOS = [
         "categoria": "Combos",
     },
     {
-        "nome": "Teste MP 1 centavo",
-        "descricao": "Produto de teste para pagamento Mercado Pago (R$ 0,01)",
-        "preco": 0.01,
-        "imagem": "images/produtos/padrao.svg",
-        "categoria": "Teste MP",
-    },
-    {
         "nome": "Teste MP 50 centavos",
-        "descricao": "Produto de teste para pagamento Mercado Pago (R$ 0,50)",
+        "descricao": "Produto de teste para Pix online (R$ 0,50)",
         "preco": 0.50,
         "imagem": "images/produtos/padrao.svg",
         "categoria": "Teste MP",
@@ -213,7 +206,14 @@ def _seed_produtos():
         principal = db.query(Produto).filter(Produto.nome == "Combo Familia").first()
         if duplicata and principal and duplicata.id != principal.id:
             duplicata.ativo = False
+        antigo_centavo = db.query(Produto).filter(Produto.nome == "Teste MP 1 centavo").first()
+        if antigo_centavo:
+            antigo_centavo.ativo = False
         db.commit()
+        antigo = db.query(Produto).filter(Produto.nome == "Teste MP 1 centavo").first()
+        if antigo:
+            antigo.ativo = False
+            db.commit()
     finally:
         db.close()
 

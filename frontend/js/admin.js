@@ -25,7 +25,7 @@ const PAGAMENTO_LABELS = {
     pix: "Pix ao receber",
     dinheiro: "Dinheiro ao receber",
     cartao: "Cartao ao receber",
-    mercadopago: "Mercado Pago (online)",
+    mercadopago: "Pix online",
 };
 
 const MOTOBOY_WHATSAPP = window.MOTOBOY_WHATSAPP || "5518997640335";

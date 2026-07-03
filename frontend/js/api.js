@@ -310,6 +310,12 @@ const api = {
         });
     },
 
+    async simularPagamentoPix(pedidoId) {
+        return await apiRequest(`/pagamentos/simular/${pedidoId}`, {
+            method: "POST",
+        });
+    },
+
     async getMeusPedidos() {
         return await apiRequest("/pedidos/me");
     },
