@@ -4351,16 +4351,59 @@ body[data-fab="false"] .cart-fab {
     border: 1px dashed var(--border);
     border-radius: var(--radius-sm);
     padding: 12px;
-    margin-bottom: 12px;
+    margin-top: 10px;
     text-align: left;
-    max-height: 120px;
+    max-height: 140px;
     overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    cursor: pointer;
+}
+
+.pix-copia-cola:active {
+    background: var(--primary-soft);
+}
+
+.pix-codigo-detalhes {
+    margin-top: 14px;
+    text-align: left;
+}
+
+.pix-codigo-detalhes summary {
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: 8px 0;
+    list-style: none;
+}
+
+.pix-codigo-detalhes summary::-webkit-details-marker {
+    display: none;
+}
+
+.pix-codigo-detalhes summary::before {
+    content: "▸ ";
+}
+
+.pix-codigo-detalhes[open] summary::before {
+    content: "▾ ";
+}
+
+.btn-copiar-pix {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    touch-action: manipulation;
 }
 
 .pix-copia-cola code {
     font-size: 0.72rem;
     word-break: break-all;
     color: var(--text);
+    user-select: all;
+    -webkit-user-select: all;
 }
 
 .pix-ajuda {
@@ -4376,4 +4419,23 @@ body[data-fab="false"] .cart-fab {
 
 .btn-block {
     width: 100%;
+}
+
+@media (max-width: 480px) {
+    .pix-qr {
+        width: min(280px, 88vw);
+        height: auto;
+        aspect-ratio: 1;
+    }
+
+    .btn-copiar-pix {
+        position: sticky;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        z-index: 2;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .pix-card {
+        padding-bottom: 8px;
+    }
 }

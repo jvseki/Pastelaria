@@ -18,7 +18,7 @@ async function initPixPagamento() {
     const copiaCola = pix.copia_cola || "";
     const qrSrc = pix.qr_code_base64
         ? `data:image/png;base64,${pix.qr_code_base64}`
-        : `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(copiaCola)}`;
+        : `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(copiaCola)}`;
 
     container.innerHTML = `
         <div class="page-title" style="padding-top:0">
@@ -33,19 +33,27 @@ async function initPixPagamento() {
 
         <div class="form-card pix-card">
             <div class="pix-qr-wrap">
-                <img src="${qrSrc}" alt="QR Code Pix" class="pix-qr" width="240" height="240">
+                <img src="${qrSrc}" alt="QR Code Pix" class="pix-qr" width="280" height="280" loading="eager">
             </div>
 
-            <p class="pix-instrucao">Escaneie o QR Code ou copie o código abaixo no app do seu banco.</p>
+            <p class="pix-instrucao">Escaneie o QR Code ou toque em <strong>Copiar código Pix</strong> e cole no app do banco.</p>
 
-            <div class="pix-copia-cola">
-                <code id="pixCodigo">${copiaCola}</code>
-            </div>
+            <button type="button" class="btn btn-primary btn-lg btn-block btn-copiar-pix" id="btnCopiarPix">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Copiar código Pix
+            </button>
 
-            <button type="button" class="btn btn-secondary btn-block" id="btnCopiarPix">Copiar código Pix</button>
+            <details class="pix-codigo-detalhes">
+                <summary>Ver código completo</summary>
+                <div class="pix-copia-cola" id="pixCopiaColaBox" role="button" tabindex="0" title="Toque para copiar">
+                    <code id="pixCodigo">${escapeHtml(copiaCola)}</code>
+                </div>
+            </details>
 
             ${simulado ? `
-            <button type="button" class="btn btn-primary btn-lg btn-block" id="btnSimularPix" style="margin-top:12px">
+            <button type="button" class="btn btn-secondary btn-lg btn-block" id="btnSimularPix" style="margin-top:12px">
                 Simular pagamento aprovado
             </button>
             <p class="pix-ajuda">No modo teste, clique acima para confirmar o pagamento sem usar o Mercado Pago.</p>
@@ -58,12 +66,15 @@ async function initPixPagamento() {
         </div>
     `;
 
-    document.getElementById("btnCopiarPix")?.addEventListener("click", async () => {
-        try {
-            await navigator.clipboard.writeText(copiaCola);
-            mostrarToast("Código Pix copiado!");
-        } catch {
-            mostrarToast("Não foi possível copiar. Selecione o código manualmente.");
+    const btnCopiar = document.getElementById("btnCopiarPix");
+    const boxCodigo = document.getElementById("pixCopiaColaBox");
+
+    btnCopiar?.addEventListener("click", () => copiarCodigoPix(copiaCola, btnCopiar));
+    boxCodigo?.addEventListener("click", () => copiarCodigoPix(copiaCola, btnCopiar));
+    boxCodigo?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            copiarCodigoPix(copiaCola, btnCopiar);
         }
     });
 
@@ -71,6 +82,38 @@ async function initPixPagamento() {
     if (!simulado) {
         iniciarPollingConfirmacao(pedido.id);
     }
+}
+
+function escapeHtml(texto) {
+    return String(texto)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+async function copiarCodigoPix(copiaCola, btn) {
+    const ok = await copiarTexto(copiaCola);
+    if (ok) {
+        mostrarToast("Código Pix copiado!", "sucesso");
+        if (btn) {
+            const labelOriginal = btn.dataset.labelOriginal || btn.innerHTML;
+            btn.dataset.labelOriginal = labelOriginal;
+            btn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Copiado!`;
+            setTimeout(() => {
+                btn.innerHTML = labelOriginal;
+            }, 2000);
+        }
+        return;
+    }
+    mostrarAlerta("Selecione o código em \"Ver código completo\" e copie manualmente.", {
+        titulo: "Não foi possível copiar",
+        tipo: "aviso",
+    });
 }
 
 function calcularTotalPedido(pedido) {
@@ -104,12 +147,16 @@ async function simularPagamento(pedidoId) {
 
 function iniciarPollingConfirmacao(pedidoId) {
     let tentativas = 0;
-    const maxTentativas = 60;
+    const maxTentativas = 72;
 
     const interval = setInterval(async () => {
         tentativas += 1;
         if (tentativas > maxTentativas) {
             clearInterval(interval);
+            const aguardando = document.getElementById("pixAguardando");
+            if (aguardando) {
+                aguardando.innerHTML = `<p>Pagamento ainda não confirmado. Se você já pagou, aguarde alguns minutos ou entre em contato.</p>`;
+            }
             return;
         }
 

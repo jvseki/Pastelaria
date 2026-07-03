@@ -144,10 +144,6 @@ function pagamentoEstaCompleto() {
     return true;
 }
 
-function normalizarCpf(valor) {
-    return (valor || "").replace(/\D/g, "");
-}
-
 function atualizarTextoConfirmacao() {
     const titulo = document.getElementById("confirmarPagamentoTitulo");
     const desc = document.getElementById("confirmarPagamentoDesc");

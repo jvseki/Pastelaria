@@ -66,8 +66,6 @@ Sem webhook, o site ainda tenta confirmar a cada 5 segundos na tela do Pix.
 
 ### Erro ao gerar Pix em produção
 
-| Erro | Solução |
-|------|---------|
 | Erro na tela | Solução |
 |--------------|---------|
 | **Unauthorized use of live credentials** | Token de **teste** com `SANDBOX=false`. Use token de **produção** ou volte `SANDBOX=true` |
@@ -75,7 +73,38 @@ Sem webhook, o site ainda tenta confirmar a cada 5 segundos na tela do Pix.
 | QR vazio | Conta sem chave Pix cadastrada no MP |
 | Pagou e não confirmou | Confira webhook e `API_PUBLIC_URL` no Render |
 
-Em **produção**, o site pede o **CPF do pagador** — exigência da API Pix do Mercado Pago.
+Em **produção**, o site pede o **CPF do pagador** (com máscara automática `000.000.000-00`).
+
+## Checklist — evitar problemas com o Mercado Pago
+
+### No Render (obrigatório em produção)
+
+- [ ] `MERCADOPAGO_ACCESS_TOKEN` = token de **Credenciais de produção**
+- [ ] `MERCADOPAGO_SANDBOX=false` só quando for receber dinheiro real
+- [ ] `API_PUBLIC_URL=https://pastelaria-geu7.onrender.com` (sem barra no final)
+- [ ] `FRONTEND_URL=https://pastelaria-mu.vercel.app`
+
+### No painel Mercado Pago
+
+- [ ] Conta verificada (CPF/CNPJ)
+- [ ] Chave Pix cadastrada (aleatória, e-mail ou telefone)
+- [ ] Webhook: `https://pastelaria-geu7.onrender.com/pagamentos/webhook` → evento **Pagamentos**
+- [ ] Regenerar Access Token se ele foi exposto em print/chat
+
+### No site (já implementado)
+
+- CPF com máscara automática na tela de pagamento
+- Botão **Copiar código Pix** (funciona no celular)
+- QR Code do MP em produção; simulador em sandbox
+- Confirmação automática após pagamento (webhook + verificação a cada 5 s)
+
+### Boas práticas
+
+- Teste primeiro com `SANDBOX=true` (simulador, sem dinheiro)
+- Em produção, teste com valor baixo (R$ 0,50) uma vez
+- Depois desative os produtos **Teste MP** no admin
+- Não misture token de teste com `SANDBOX=false`
+- Não commite `.env` nem cole token no GitHub
 
 > **Atenção:** em produção cada pedido gera cobrança real. Use valor baixo no primeiro teste (ex.: R$ 0,50) e depois remova os produtos “Teste MP” do cardápio.
 

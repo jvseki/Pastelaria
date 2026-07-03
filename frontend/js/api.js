@@ -371,6 +371,61 @@ function formatarPreco(valor) {
     return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function normalizarCpf(valor) {
+    return (valor || "").replace(/\D/g, "");
+}
+
+function formatarCpf(valor) {
+    const digitos = normalizarCpf(valor).slice(0, 11);
+    if (digitos.length <= 3) return digitos;
+    if (digitos.length <= 6) return `${digitos.slice(0, 3)}.${digitos.slice(3)}`;
+    if (digitos.length <= 9) return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6)}`;
+    return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-${digitos.slice(9)}`;
+}
+
+function mascararCpfPix(input) {
+    if (!input) return;
+    input.value = formatarCpf(input.value);
+    if (typeof atualizarBotaoFinalizar === "function") atualizarBotaoFinalizar();
+}
+
+async function copiarTexto(texto) {
+    const valor = String(texto || "");
+    if (!valor) return false;
+
+    try {
+        if (navigator.clipboard?.writeText && window.isSecureContext) {
+            await navigator.clipboard.writeText(valor);
+            return true;
+        }
+    } catch {
+        /* tenta fallback */
+    }
+
+    const area = document.createElement("textarea");
+    area.value = valor;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.top = "0";
+    area.style.left = "0";
+    area.style.width = "1px";
+    area.style.height = "1px";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    area.setSelectionRange(0, valor.length);
+
+    let ok = false;
+    try {
+        ok = document.execCommand("copy");
+    } catch {
+        ok = false;
+    }
+    document.body.removeChild(area);
+    return ok;
+}
+
 function mostrarToast(mensagem, tipo = "info") {
     let toast = document.getElementById("toast");
     if (!toast) {
