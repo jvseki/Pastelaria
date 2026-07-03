@@ -19,22 +19,60 @@ Pagamento **Pix** integrado na Pastelaria Delivery.
 
 Não precisa de credenciais do Mercado Pago em sandbox.
 
-## Produção (dinheiro real)
+## Produção — QR Code Pix verdadeiro
 
-No [painel Mercado Pago](https://www.mercadopago.com.br/developers/panel/app):
+Com `MERCADOPAGO_SANDBOX=false`, o site chama a API do Mercado Pago e exibe o **QR real** (imagem base64 do MP + copia-e-cola que funciona no app do banco).
 
-1. Copie o **Access Token** de **Credenciais de produção**
-2. No Render:
+### Pré-requisitos no Mercado Pago
+
+1. Conta Mercado Pago **verificada** (CPF/CNPJ)
+2. **Chave Pix cadastrada** na conta ([Suas chaves Pix](https://www.mercadopago.com.br/pix-keys/app/key-management))
+3. Aplicação criada em [Suas integrações](https://www.mercadopago.com.br/developers/panel/app)
+
+### Passo a passo no Render
+
+1. Painel MP → sua app → **Credenciais de produção** → copie o **Access Token**
+2. No Render, configure:
 
 ```env
-MERCADOPAGO_ACCESS_TOKEN=APP_USR-...
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-...   # token de PRODUÇÃO
 MERCADOPAGO_SANDBOX=false
 FRONTEND_URL=https://pastelaria-mu.vercel.app
 API_PUBLIC_URL=https://pastelaria-geu7.onrender.com
 ```
 
-3. Cliente vê QR Code Pix real e paga no app do banco
-4. Webhook `/pagamentos/webhook` confirma automaticamente
+3. Salve e aguarde o redeploy
+4. Faça um pedido no site → **Pix online**
+5. O QR **não** terá faixa “Modo teste” — é cobrança real
+6. Pague pelo app do banco → o pedido confirma sozinho (webhook + polling)
+
+### Webhook (recomendado)
+
+No painel MP → sua app → **Webhooks**:
+
+- URL: `https://pastelaria-geu7.onrender.com/pagamentos/webhook`
+- Evento: **Pagamentos**
+
+Sem webhook, o site ainda tenta confirmar a cada 5 segundos na tela do Pix.
+
+### Como saber se está no modo certo
+
+| Sinal | Simulador (teste) | Pix real |
+|-------|-------------------|----------|
+| Banner amarelo “Modo teste” | Sim | Não |
+| Botão “Simular pagamento” | Sim | Não |
+| Texto “Aguardando confirmação do Pix…” | Não | Sim |
+| Dinheiro na conta MP | Não | Sim |
+
+### Erro ao gerar Pix em produção
+
+| Erro | Solução |
+|------|---------|
+| 502 ao clicar “Gerar Pix” | Token inválido ou de teste com `SANDBOX=false` |
+| QR vazio | Conta sem chave Pix cadastrada no MP |
+| Pagou e não confirmou | Confira webhook e `API_PUBLIC_URL` no Render |
+
+> **Atenção:** em produção cada pedido gera cobrança real. Use valor baixo no primeiro teste (ex.: R$ 0,50) e depois remova os produtos “Teste MP” do cardápio.
 
 ## Endpoints da API
 
