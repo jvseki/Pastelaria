@@ -118,13 +118,11 @@ def _gerar_pix_pedido(
 @router.get("/config")
 def config_mercadopago():
     sandbox = settings.MERCADOPAGO_SANDBOX
-    cartao_real = cartao_online_habilitado()
     return {
         "habilitado": mercadopago_habilitado(),
         "sandbox": sandbox,
         "modo": "simulador_pix" if sandbox else "pix_mercadopago",
-        "cartao_habilitado": cartao_real,
-        "cartao_modo": "checkout_pro",
+        "cartao_habilitado": False,
         "aviso_credenciais": aviso_credenciais_mp(),
     }
 

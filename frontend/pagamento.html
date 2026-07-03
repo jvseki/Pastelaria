@@ -64,7 +64,7 @@
                     </span>
                     <span class="pagamento-tab-text">
                         <strong>Pagar agora</strong>
-                        <small>Pix ou cartão online</small>
+                        <small>Pix online</small>
                     </span>
                 </button>
                 <button type="button" class="pagamento-tab" id="tabPagarEntrega" role="tab"
@@ -83,15 +83,6 @@
             </div>
 
             <div class="pagamento-panel" id="panelPagarAgora" role="tabpanel" aria-labelledby="tabPagarAgora">
-                <div class="pagamento-agora-subtabs pagamento-agora-subtabs--tres" id="agoraSubtabs" role="tablist" aria-label="Pagar agora">
-                    <button type="button" class="pagamento-agora-subtab active" id="subtabPix"
-                        onclick="selecionarFormaAgora('pix')">Pix</button>
-                    <button type="button" class="pagamento-agora-subtab" id="subtabCredito"
-                        onclick="selecionarFormaAgora('credito')" style="display:none">Crédito</button>
-                    <button type="button" class="pagamento-agora-subtab" id="subtabDebito"
-                        onclick="selecionarFormaAgora('debito')" style="display:none">Débito</button>
-                </div>
-
                 <div class="pagamento-agora-conteudo" id="agoraConteudoPix">
                     <div class="pix-info-box visible">
                         <div class="pix-info-header">
@@ -110,17 +101,6 @@
                                 placeholder="000.000.000-00" oninput="mascararCpfPix(this); atualizarBotaoFinalizar()">
                             <p class="form-hint">Obrigatório para gerar o Pix no Mercado Pago.</p>
                         </div>
-                    </div>
-                </div>
-
-                <div class="pagamento-agora-conteudo" id="agoraConteudoCartao" style="display:none">
-                    <div class="pix-info-box visible">
-                        <div class="pix-info-header">
-                            <span class="pix-info-badge">Pagamento seguro</span>
-                        </div>
-                        <p class="pix-info-desc" id="cartaoCheckoutDesc">
-                            Você será redirecionado para o <strong>site do Mercado Pago</strong> para concluir o pagamento com cartão.
-                        </p>
                     </div>
                 </div>
             </div>
