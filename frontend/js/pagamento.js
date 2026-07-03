@@ -46,17 +46,26 @@ async function initPagamento() {
 }
 
 async function carregarMercadoPago() {
+    let avisoCredenciais = null;
     try {
         const cfg = await api.getMercadoPagoConfig();
         mercadoPagoHabilitado = !!cfg.habilitado;
         cartaoOnlineHabilitado = !!cfg.cartao_habilitado;
         pixProducao = cfg.modo === "pix_mercadopago";
         mpPublicKey = cfg.public_key || "";
+        avisoCredenciais = cfg.aviso_credenciais || null;
     } catch (_) {
         mercadoPagoHabilitado = false;
         cartaoOnlineHabilitado = false;
         pixProducao = false;
         mpPublicKey = "";
+    }
+
+    if (avisoCredenciais) {
+        mostrarAlerta(avisoCredenciais, {
+            titulo: "Credenciais do Mercado Pago",
+            tipo: "aviso",
+        });
     }
 
     const tabs = document.getElementById("pagamentoTabs");

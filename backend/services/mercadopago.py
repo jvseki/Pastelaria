@@ -81,6 +81,49 @@ def mensagem_erro_mp(exc: httpx.HTTPStatusError) -> str:
     return "Erro ao gerar Pix no Mercado Pago"
 
 
+_MENSAGENS_RECUSA_CARTAO = {
+    "cc_rejected_insufficient_amount": "Saldo ou limite insuficiente no cartão.",
+    "cc_rejected_bad_filled_card_number": "Número do cartão inválido. Confira os dados.",
+    "cc_rejected_bad_filled_date": "Data de validade inválida.",
+    "cc_rejected_bad_filled_security_code": "Código de segurança (CVV) inválido.",
+    "cc_rejected_bad_filled_other": "Revise os dados do cartão e do titular.",
+    "cc_rejected_call_for_authorize": "Ligue para o banco para autorizar a compra.",
+    "cc_rejected_card_disabled": "Cartão desabilitado ou bloqueado para compras online.",
+    "cc_rejected_duplicated_payment": "Pagamento duplicado. Aguarde alguns minutos.",
+    "cc_rejected_high_risk": "Pagamento recusado por segurança. Tente outro cartão ou use Pix.",
+    "cc_rejected_invalid_installments": "Parcelamento não permitido para este cartão.",
+    "cc_rejected_max_attempts": "Muitas tentativas. Aguarde e tente novamente.",
+    "cc_rejected_other_reason": "Cartão recusado pelo banco. Tente outro cartão ou use Pix.",
+}
+
+
+def mensagem_recusa_cartao(payment: dict) -> str:
+    codigo = str(payment.get("status_detail") or "").strip()
+    if codigo in _MENSAGENS_RECUSA_CARTAO:
+        return _MENSAGENS_RECUSA_CARTAO[codigo]
+    if codigo:
+        return f"Pagamento recusado ({codigo}). Tente outro cartão ou use Pix."
+    return "Pagamento recusado pelo banco ou pelo Mercado Pago."
+
+
+def _credencial_eh_teste(valor: str) -> bool:
+    return (valor or "").strip().upper().startswith("TEST-")
+
+
+def aviso_credenciais_mp() -> str | None:
+    token = settings.MERCADOPAGO_ACCESS_TOKEN.strip()
+    pubkey = settings.MERCADOPAGO_PUBLIC_KEY.strip()
+    if not token and not pubkey:
+        return None
+    if settings.MERCADOPAGO_SANDBOX:
+        return None
+    token_teste = _credencial_eh_teste(token)
+    pub_teste = _credencial_eh_teste(pubkey)
+    if token_teste or pub_teste:
+        return "Credenciais de TESTE com SANDBOX desligado. Use Access Token e Public Key de produção."
+    return None
+
+
 def gerar_pix_simulado(*, pedido_id: int, valor: float) -> dict:
     """Pix fictício para testes locais — não chama a API do MP."""
     valor_fmt = f"{valor:.2f}".replace(".", "")
@@ -178,6 +221,8 @@ def criar_pagamento_cartao(
         },
         "external_reference": str(pedido_id),
         "notification_url": f"{_api_base_url()}/pagamentos/webhook",
+        "statement_descriptor": "PASTELARIA",
+        "binary_mode": False,
     }
     if issuer_id:
         body["issuer_id"] = str(issuer_id)

@@ -25,6 +25,8 @@ from services.mercadopago import (
     gerar_pix_simulado,
     mensagem_erro_mp,
     mercadopago_habilitado,
+    mensagem_recusa_cartao,
+    aviso_credenciais_mp,
     obter_pix_de_pagamento_existente,
     resumo_pagamento_cartao,
     validar_cpf,
@@ -116,6 +118,7 @@ def config_mercadopago():
         "modo": "simulador_pix" if sandbox else "pix_mercadopago",
         "public_key": settings.MERCADOPAGO_PUBLIC_KEY.strip() if cartao_real else "",
         "cartao_habilitado": cartao_real,
+        "aviso_credenciais": aviso_credenciais_mp(),
     }
 
 
@@ -230,7 +233,8 @@ def iniciar_pagamento_cartao(
     if status_mp in ("rejected", "cancelled"):
         pedido.status = "cancelado"
         db.commit()
-        detail = payment.get("status_detail") or "Pagamento recusado pelo emissor do cartão"
+        detail = mensagem_recusa_cartao(payment)
+        logger.warning("Cartão recusado pedido %s: %s", pedido.id, payment.get("status_detail"))
         raise HTTPException(status_code=402, detail=detail)
 
     db.commit()

@@ -73,7 +73,20 @@ Sem webhook, o site ainda tenta confirmar a cada 5 segundos na tela do Pix.
 | Texto “Aguardando confirmação do Pix…” | Não | Sim |
 | Dinheiro na conta MP | Não | Sim |
 
-### Erro ao gerar Pix em produção
+### Erro no cartão (402) ou console com `mercadolibre.com`
+
+**O que importa:** se o formulário de cartão apareceu e você clicou em pagar, o Brick funcionou.
+
+| Sintoma | Causa provável | O que fazer |
+|---------|----------------|-------------|
+| `402` em `/checkout-cartao` | Cartão **recusado** pelo banco/MP | Use outro cartão, confira CPF do titular, ou pague com **Pix** |
+| `ERR_CERT_AUTHORITY_INVALID` em `mercadolibre.com` | Antivírus/VPN interceptando HTTPS no **seu PC** | Desative inspeção SSL do antivírus no navegador ou teste em outro aparelho/rede |
+| `Could not send event` / `tracks` | Telemetria do MP bloqueada (mesmo motivo acima) | Pode ignorar se o pagamento seguir; não é bug do site |
+
+**Credenciais:** com `SANDBOX=false`, Access Token e Public Key devem ser os dois de **produção** (`APP_USR-...`), não de teste (`TEST-...`).
+
+**Conta MP:** cartão online exige conta verificada e habilitada para receber cartão no painel do Mercado Pago.
+
 
 | Erro na tela | Solução |
 |--------------|---------|
