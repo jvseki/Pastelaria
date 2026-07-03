@@ -145,4 +145,4 @@ Se o cliente **já pagou via Pix online** e você **recusar o pedido** no painel
 
 ### Pedido sem pagamento finalizado
 
-Se o cliente **não pagou** (status *Pagamento pendente*), não há o que estornar — o pedido expira sozinho. O cliente pode retomar em **Meus pedidos** → **Finalizar pagamento Pix**.
+Se o cliente **não pagou** (status *Pagamento pendente*), não há o que estornar — o pedido expira sozinho. O cliente pode retomar em **Meus pedidos** → **Finalizar pagamento Pix**, ou **Desistir deste pedido** para limpar a lista (vários de uma vez: **Remover todos não pagos**).

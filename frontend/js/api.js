@@ -331,6 +331,14 @@ const api = {
         return await apiRequest("/pedidos/me");
     },
 
+    async desistirPedido(pedidoId) {
+        return await apiRequest(`/pedidos/${pedidoId}/desistir`, { method: "POST" });
+    },
+
+    async desistirPedidosNaoPagos() {
+        return await apiRequest("/pedidos/desistir-nao-pagos", { method: "POST" });
+    },
+
     async getPedidosAdmin() {
         const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest("/admin/pedidos", {

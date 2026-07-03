@@ -51,10 +51,19 @@ function pedidoAguardandoPix(pedido) {
         && !pedido.pagamento_confirmado;
 }
 
+function pedidoVisivel(pedido) {
+    return !(pedido.status === "cancelado" && !pedido.pagamento_confirmado);
+}
+
 function renderBannerPendentes(pendentes) {
     if (!pendentes.length) return "";
 
     const total = pendentes.reduce((s, p) => s + totalPedido(p), 0);
+    const limparTodos = pendentes.length > 1 ? `
+        <button type="button" class="pedidos-pendentes-limpar" onclick="desistirTodosNaoPagos()">
+            Remover todos não pagos
+        </button>` : "";
+
     return `
         <section class="pedidos-pendentes-banner" id="pedidosPendentesBanner">
             <div class="pedidos-pendentes-banner-icon" aria-hidden="true">
@@ -65,6 +74,7 @@ function renderBannerPendentes(pendentes) {
             <div class="pedidos-pendentes-banner-texto">
                 <strong>${pendentes.length === 1 ? "1 pagamento pendente" : `${pendentes.length} pagamentos pendentes`}</strong>
                 <span>Total em aberto: ${formatarPreco(total)} · finalize o Pix para confirmar o pedido</span>
+                ${limparTodos}
             </div>
         </section>`;
 }
@@ -96,6 +106,10 @@ function renderCardPagamentoPendente(pedido) {
                     <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M20 17h1v4h-4v-1"/>
                 </svg>
                 Finalizar pagamento Pix
+            </button>
+            <button type="button" class="btn btn-ghost btn-block pedido-desistir-btn"
+                onclick="desistirPedido(${pedido.id})">
+                Desistir deste pedido
             </button>
         </article>`;
 }
@@ -129,7 +143,9 @@ function renderCardPedido(pedido) {
 
 function renderizarPedidos(pedidos) {
     const container = document.getElementById("meusPedidosConteudo");
-    if (!pedidos.length) {
+    const visiveis = pedidos.filter(pedidoVisivel);
+
+    if (!visiveis.length) {
         container.innerHTML = `
             <div class="carrinho-vazio">
                 <div class="empty-icon">
@@ -142,8 +158,8 @@ function renderizarPedidos(pedidos) {
         return;
     }
 
-    const pendentes = pedidos.filter(pedidoAguardandoPix);
-    const demais = pedidos.filter((p) => !pedidoAguardandoPix(p));
+    const pendentes = visiveis.filter(pedidoAguardandoPix);
+    const demais = visiveis.filter((p) => !pedidoAguardandoPix(p));
 
     container.innerHTML = `
         ${renderBannerPendentes(pendentes)}
@@ -188,6 +204,38 @@ async function finalizarPagamentoPendente(pedidoId) {
                 </svg>
                 Finalizar pagamento Pix`;
         }
+    }
+}
+
+async function desistirPedido(pedidoId) {
+    const confirmar = await confirmarAcao(
+        "Este pedido será removido da sua lista. Como o pagamento não foi feito, não há cobrança.",
+        { titulo: "Desistir do pedido?", confirmar: "Remover", cancelar: "Manter", tipo: "aviso" },
+    );
+    if (!confirmar) return;
+
+    try {
+        await api.desistirPedido(pedidoId);
+        mostrarToast("Pedido removido.", "sucesso");
+        await carregarMeusPedidos();
+    } catch (error) {
+        mostrarAlerta(error.message, { titulo: "Não foi possível remover", tipo: "erro" });
+    }
+}
+
+async function desistirTodosNaoPagos() {
+    const confirmar = await confirmarAcao(
+        "Todos os pedidos com Pix não finalizado serão removidos da sua lista.",
+        { titulo: "Remover todos não pagos?", confirmar: "Remover todos", cancelar: "Cancelar", tipo: "aviso" },
+    );
+    if (!confirmar) return;
+
+    try {
+        const resultado = await api.desistirPedidosNaoPagos();
+        mostrarToast(`${resultado.quantidade} pedido(s) removido(s).`, "sucesso");
+        await carregarMeusPedidos();
+    } catch (error) {
+        mostrarAlerta(error.message, { titulo: "Não foi possível remover", tipo: "erro" });
     }
 }
 

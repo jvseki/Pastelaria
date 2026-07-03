@@ -79,6 +79,53 @@ def listar_meus_pedidos(
     return [serializar_pedido(pedido, db) for pedido in pedidos]
 
 
+@router.post("/{pedido_id}/desistir")
+def desistir_pedido(
+    pedido_id: int,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancela pedido não pago (cliente desistiu antes de concluir o Pix)."""
+    pedido = (
+        db.query(Pedido)
+        .filter(Pedido.id == pedido_id, Pedido.usuario_id == usuario.id)
+        .first()
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    if pedido.pagamento_confirmado:
+        raise HTTPException(status_code=400, detail="Este pedido já foi pago e não pode ser removido")
+    if pedido.status != "aguardando_pagamento":
+        raise HTTPException(status_code=400, detail="Só é possível remover pedidos com pagamento não finalizado")
+
+    pedido.status = "cancelado"
+    db.commit()
+    db.refresh(pedido)
+    return serializar_pedido(pedido, db)
+
+
+@router.post("/desistir-nao-pagos")
+def desistir_pedidos_nao_pagos(
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancela todos os pedidos Pix não pagos do cliente."""
+    pedidos = (
+        db.query(Pedido)
+        .filter(
+            Pedido.usuario_id == usuario.id,
+            Pedido.pagamento == "mercadopago",
+            Pedido.status == "aguardando_pagamento",
+            Pedido.pagamento_confirmado == False,  # noqa: E712
+        )
+        .all()
+    )
+    for pedido in pedidos:
+        pedido.status = "cancelado"
+    db.commit()
+    return {"quantidade": len(pedidos)}
+
+
 @router.post("")
 def criar_pedido(
     body: PedidoRequest,
