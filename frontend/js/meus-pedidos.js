@@ -45,15 +45,23 @@ function totalPedido(pedido) {
     return itens.reduce((sum, item) => sum + item.preco * item.quantidade, 0) + (pedido.taxa_entrega || 0);
 }
 
-function pedidoAguardandoPix(pedido) {
+function pedidoAguardandoPagamentoOnline(pedido) {
     return pedido.pagamento === "mercadopago"
         && pedido.status === "aguardando_pagamento"
         && !pedido.pagamento_confirmado;
 }
 
+function pedidoAguardandoPix(pedido) {
+    return pedidoAguardandoPagamentoOnline(pedido) && !pedido.mp_preference_id;
+}
+
+function pedidoAguardandoCheckoutPro(pedido) {
+    return pedidoAguardandoPagamentoOnline(pedido) && !!pedido.mp_preference_id;
+}
+
 function pedidoClientePodeCancelar(pedido) {
     if (pedido.status === "cancelado") return false;
-    if (pedidoAguardandoPix(pedido)) return true;
+    if (pedidoAguardandoPagamentoOnline(pedido)) return true;
     if (pedido.status === "pendente") return true;
     return false;
 }
@@ -62,8 +70,8 @@ function mensagemCancelarPedido(pedido) {
     if (pedido.pagamento === "mercadopago" && pedido.pagamento_confirmado) {
         return "O pedido será cancelado e o valor pago via Pix será estornado. Pode levar alguns minutos para aparecer no banco.";
     }
-    if (pedidoAguardandoPix(pedido)) {
-        return "Este pedido será removido da sua lista. Como o pagamento não foi feito, não há cobrança.";
+    if (pedidoAguardandoPagamentoOnline(pedido)) {
+        return "Este pedido será removido da sua lista. Como o pagamento não foi concluído, não há cobrança.";
     }
     return "O pedido ainda não entrou em preparo. A pastelaria será avisada do cancelamento.";
 }
@@ -72,6 +80,7 @@ function pedidoVisivel(pedido) {
     if (pedido.status !== "cancelado") return true;
     if (pedido.pagamento_confirmado) return true;
     if (pedido.mp_payment_id) return true;
+    if (pedido.mp_preference_id) return true;
     if (pedido.pagamento !== "mercadopago") return true;
     return false;
 }
@@ -94,13 +103,20 @@ function renderBannerPendentes(pendentes) {
             </div>
             <div class="pedidos-pendentes-banner-texto">
                 <strong>${pendentes.length === 1 ? "1 pagamento pendente" : `${pendentes.length} pagamentos pendentes`}</strong>
-                <span>Total em aberto: ${formatarPreco(total)} · finalize o Pix para confirmar o pedido</span>
+                <span>Total em aberto: ${formatarPreco(total)} · finalize o pagamento para confirmar o pedido</span>
                 ${limparTodos}
             </div>
         </section>`;
 }
 
 function renderCardPagamentoPendente(pedido) {
+    if (pedidoAguardandoCheckoutPro(pedido)) {
+        return renderCardCheckoutProPendente(pedido);
+    }
+    return renderCardPixPendente(pedido);
+}
+
+function renderCardPixPendente(pedido) {
     const numero = String(pedido.numero_dia ?? pedido.id).padStart(3, "0");
     const cpfField = pixProducao ? `
         <div class="form-group pedido-pix-cpf">
@@ -127,6 +143,30 @@ function renderCardPagamentoPendente(pedido) {
                     <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M20 17h1v4h-4v-1"/>
                 </svg>
                 Finalizar pagamento Pix
+            </button>
+            <button type="button" class="btn btn-ghost btn-block pedido-desistir-btn"
+                onclick="cancelarPedido(${pedido.id})">
+                Desistir deste pedido
+            </button>
+        </article>`;
+}
+
+function renderCardCheckoutProPendente(pedido) {
+    const numero = String(pedido.numero_dia ?? pedido.id).padStart(3, "0");
+
+    return `
+        <article class="pedido-pix-pendente-card" id="pedido-pendente-${pedido.id}">
+            <div class="pedido-pix-pendente-header">
+                <span class="pedido-pix-pendente-badge">Cartão não finalizado</span>
+                <span class="pedido-pix-pendente-valor">${formatarPreco(totalPedido(pedido))}</span>
+            </div>
+            <h2>Pedido #${numero}</h2>
+            <p class="pedido-pix-pendente-desc">
+                Você iniciou o pagamento no Mercado Pago mas não concluiu. Continue no site seguro do MP para finalizar.
+            </p>
+            <button type="button" class="btn btn-primary btn-lg btn-block"
+                onclick="retomarCheckoutPro(${pedido.id})">
+                Continuar no Mercado Pago
             </button>
             <button type="button" class="btn btn-ghost btn-block pedido-desistir-btn"
                 onclick="cancelarPedido(${pedido.id})">
@@ -164,7 +204,7 @@ function renderCardPedido(pedido) {
             <p><strong>Recebimento:</strong> ${tipoEntrega}</p>
             <p><strong>Pagamento:</strong> ${PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento}</p>
             ${pedido.pagamento_confirmado && pedido.pagamento === "mercadopago"
-                ? `<p class="pedido-pago-online">Pagamento Pix confirmado</p>` : ""}
+                ? `<p class="pedido-pago-online">Pagamento online confirmado</p>` : ""}
             ${cancelarBtn}
         </article>`;
 }
@@ -186,8 +226,8 @@ function renderizarPedidos(pedidos) {
         return;
     }
 
-    const pendentes = visiveis.filter(pedidoAguardandoPix);
-    const demais = visiveis.filter((p) => !pedidoAguardandoPix(p));
+    const pendentes = visiveis.filter(pedidoAguardandoPagamentoOnline);
+    const demais = visiveis.filter((p) => !pedidoAguardandoPagamentoOnline(p));
 
     container.innerHTML = `
         ${renderBannerPendentes(pendentes)}
@@ -198,6 +238,29 @@ function renderizarPedidos(pedidos) {
 
     if (pendentes.length) {
         document.getElementById("pedidosPendentesBanner")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+async function retomarCheckoutPro(pedidoId) {
+    const btn = document.querySelector(`#pedido-pendente-${pedidoId} .btn-primary`);
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Abrindo Mercado Pago...";
+    }
+
+    try {
+        const resultado = await api.retomarCheckoutPro(pedidoId);
+        localStorage.setItem("ultimoPedido", JSON.stringify(resultado));
+        if (!resultado.checkout_url) {
+            throw new Error("Link de pagamento indisponível");
+        }
+        window.location.href = resultado.checkout_url;
+    } catch (error) {
+        mostrarAlerta(error.message, { titulo: "Erro ao retomar pagamento", tipo: "erro" });
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = "Continuar no Mercado Pago";
+        }
     }
 }
 
@@ -263,7 +326,7 @@ async function cancelarPedido(pedidoId) {
 
 async function desistirTodosNaoPagos() {
     const confirmar = await confirmarAcao(
-        "Todos os pedidos com Pix não finalizado serão removidos da sua lista.",
+        "Todos os pedidos com pagamento online não finalizado serão removidos da sua lista.",
         { titulo: "Remover todos não pagos?", confirmar: "Remover todos", cancelar: "Cancelar", tipo: "aviso" },
     );
     if (!confirmar) return;

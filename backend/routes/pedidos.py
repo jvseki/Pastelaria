@@ -54,6 +54,8 @@ def serializar_pedido(pedido: Pedido, db: Session) -> dict:
         "local_retirada": pedido.local_retirada,
         "status": pedido.status,
         "pagamento_confirmado": bool(pedido.pagamento_confirmado),
+        "mp_preference_id": pedido.mp_preference_id or None,
+        "mp_payment_id": pedido.mp_payment_id or None,
         "data_pedido": pedido.data_pedido.isoformat() if pedido.data_pedido else None,
         "endereco": {
             "rua": endereco.rua if endereco else "",

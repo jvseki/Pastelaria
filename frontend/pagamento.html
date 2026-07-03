@@ -83,11 +83,13 @@
             </div>
 
             <div class="pagamento-panel" id="panelPagarAgora" role="tabpanel" aria-labelledby="tabPagarAgora">
-                <div class="pagamento-agora-subtabs" id="agoraSubtabs" role="tablist" aria-label="Pagar agora">
+                <div class="pagamento-agora-subtabs pagamento-agora-subtabs--tres" id="agoraSubtabs" role="tablist" aria-label="Pagar agora">
                     <button type="button" class="pagamento-agora-subtab active" id="subtabPix"
                         onclick="selecionarFormaAgora('pix')">Pix</button>
-                    <button type="button" class="pagamento-agora-subtab" id="subtabCartao"
-                        onclick="selecionarFormaAgora('cartao')" style="display:none">Cartão</button>
+                    <button type="button" class="pagamento-agora-subtab" id="subtabCredito"
+                        onclick="selecionarFormaAgora('credito')" style="display:none">Crédito</button>
+                    <button type="button" class="pagamento-agora-subtab" id="subtabDebito"
+                        onclick="selecionarFormaAgora('debito')" style="display:none">Débito</button>
                 </div>
 
                 <div class="pagamento-agora-conteudo" id="agoraConteudoPix">
@@ -113,15 +115,13 @@
 
                 <div class="pagamento-agora-conteudo" id="agoraConteudoCartao" style="display:none">
                     <div class="pix-info-box visible">
-                        <p class="pix-info-desc">
-                            Pague com <strong>cartão de crédito ou débito</strong> de forma segura pelo Mercado Pago.
-                            O pedido é confirmado assim que o pagamento for aprovado.
+                        <div class="pix-info-header">
+                            <span class="pix-info-badge">Pagamento seguro</span>
+                        </div>
+                        <p class="pix-info-desc" id="cartaoCheckoutDesc">
+                            Você será redirecionado para o <strong>site do Mercado Pago</strong> para concluir o pagamento com cartão.
                         </p>
                     </div>
-                    <div id="cardPaymentBrick_container" class="card-brick-wrap"></div>
-                    <p class="form-hint card-brick-hint" id="cardBrickHint">
-                        Marque a confirmação abaixo e preencha o cartão para pagar.
-                    </p>
                 </div>
             </div>
 

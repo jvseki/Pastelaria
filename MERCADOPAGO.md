@@ -21,11 +21,12 @@ Com `MERCADOPAGO_SANDBOX=true` e **sem** Access Token / Public Key, Pix e cartã
 4. Sub-aba **Pix** → marque a confirmação → **Gerar Pix e pagar**
 5. Na tela do QR → **Simular pagamento aprovado**
 
-**Cartão (teste):**
-4. Sub-aba **Cartão** → marque a confirmação → **Simular pagamento com cartão**
-5. Pedido confirmado na hora (sem formulário de cartão real)
+**Cartão (produção):**
+4. Sub-abas **Crédito** ou **Débito** → marque a confirmação → **Pagar no Mercado Pago**
+5. O site abre a **página segura do Mercado Pago** (Checkout Pro) — não preenche cartão no site da pastelaria
+6. Após pagar, você volta para a tela do pedido
 
-Não precisa de credenciais do Mercado Pago para esse modo.
+Não precisa de credenciais do Mercado Pago para o modo simulador Pix.
 
 ## Produção — QR Code Pix verdadeiro
 
@@ -44,11 +45,12 @@ Com `MERCADOPAGO_SANDBOX=false`, o site chama a API do Mercado Pago e exibe o **
 
 ```env
 MERCADOPAGO_ACCESS_TOKEN=APP_USR-...   # token de PRODUÇÃO
-MERCADOPAGO_PUBLIC_KEY=APP_USR-...     # Public Key de PRODUÇÃO (para cartão online)
 MERCADOPAGO_SANDBOX=false
 FRONTEND_URL=https://pastelaria-mu.vercel.app
 API_PUBLIC_URL=https://pastelaria-geu7.onrender.com
 ```
+
+> **Cartão online** usa Checkout Pro (redirect para o site do MP). Só precisa do **Access Token** — não é necessário `MERCADOPAGO_PUBLIC_KEY`.
 
 3. Salve e aguarde o redeploy
 4. Faça um pedido no site → **Pix online**
@@ -73,17 +75,22 @@ Sem webhook, o site ainda tenta confirmar a cada 5 segundos na tela do Pix.
 | Texto “Aguardando confirmação do Pix…” | Não | Sim |
 | Dinheiro na conta MP | Não | Sim |
 
-### Erro no cartão (402) ou console com `mercadolibre.com`
+### Cartão online (Checkout Pro)
 
-**O que importa:** se o formulário de cartão apareceu e você clicou em pagar, o Brick funcionou.
+- Na aba **Pagar agora**, escolha **Crédito** ou **Débito** (opções separadas)
+- O cliente é redirecionado para `mercadopago.com.br` — pagamento fora do site da pastelaria
+- Ao concluir, volta para `pedido.html` e o pedido entra na fila
+- Pedidos não finalizados aparecem em **Meus pedidos** → **Continuar no Mercado Pago**
+
+### Erro no pagamento com cartão
 
 | Sintoma | Causa provável | O que fazer |
 |---------|----------------|-------------|
-| `402` em `/checkout-cartao` | Cartão **recusado** pelo banco/MP | Use outro cartão, confira CPF do titular, ou pague com **Pix** |
-| `ERR_CERT_AUTHORITY_INVALID` em `mercadolibre.com` | Antivírus/VPN interceptando HTTPS no **seu PC** | Desative inspeção SSL do antivírus no navegador ou teste em outro aparelho/rede |
-| `Could not send event` / `tracks` | Telemetria do MP bloqueada (mesmo motivo acima) | Pode ignorar se o pagamento seguir; não é bug do site |
+| Voltou sem pagar | Fechou a janela do MP ou pagamento recusado | Tente de novo em Meus pedidos ou use Pix |
+| Pedido não aparece | Pagamento ainda pendente | Veja **Meus pedidos** — pedido fica como *Pagamento pendente* até aprovar |
+| `ERR_CERT_AUTHORITY_INVALID` | Antivírus/VPN no PC | Teste em outro aparelho/rede |
 
-**Credenciais:** com `SANDBOX=false`, Access Token e Public Key devem ser os dois de **produção** (`APP_USR-...`), não de teste (`TEST-...`).
+**Credenciais:** com `SANDBOX=false`, use Access Token de **produção** (`APP_USR-...`).
 
 **Conta MP:** cartão online exige conta verificada e habilitada para receber cartão no painel do Mercado Pago.
 
@@ -136,7 +143,8 @@ Em **produção**, o site pede o **CPF do pagador** (com máscara automática `0
 |------|--------|
 | `GET /pagamentos/config` | Se Pix online está habilitado |
 | `POST /pagamentos/checkout` | Cria pedido + dados do Pix |
-| `POST /pagamentos/checkout-cartao` | Cria pedido + cobrança no cartão |
+| `POST /pagamentos/checkout-pro` | Cria pedido + link Checkout Pro (crédito/débito) |
+| `POST /pagamentos/retomar-checkout-pro/{id}` | Retoma pagamento cartão pendente |
 | `POST /pagamentos/simular/{id}` | Sandbox: confirma pagamento fictício |
 | `POST /pagamentos/confirmar/{id}` | Produção: consulta status no MP |
 | `POST /pagamentos/webhook` | Produção: notificação do MP |
@@ -146,7 +154,7 @@ Em **produção**, o site pede o **CPF do pagador** (com máscara automática `0
 | Opção | Quando |
 |-------|--------|
 | **Pix online** | Paga agora (simulado ou real) |
-| **Cartão online** | Paga agora com cartão (requer Public Key + Access Token) |
+| **Cartão online** | Paga agora — redirect para Mercado Pago (crédito ou débito) |
 | Pix / Dinheiro ao receber | Presencial na entrega |
 | Cartão ao receber | Presencial na entrega |
 
@@ -169,4 +177,4 @@ Se o cliente **já pagou via Pix online** e você **recusar o pedido** no painel
 
 ### Pedido sem pagamento finalizado
 
-Se o cliente **não pagou** (status *Pagamento pendente*), não há o que estornar — o pedido expira sozinho. O cliente pode retomar em **Meus pedidos** → **Finalizar pagamento Pix**, ou **Desistir deste pedido** para limpar a lista (vários de uma vez: **Remover todos não pagos**).
+Se o cliente **não pagou** (status *Pagamento pendente*), não há o que estornar. O cliente pode retomar em **Meus pedidos** (Pix ou **Continuar no Mercado Pago**), ou **Desistir deste pedido** para limpar a lista.

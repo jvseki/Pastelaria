@@ -73,6 +73,8 @@ def serializar_pedido_criado(pedido: Pedido, usuario: Usuario, itens_resposta: l
         "local_retirada": pedido.local_retirada,
         "status": pedido.status,
         "pagamento_confirmado": bool(pedido.pagamento_confirmado),
+        "mp_preference_id": pedido.mp_preference_id or None,
+        "mp_payment_id": pedido.mp_payment_id or None,
         "data_pedido": pedido.data_pedido.isoformat() if pedido.data_pedido else None,
         "usuario": {
             "id": usuario.id,

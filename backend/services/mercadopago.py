@@ -19,7 +19,8 @@ def mercadopago_habilitado() -> bool:
 
 
 def cartao_online_habilitado() -> bool:
-    if not settings.MERCADOPAGO_PUBLIC_KEY.strip():
+    """Checkout Pro (crédito/débito no site do MP) — só precisa do Access Token."""
+    if settings.MERCADOPAGO_SANDBOX:
         return False
     return bool(settings.MERCADOPAGO_ACCESS_TOKEN.strip())
 
@@ -247,6 +248,84 @@ def resumo_pagamento_cartao(payment: dict) -> dict:
         "status_detail": payment.get("status_detail"),
         "pedido_id": int(payment.get("external_reference") or 0),
     }
+
+
+def criar_preferencia_checkout(
+    *,
+    pedido_id: int,
+    valor: float,
+    titulo: str,
+    payer_email: str | None,
+    modo: str,
+) -> dict:
+    """Checkout Pro — redireciona para página segura do Mercado Pago."""
+    if modo not in ("credito", "debito"):
+        raise ValueError("Modo de cartão inválido")
+
+    frontend = settings.FRONTEND_URL.rstrip("/")
+    excluded = [
+        {"id": "ticket"},
+        {"id": "bank_transfer"},
+        {"id": "atm"},
+        {"id": "account_money"},
+    ]
+    installments = 12
+    if modo == "credito":
+        excluded.append({"id": "debit_card"})
+    else:
+        excluded.append({"id": "credit_card"})
+        installments = 1
+
+    body: dict = {
+        "items": [
+            {
+                "id": str(pedido_id),
+                "title": titulo[:256],
+                "quantity": 1,
+                "unit_price": round(valor, 2),
+                "currency_id": "BRL",
+            }
+        ],
+        "payer": {"email": payer_email or "comprador@pastelaria.com"},
+        "external_reference": str(pedido_id),
+        "notification_url": f"{_api_base_url()}/pagamentos/webhook",
+        "back_urls": {
+            "success": f"{frontend}/pedido.html?mp=success",
+            "failure": f"{frontend}/pagamento.html?mp=failure",
+            "pending": f"{frontend}/pedido.html?mp=pending",
+        },
+        "auto_return": "approved",
+        "payment_methods": {
+            "excluded_payment_types": excluded,
+            "installments": installments,
+        },
+        "statement_descriptor": "PASTELARIA",
+    }
+
+    with httpx.Client(timeout=30.0) as client:
+        response = client.post(
+            f"{MP_API}/checkout/preferences",
+            headers=_headers(idempotency_key=f"pastelaria-pref-{pedido_id}-{modo}"),
+            json=body,
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+def buscar_preferencia(preference_id: str) -> dict:
+    with httpx.Client(timeout=30.0) as client:
+        response = client.get(
+            f"{MP_API}/checkout/preferences/{preference_id}",
+            headers=_headers(),
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+def url_checkout_preferencia(preference: dict) -> str:
+    if settings.MERCADOPAGO_SANDBOX:
+        return preference.get("sandbox_init_point") or preference.get("init_point") or ""
+    return preference.get("init_point") or preference.get("sandbox_init_point") or ""
 
 
 def extrair_dados_pix(payment: dict) -> dict:
