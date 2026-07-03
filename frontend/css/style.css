@@ -1188,6 +1188,12 @@ body.is-admin .bottom-nav {
     display: block;
 }
 
+.form-hint {
+    margin-top: 8px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
 .presencial-label {
     font-size: 0.85rem;
     font-weight: 600;

@@ -24,6 +24,7 @@ class PedidoRequest(BaseModel):
     taxa_entrega: float = 0
     local_retirada: Optional[str] = None
     observacao: Optional[str] = None
+    cpf: Optional[str] = None
     itens: list[ItemPedidoRequest]
 
 

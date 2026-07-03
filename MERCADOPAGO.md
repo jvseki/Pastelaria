@@ -68,9 +68,11 @@ Sem webhook, o site ainda tenta confirmar a cada 5 segundos na tela do Pix.
 
 | Erro | Solução |
 |------|---------|
-| 502 ao clicar “Gerar Pix” | Token inválido ou de teste com `SANDBOX=false` |
+| 502 ao clicar “Gerar Pix” | Token inválido, CPF faltando ou conta sem chave Pix |
 | QR vazio | Conta sem chave Pix cadastrada no MP |
 | Pagou e não confirmou | Confira webhook e `API_PUBLIC_URL` no Render |
+
+Em **produção**, o site pede o **CPF do pagador** — exigência da API Pix do Mercado Pago.
 
 > **Atenção:** em produção cada pedido gera cobrança real. Use valor baixo no primeiro teste (ex.: R$ 0,50) e depois remova os produtos “Teste MP” do cardápio.
 

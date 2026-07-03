@@ -1,6 +1,7 @@
 let pagamentoSelecionado = null;
 let formaPresencial = null;
 let mercadoPagoHabilitado = false;
+let pixProducao = false;
 const carrinho = JSON.parse(localStorage.getItem("carrinho") || "[]");
 const TAXA_ENTREGA = Number(window.TAXA_ENTREGA || 0);
 
@@ -42,12 +43,14 @@ async function carregarMercadoPago() {
     try {
         const cfg = await api.getMercadoPagoConfig();
         mercadoPagoHabilitado = !!cfg.habilitado;
+        pixProducao = cfg.modo === "pix_mercadopago";
         const opcao = document.getElementById("opcaoMercadoPago");
         if (opcao && mercadoPagoHabilitado) {
             opcao.style.display = "";
         }
     } catch (_) {
         mercadoPagoHabilitado = false;
+        pixProducao = false;
     }
 }
 
@@ -114,7 +117,7 @@ function montarObservacao() {
 }
 
 function montarPayloadPedido(pagamentoFinal, troco = null) {
-    return {
+    const payload = {
         pagamento: pagamentoFinal,
         troco,
         tipo_entrega: getTipoEntrega(),
@@ -126,12 +129,23 @@ function montarPayloadPedido(pagamentoFinal, troco = null) {
             quantidade: item.quantidade,
         })),
     };
+    if (pagamentoFinal === "mercadopago" && pixProducao) {
+        payload.cpf = normalizarCpf(document.getElementById("cpfPix")?.value);
+    }
+    return payload;
 }
 
 function pagamentoEstaCompleto() {
     if (!pagamentoSelecionado) return false;
     if (pagamentoSelecionado === "presencial") return !!formaPresencial;
+    if (pagamentoSelecionado === "mercadopago" && pixProducao) {
+        return normalizarCpf(document.getElementById("cpfPix")?.value).length === 11;
+    }
     return true;
+}
+
+function normalizarCpf(valor) {
+    return (valor || "").replace(/\D/g, "");
 }
 
 function atualizarTextoConfirmacao() {
@@ -176,6 +190,11 @@ function selecionarPagamento(tipo) {
         presencialSection.classList.add("visible");
     } else {
         presencialSection.classList.remove("visible");
+    }
+
+    const cpfSection = document.getElementById("cpfPixSection");
+    if (cpfSection) {
+        cpfSection.classList.toggle("visible", tipo === "mercadopago" && pixProducao);
     }
 
     atualizarTextoConfirmacao();

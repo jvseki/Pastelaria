@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import re
+from datetime import datetime, timedelta, timezone
+
 import httpx
 
 from config import settings
@@ -15,15 +18,52 @@ def mercadopago_habilitado() -> bool:
     return bool(settings.MERCADOPAGO_ACCESS_TOKEN.strip())
 
 
-def _headers() -> dict:
-    return {
+def normalizar_cpf(cpf: str | None) -> str:
+    return re.sub(r"\D", "", cpf or "")
+
+
+def validar_cpf(cpf: str | None) -> str:
+    digits = normalizar_cpf(cpf)
+    if len(digits) != 11:
+        raise ValueError("Informe um CPF válido com 11 dígitos")
+    return digits
+
+
+def _split_nome(nome: str | None) -> tuple[str, str]:
+    partes = (nome or "Cliente").strip().split(maxsplit=1)
+    primeiro = partes[0][:50] if partes else "Cliente"
+    sobrenome = (partes[1] if len(partes) > 1 else "Cliente")[:50]
+    return primeiro, sobrenome
+
+
+def _headers(*, idempotency_key: str | None = None) -> dict:
+    headers = {
         "Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}",
         "Content-Type": "application/json",
     }
+    if idempotency_key:
+        headers["X-Idempotency-Key"] = idempotency_key
+    return headers
 
 
 def _api_base_url() -> str:
     return settings.API_PUBLIC_URL.rstrip("/") or settings.FRONTEND_URL.rstrip("/")
+
+
+def mensagem_erro_mp(exc: httpx.HTTPStatusError) -> str:
+    try:
+        data = exc.response.json()
+        causes = data.get("cause") or []
+        descricoes = [c.get("description") for c in causes if isinstance(c, dict) and c.get("description")]
+        if descricoes:
+            return "; ".join(descricoes)
+        if data.get("message"):
+            return str(data["message"])
+    except Exception:
+        pass
+    if exc.response.status_code == 401:
+        return "Access Token do Mercado Pago inválido ou expirado"
+    return "Erro ao gerar Pix no Mercado Pago"
 
 
 def gerar_pix_simulado(*, pedido_id: int, valor: float) -> dict:
@@ -47,20 +87,39 @@ def criar_pagamento_pix(
     pedido_id: int,
     valor: float,
     payer_email: str | None,
+    payer_nome: str | None,
+    payer_cpf: str | None,
     descricao: str,
 ) -> dict:
     """Cria cobrança Pix real via API do Mercado Pago."""
+    cpf = validar_cpf(payer_cpf)
+    primeiro_nome, sobrenome = _split_nome(payer_nome)
+    expira = datetime.now(timezone.utc) + timedelta(minutes=30)
+
     body: dict = {
         "transaction_amount": round(valor, 2),
         "description": descricao[:256],
         "payment_method_id": "pix",
-        "payer": {"email": payer_email or "comprador@pastelaria.com"},
+        "date_of_expiration": expira.strftime("%Y-%m-%dT%H:%M:%S.000-03:00"),
+        "payer": {
+            "email": payer_email or "comprador@pastelaria.com",
+            "first_name": primeiro_nome,
+            "last_name": sobrenome,
+            "identification": {
+                "type": "CPF",
+                "number": cpf,
+            },
+        },
         "external_reference": str(pedido_id),
         "notification_url": f"{_api_base_url()}/pagamentos/webhook",
     }
 
     with httpx.Client(timeout=30.0) as client:
-        response = client.post(f"{MP_API}/v1/payments", headers=_headers(), json=body)
+        response = client.post(
+            f"{MP_API}/v1/payments",
+            headers=_headers(idempotency_key=f"pastelaria-pix-{pedido_id}"),
+            json=body,
+        )
         response.raise_for_status()
         return response.json()
 
@@ -68,9 +127,12 @@ def criar_pagamento_pix(
 def extrair_dados_pix(payment: dict) -> dict:
     """Extrai QR e copia-e-cola de um pagamento Pix do MP."""
     tx = (payment.get("point_of_interaction") or {}).get("transaction_data") or {}
+    copia_cola = tx.get("qr_code") or ""
+    if not copia_cola:
+        raise ValueError("Mercado Pago não retornou o código Pix")
     return {
         "simulado": False,
-        "copia_cola": tx.get("qr_code") or "",
+        "copia_cola": copia_cola,
         "qr_code_base64": tx.get("qr_code_base64") or "",
         "valor": payment.get("transaction_amount"),
         "pedido_id": int(payment.get("external_reference") or 0),

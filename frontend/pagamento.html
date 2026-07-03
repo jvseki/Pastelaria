@@ -78,6 +78,15 @@
                 </label>
             </div>
 
+            <div class="presencial-section" id="cpfPixSection">
+                <div class="form-group">
+                    <label for="cpfPix">CPF do pagador</label>
+                    <input type="text" id="cpfPix" inputmode="numeric" maxlength="14"
+                        placeholder="000.000.000-00" oninput="atualizarBotaoFinalizar()">
+                    <p class="form-hint">Obrigatório para gerar o Pix real no Mercado Pago.</p>
+                </div>
+            </div>
+
             <div class="presencial-section" id="presencialSection">
                 <p class="presencial-label">Como você vai pagar ao receber?</p>
                 <div class="presencial-opcoes">

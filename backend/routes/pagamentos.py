@@ -17,7 +17,9 @@ from services.mercadopago import (
     criar_pagamento_pix,
     extrair_dados_pix,
     gerar_pix_simulado,
+    mensagem_erro_mp,
     mercadopago_habilitado,
+    validar_cpf,
 )
 from services.pedido_service import criar_pedido_no_banco, serializar_pedido_criado
 
@@ -71,18 +73,29 @@ def iniciar_pagamento_pix(
             if not settings.MERCADOPAGO_ACCESS_TOKEN.strip():
                 db.rollback()
                 raise HTTPException(status_code=503, detail="Access Token do Mercado Pago não configurado")
+            try:
+                cpf = validar_cpf(body.cpf)
+            except ValueError as exc:
+                db.rollback()
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
             payment = criar_pagamento_pix(
                 pedido_id=pedido.id,
                 valor=valor,
                 payer_email=usuario.email_google,
+                payer_nome=usuario.nome,
+                payer_cpf=cpf,
                 descricao=f"Pedido #{pedido.numero_dia or pedido.id} — Pastelaria",
             )
             pedido.mp_payment_id = str(payment.get("id") or "")
             pix = extrair_dados_pix(payment)
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
         db.rollback()
+        detail = mensagem_erro_mp(exc)
         logger.error("Erro MP Pix: %s", exc.response.text)
-        raise HTTPException(status_code=502, detail="Erro ao gerar Pix no Mercado Pago") from exc
+        raise HTTPException(status_code=502, detail=detail) from exc
 
     db.commit()
     db.refresh(pedido)
