@@ -1,5 +1,5 @@
-let pagamentoSelecionado = null;
-let formaPresencial = null;
+let abaPagamento = null;
+let formaEntrega = null;
 let mercadoPagoHabilitado = false;
 let pixProducao = false;
 const carrinho = JSON.parse(localStorage.getItem("carrinho") || "[]");
@@ -25,7 +25,7 @@ async function initPagamento() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("mp") === "failure") {
-        mostrarAlerta("O pagamento Pix não foi concluído. Tente novamente ou escolha pagar na entrega.", {
+        mostrarAlerta("O pagamento Pix não foi concluído. Tente novamente ou escolha pagar ao receber.", {
             titulo: "Pagamento cancelado",
             tipo: "aviso",
         });
@@ -35,6 +35,7 @@ async function initPagamento() {
     document.getElementById("totalPedido").textContent = formatarPreco(calcularTotal());
     atualizarDetalhesTotal();
     renderizarResumoEntrega();
+    atualizarLabelsEntrega();
     await carregarMercadoPago();
     atualizarBotaoFinalizar();
 }
@@ -44,18 +45,45 @@ async function carregarMercadoPago() {
         const cfg = await api.getMercadoPagoConfig();
         mercadoPagoHabilitado = !!cfg.habilitado;
         pixProducao = cfg.modo === "pix_mercadopago";
-        const opcao = document.getElementById("opcaoMercadoPago");
-        if (opcao && mercadoPagoHabilitado) {
-            opcao.style.display = "";
-        }
     } catch (_) {
         mercadoPagoHabilitado = false;
         pixProducao = false;
     }
+
+    const tabs = document.getElementById("pagamentoTabs");
+    const tabAgora = document.getElementById("tabPagarAgora");
+
+    if (!mercadoPagoHabilitado) {
+        tabAgora.style.display = "none";
+        tabs.classList.add("pagamento-tabs--unica");
+        selecionarAbaPagamento("entrega");
+        return;
+    }
+
+    selecionarAbaPagamento("agora");
 }
 
 function getTipoEntrega() {
     return getPersistedItem("tipoEntrega") || "entrega";
+}
+
+function isRetirada() {
+    return getTipoEntrega() === "retirada";
+}
+
+function atualizarLabelsEntrega() {
+    const retirada = isRetirada();
+    const tituloTab = document.getElementById("tabPagarEntregaTitulo");
+    const presencialLabel = document.getElementById("presencialLabel");
+
+    if (tituloTab) {
+        tituloTab.textContent = retirada ? "Pagar na retirada" : "Pagar na entrega";
+    }
+    if (presencialLabel) {
+        presencialLabel.textContent = retirada
+            ? "Como você vai pagar ao retirar?"
+            : "Como você vai pagar ao receber?";
+    }
 }
 
 function calcularSubtotal() {
@@ -136,27 +164,31 @@ function montarPayloadPedido(pagamentoFinal, troco = null) {
 }
 
 function pagamentoEstaCompleto() {
-    if (!pagamentoSelecionado) return false;
-    if (pagamentoSelecionado === "presencial") return !!formaPresencial;
-    if (pagamentoSelecionado === "mercadopago" && pixProducao) {
-        return normalizarCpf(document.getElementById("cpfPix")?.value).length === 11;
+    if (abaPagamento === "agora") {
+        if (!mercadoPagoHabilitado) return false;
+        if (pixProducao) {
+            return normalizarCpf(document.getElementById("cpfPix")?.value).length === 11;
+        }
+        return true;
     }
-    return true;
+    if (abaPagamento === "entrega") return !!formaEntrega;
+    return false;
 }
 
 function atualizarTextoConfirmacao() {
     const titulo = document.getElementById("confirmarPagamentoTitulo");
     const desc = document.getElementById("confirmarPagamentoDesc");
     const btn = document.getElementById("btnFinalizar");
+    const aoReceber = isRetirada() ? "na retirada" : "na entrega";
 
-    if (pagamentoSelecionado === "mercadopago") {
-        if (titulo) titulo.textContent = "Confirmo e irei pagar com Pix";
-        if (desc) desc.textContent = "Voce vera o QR Code Pix na proxima tela para concluir o pagamento.";
+    if (abaPagamento === "agora") {
+        if (titulo) titulo.textContent = "Confirmo e irei pagar com Pix agora";
+        if (desc) desc.textContent = "Você verá o QR Code Pix na próxima tela para concluir o pagamento.";
         if (btn) btn.textContent = "Gerar Pix e pagar";
     } else {
-        if (titulo) titulo.textContent = "Confirmo o pagamento na entrega";
-        if (desc) desc.textContent = "Estou ciente de que pagarei ao receber o pedido conforme a forma selecionada acima.";
-        if (btn) btn.textContent = "Confirmar pagamento e finalizar pedido";
+        if (titulo) titulo.textContent = `Confirmo o pagamento ${aoReceber}`;
+        if (desc) desc.textContent = `Estou ciente de que pagarei ao receber o pedido ${aoReceber}, conforme a forma selecionada.`;
+        if (btn) btn.textContent = "Confirmar e finalizar pedido";
     }
 }
 
@@ -167,45 +199,50 @@ function atualizarBotaoFinalizar() {
     btn.disabled = !(confirmado && pagamentoEstaCompleto());
 }
 
-function selecionarPagamento(tipo) {
-    pagamentoSelecionado = tipo;
-    formaPresencial = null;
+function selecionarAbaPagamento(aba) {
+    abaPagamento = aba;
+    formaEntrega = null;
 
-    document.querySelectorAll(".pagamento-opcao").forEach((el) => {
-        el.classList.remove("selected");
-        if (el.querySelector(`input[value="${tipo}"]`)) {
-            el.classList.add("selected");
-        }
+    document.querySelectorAll(".pagamento-tab").forEach((tab) => {
+        const ativo = tab.id === (aba === "agora" ? "tabPagarAgora" : "tabPagarEntrega");
+        tab.classList.toggle("active", ativo);
+        tab.setAttribute("aria-selected", ativo ? "true" : "false");
     });
 
-    const presencialSection = document.getElementById("presencialSection");
-    document.querySelectorAll('input[name="formaPresencial"]').forEach((r) => (r.checked = false));
-    document.getElementById("trocoSection")?.classList.remove("visible");
+    document.getElementById("panelPagarAgora")?.classList.toggle("visible", aba === "agora");
+    document.getElementById("panelPagarEntrega")?.classList.toggle("visible", aba === "entrega");
 
-    if (tipo === "presencial") {
-        presencialSection.classList.add("visible");
-    } else {
-        presencialSection.classList.remove("visible");
-    }
+    document.querySelectorAll('input[name="formaEntrega"]').forEach((r) => (r.checked = false));
+    document.querySelectorAll(".pagamento-opcoes--entrega .pagamento-opcao").forEach((el) => {
+        el.classList.remove("selected");
+    });
+    document.getElementById("trocoSection")?.classList.remove("visible");
 
     const cpfSection = document.getElementById("cpfPixSection");
     if (cpfSection) {
-        cpfSection.classList.toggle("visible", tipo === "mercadopago" && pixProducao);
+        cpfSection.classList.toggle("visible", aba === "agora" && pixProducao);
     }
+
+    const checkbox = document.getElementById("confirmarPagamento");
+    if (checkbox) checkbox.checked = false;
 
     atualizarTextoConfirmacao();
     atualizarBotaoFinalizar();
 }
 
-function selecionarFormaPresencial(forma) {
-    formaPresencial = forma;
+function selecionarFormaEntrega(forma) {
+    formaEntrega = forma;
+
+    document.querySelectorAll('input[name="formaEntrega"]').forEach((radio) => {
+        radio.checked = radio.value === forma;
+        radio.closest(".pagamento-opcao")?.classList.toggle("selected", radio.checked);
+    });
 
     const trocoSection = document.getElementById("trocoSection");
-
-    if (forma === "pix") {
-        trocoSection.classList.remove("visible");
+    if (forma === "dinheiro") {
+        trocoSection?.classList.add("visible");
     } else {
-        trocoSection.classList.add("visible");
+        trocoSection?.classList.remove("visible");
     }
 
     atualizarBotaoFinalizar();
@@ -217,58 +254,53 @@ function toggleTroco() {
 }
 
 async function finalizarPedido() {
-    if (!pagamentoSelecionado) {
+    if (!abaPagamento) {
         mostrarToast("Selecione uma forma de pagamento");
         return;
     }
 
     if (!document.getElementById("confirmarPagamento").checked) {
-        mostrarToast(pagamentoSelecionado === "mercadopago" ? "Confirme para gerar o Pix" : "Confirme o pagamento ao receber");
+        mostrarToast(abaPagamento === "agora" ? "Confirme para gerar o Pix" : "Confirme o pagamento ao receber");
         return;
     }
 
     const btn = document.getElementById("btnFinalizar");
     btn.disabled = true;
-    btn.textContent = pagamentoSelecionado === "mercadopago" ? "Gerando Pix..." : "Enviando pedido...";
+    btn.textContent = abaPagamento === "agora" ? "Gerando Pix..." : "Enviando pedido...";
 
-    if (pagamentoSelecionado === "mercadopago") {
+    if (abaPagamento === "agora") {
         await finalizarComPix(btn);
         return;
     }
 
-    let pagamentoFinal = pagamentoSelecionado;
+    if (!formaEntrega) {
+        mostrarToast("Escolha como vai pagar ao receber");
+        btn.disabled = false;
+        atualizarTextoConfirmacao();
+        atualizarBotaoFinalizar();
+        return;
+    }
+
     let troco = null;
-
-    if (pagamentoSelecionado === "presencial") {
-        if (!formaPresencial) {
-            mostrarToast("Escolha Pix ou Dinheiro ao receber");
-            btn.disabled = false;
-            atualizarTextoConfirmacao();
-            atualizarBotaoFinalizar();
-            return;
-        }
-        pagamentoFinal = formaPresencial;
-
-        if (formaPresencial === "dinheiro") {
-            const precisaTroco = document.querySelector('input[name="precisaTroco"]:checked').value;
-            if (precisaTroco === "sim") {
-                troco = parseFloat(document.getElementById("trocoPara").value);
-                if (!troco || troco <= calcularTotal()) {
-                    mostrarAlerta("Informe um valor valido para o troco, maior que o total do pedido.", {
-                        titulo: "Troco inválido",
-                        tipo: "erro",
-                    });
-                    btn.disabled = false;
-                    atualizarTextoConfirmacao();
-                    atualizarBotaoFinalizar();
-                    return;
-                }
+    if (formaEntrega === "dinheiro") {
+        const precisaTroco = document.querySelector('input[name="precisaTroco"]:checked').value;
+        if (precisaTroco === "sim") {
+            troco = parseFloat(document.getElementById("trocoPara").value);
+            if (!troco || troco <= calcularTotal()) {
+                mostrarAlerta("Informe um valor válido para o troco, maior que o total do pedido.", {
+                    titulo: "Troco inválido",
+                    tipo: "erro",
+                });
+                btn.disabled = false;
+                atualizarTextoConfirmacao();
+                atualizarBotaoFinalizar();
+                return;
             }
         }
     }
 
     try {
-        const resultado = await api.criarPedido(montarPayloadPedido(pagamentoFinal, troco));
+        const resultado = await api.criarPedido(montarPayloadPedido(formaEntrega, troco));
         localStorage.setItem("ultimoPedido", JSON.stringify(resultado));
         localStorage.removeItem("carrinho");
         sessionStorage.removeItem("bebidasOferecidas");

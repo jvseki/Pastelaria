@@ -33,7 +33,7 @@
 
         <div id="loginContent" class="form-card login-card" style="display:none">
             <div id="ultimaContaCard" class="ultima-conta-card" style="display:none">
-                <p class="ultima-conta-label">Última conta usada neste aparelho</p>
+                <p class="ultima-conta-label">Bem-vindo de volta</p>
                 <div class="ultima-conta-perfil">
                     <div class="ultima-conta-avatar" id="ultimaContaAvatar">U</div>
                     <div class="ultima-conta-info">
@@ -41,7 +41,11 @@
                         <span id="ultimaContaEmail">email@gmail.com</span>
                     </div>
                 </div>
-                <p class="ultima-conta-hint">Toque no Google abaixo para entrar de novo com esta conta ou escolher outra.</p>
+                <button type="button" class="btn btn-primary btn-lg btn-block" id="btnContinuarUltimaConta"
+                    onclick="entrarComUltimaConta()">
+                    Continuar com esta conta
+                </button>
+                <p class="ultima-conta-hint">Ou use outra conta Google abaixo.</p>
             </div>
             <div id="googleLoginBtn" class="google-btn-wrap"></div>
         </div>

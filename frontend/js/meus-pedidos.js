@@ -51,8 +51,29 @@ function pedidoAguardandoPix(pedido) {
         && !pedido.pagamento_confirmado;
 }
 
+function pedidoClientePodeCancelar(pedido) {
+    if (pedido.status === "cancelado") return false;
+    if (pedidoAguardandoPix(pedido)) return true;
+    if (pedido.status === "pendente") return true;
+    return false;
+}
+
+function mensagemCancelarPedido(pedido) {
+    if (pedido.pagamento === "mercadopago" && pedido.pagamento_confirmado) {
+        return "O pedido será cancelado e o valor pago via Pix será estornado. Pode levar alguns minutos para aparecer no banco.";
+    }
+    if (pedidoAguardandoPix(pedido)) {
+        return "Este pedido será removido da sua lista. Como o pagamento não foi feito, não há cobrança.";
+    }
+    return "O pedido ainda não entrou em preparo. A pastelaria será avisada do cancelamento.";
+}
+
 function pedidoVisivel(pedido) {
-    return !(pedido.status === "cancelado" && !pedido.pagamento_confirmado);
+    if (pedido.status !== "cancelado") return true;
+    if (pedido.pagamento_confirmado) return true;
+    if (pedido.mp_payment_id) return true;
+    if (pedido.pagamento !== "mercadopago") return true;
+    return false;
 }
 
 function renderBannerPendentes(pendentes) {
@@ -108,7 +129,7 @@ function renderCardPagamentoPendente(pedido) {
                 Finalizar pagamento Pix
             </button>
             <button type="button" class="btn btn-ghost btn-block pedido-desistir-btn"
-                onclick="desistirPedido(${pedido.id})">
+                onclick="cancelarPedido(${pedido.id})">
                 Desistir deste pedido
             </button>
         </article>`;
@@ -121,6 +142,12 @@ function renderCardPedido(pedido) {
     const itensHtml = (pedido.itens || [])
         .map((item) => `<li>${item.quantidade}x ${item.nome} — ${formatarPreco(item.preco * item.quantidade)}</li>`)
         .join("");
+
+    const cancelarBtn = pedidoClientePodeCancelar(pedido) ? `
+            <button type="button" class="btn btn-ghost btn-sm pedido-cancelar-historico"
+                onclick="cancelarPedido(${pedido.id})">
+                Cancelar pedido
+            </button>` : "";
 
     return `
         <article class="form-card pedido-historico-card">
@@ -138,6 +165,7 @@ function renderCardPedido(pedido) {
             <p><strong>Pagamento:</strong> ${PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento}</p>
             ${pedido.pagamento_confirmado && pedido.pagamento === "mercadopago"
                 ? `<p class="pedido-pago-online">Pagamento Pix confirmado</p>` : ""}
+            ${cancelarBtn}
         </article>`;
 }
 
@@ -207,19 +235,29 @@ async function finalizarPagamentoPendente(pedidoId) {
     }
 }
 
-async function desistirPedido(pedidoId) {
-    const confirmar = await confirmarAcao(
-        "Este pedido será removido da sua lista. Como o pagamento não foi feito, não há cobrança.",
-        { titulo: "Desistir do pedido?", confirmar: "Remover", cancelar: "Manter", tipo: "aviso" },
-    );
+async function cancelarPedido(pedidoId) {
+    const pedidos = JSON.parse(sessionStorage.getItem("_pedidosCache") || "[]");
+    const pedido = pedidos.find((p) => p.id === pedidoId);
+    const msg = pedido ? mensagemCancelarPedido(pedido) : "Deseja cancelar este pedido?";
+
+    const confirmar = await confirmarAcao(msg, {
+        titulo: "Cancelar pedido?",
+        confirmar: "Cancelar pedido",
+        cancelar: "Manter",
+        tipo: "aviso",
+    });
     if (!confirmar) return;
 
     try {
-        await api.desistirPedido(pedidoId);
-        mostrarToast("Pedido removido.", "sucesso");
+        const resultado = await api.desistirPedido(pedidoId);
+        if (resultado.estornado) {
+            mostrarToast("Pedido cancelado e Pix estornado.", "sucesso");
+        } else {
+            mostrarToast("Pedido cancelado.", "sucesso");
+        }
         await carregarMeusPedidos();
     } catch (error) {
-        mostrarAlerta(error.message, { titulo: "Não foi possível remover", tipo: "erro" });
+        mostrarAlerta(error.message, { titulo: "Não foi possível cancelar", tipo: "erro" });
     }
 }
 
@@ -245,6 +283,7 @@ async function carregarMeusPedidos() {
         const cfg = await api.getMercadoPagoConfig();
         pixProducao = cfg.modo === "pix_mercadopago";
         const pedidos = await api.getMeusPedidos();
+        sessionStorage.setItem("_pedidosCache", JSON.stringify(pedidos));
         renderizarPedidos(pedidos);
         await atualizarBadgePedidosPendentes();
     } catch (error) {

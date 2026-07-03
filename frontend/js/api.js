@@ -1,18 +1,23 @@
 const API_BASE = window.API_URL || "http://localhost:8000";
 const AUTH_COOKIE_DAYS = 60;
-const TAB_SESSION_KEYS = new Set(["token", "usuario", "endereco", "tipoEntrega", "localRetirada"]);
+const AUTH_PERSIST_KEYS = new Set(["token", "usuario"]);
+const LOCAL_PERSIST_KEYS = new Set(["endereco", "tipoEntrega", "localRetirada"]);
+const ALL_PERSIST_KEYS = new Set([...AUTH_PERSIST_KEYS, ...LOCAL_PERSIST_KEYS]);
 
-function isTabSessionKey(chave) {
-    return TAB_SESSION_KEYS.has(chave);
-}
-
-function limparStorageCompartilhado(chave) {
-    try {
-        localStorage.removeItem(chave);
-    } catch (_) {
-        /* ignora storage indisponivel */
-    }
-    removerCookiePersistente(chave);
+function migrarSessaoTabParaLocal() {
+    ALL_PERSIST_KEYS.forEach((chave) => {
+        try {
+            const valor = sessionStorage.getItem(chave);
+            if (!valor) return;
+            localStorage.setItem(chave, valor);
+            if (AUTH_PERSIST_KEYS.has(chave)) {
+                setCookiePersistente(chave, valor);
+            }
+            sessionStorage.removeItem(chave);
+        } catch (_) {
+            /* ignora storage indisponivel */
+        }
+    });
 }
 
 function cookieName(chave) {
@@ -37,42 +42,29 @@ function removerCookiePersistente(chave) {
     document.cookie = `${cookieName(chave)}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
 }
 
-function setPersistedItem(chave, valor) {
-    if (isTabSessionKey(chave)) {
-        try {
-            sessionStorage.setItem(chave, valor);
-        } catch (_) {
-            /* sessao por aba indisponivel */
-        }
-        limparStorageCompartilhado(chave);
-        return;
-    }
+migrarSessaoTabParaLocal();
 
+function setPersistedItem(chave, valor) {
     try {
         localStorage.setItem(chave, valor);
     } catch (_) {
         /* alguns navegadores mobile bloqueiam storage persistente */
     }
-    setCookiePersistente(chave, valor);
+
+    if (AUTH_PERSIST_KEYS.has(chave)) {
+        setCookiePersistente(chave, valor);
+    }
 }
 
 function getPersistedItem(chave) {
-    if (isTabSessionKey(chave)) {
-        try {
-            const valor = sessionStorage.getItem(chave);
-            if (valor) return valor;
-        } catch (_) {
-            /* ignora storage indisponivel */
-        }
-        return null;
-    }
-
     try {
         const valor = localStorage.getItem(chave);
         if (valor) return valor;
     } catch (_) {
         /* fallback para cookie */
     }
+
+    if (!AUTH_PERSIST_KEYS.has(chave)) return null;
 
     const valorCookie = getCookiePersistente(chave);
     if (valorCookie) {
@@ -86,22 +78,21 @@ function getPersistedItem(chave) {
 }
 
 function removePersistedItem(chave) {
-    if (isTabSessionKey(chave)) {
-        try {
-            sessionStorage.removeItem(chave);
-        } catch (_) {
-            /* ignora storage indisponivel */
-        }
-        limparStorageCompartilhado(chave);
-        return;
-    }
-
     try {
         localStorage.removeItem(chave);
     } catch (_) {
         /* ignora storage indisponivel */
     }
-    removerCookiePersistente(chave);
+
+    try {
+        sessionStorage.removeItem(chave);
+    } catch (_) {
+        /* ignora storage indisponivel */
+    }
+
+    if (AUTH_PERSIST_KEYS.has(chave)) {
+        removerCookiePersistente(chave);
+    }
 }
 
 function parsePersistedJson(chave, fallback = null) {

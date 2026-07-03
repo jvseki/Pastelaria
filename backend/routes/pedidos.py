@@ -3,11 +3,14 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 
+from config import settings
 from database import get_db
 from models import Pedido, ItemPedido, Produto, Endereco
 from routes.usuarios import get_current_user
 from models import Usuario
+from services.mercadopago import estornar_pagamento, mensagem_erro_mp
 from services.pedido_service import criar_pedido_no_banco, serializar_pedido_criado
+import httpx
 
 router = APIRouter(prefix="/pedidos", tags=["pedidos"])
 
@@ -79,13 +82,23 @@ def listar_meus_pedidos(
     return [serializar_pedido(pedido, db) for pedido in pedidos]
 
 
+def _cliente_pode_cancelar(pedido: Pedido) -> bool:
+    if pedido.status == "cancelado":
+        return False
+    if pedido.status == "aguardando_pagamento" and not pedido.pagamento_confirmado:
+        return True
+    if pedido.status == "pendente":
+        return True
+    return False
+
+
 @router.post("/{pedido_id}/desistir")
 def desistir_pedido(
     pedido_id: int,
     usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Cancela pedido não pago (cliente desistiu antes de concluir o Pix)."""
+    """Cliente cancela pedido antes do preparo (com estorno se Pix online já pago)."""
     pedido = (
         db.query(Pedido)
         .filter(Pedido.id == pedido_id, Pedido.usuario_id == usuario.id)
@@ -93,15 +106,37 @@ def desistir_pedido(
     )
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
-    if pedido.pagamento_confirmado:
-        raise HTTPException(status_code=400, detail="Este pedido já foi pago e não pode ser removido")
-    if pedido.status != "aguardando_pagamento":
-        raise HTTPException(status_code=400, detail="Só é possível remover pedidos com pagamento não finalizado")
+    if not _cliente_pode_cancelar(pedido):
+        raise HTTPException(
+            status_code=400,
+            detail="Este pedido já está em preparo ou finalizado e não pode ser cancelado pelo app",
+        )
+
+    estornado = False
+    if (
+        pedido.pagamento == "mercadopago"
+        and pedido.pagamento_confirmado
+        and pedido.mp_payment_id
+        and not str(pedido.mp_payment_id).startswith("SIM-")
+        and not settings.MERCADOPAGO_SANDBOX
+    ):
+        try:
+            estornar_pagamento(str(pedido.mp_payment_id))
+            estornado = True
+            pedido.pagamento_confirmado = False
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Não foi possível estornar o Pix: {mensagem_erro_mp(exc)}",
+            ) from exc
 
     pedido.status = "cancelado"
     db.commit()
     db.refresh(pedido)
-    return serializar_pedido(pedido, db)
+
+    dados = serializar_pedido(pedido, db)
+    dados["estornado"] = estornado
+    return dados
 
 
 @router.post("/desistir-nao-pagos")

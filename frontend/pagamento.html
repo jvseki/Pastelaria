@@ -25,7 +25,7 @@
     <div class="page-title">
         <a href="cadastro.html" class="page-back">Voltar ao endereço</a>
         <h1>Pagamento</h1>
-        <p>Pagamento ao receber o pedido</p>
+        <p id="pagamentoSubtitulo">Escolha como deseja pagar</p>
     </div>
 
     <div class="checkout-steps">
@@ -49,54 +49,102 @@
             <a href="cadastro.html" class="btn btn-secondary btn-sm">Alterar</a>
         </div>
 
-        <div class="form-card">
+        <div class="form-card pagamento-card">
             <h3 class="section-title">Forma de pagamento</h3>
 
-            <div class="pagamento-opcoes">
-                <label class="pagamento-opcao pagamento-opcao--mp" id="opcaoMercadoPago" style="display:none" onclick="selecionarPagamento('mercadopago')">
-                    <input type="radio" name="pagamento" value="mercadopago">
-                    <div class="opcao-info">
-                        <div class="opcao-titulo">Pix online</div>
-                        <div class="opcao-desc">Pague agora com QR Code Pix</div>
-                    </div>
-                </label>
-
-                <label class="pagamento-opcao" onclick="selecionarPagamento('presencial')">
-                    <input type="radio" name="pagamento" value="presencial">
-                    <div class="opcao-info">
-                        <div class="opcao-titulo">Pix ou Dinheiro</div>
-                        <div class="opcao-desc">Pague ao receber o pedido</div>
-                    </div>
-                </label>
-
-                <label class="pagamento-opcao" onclick="selecionarPagamento('cartao')">
-                    <input type="radio" name="pagamento" value="cartao">
-                    <div class="opcao-info">
-                        <div class="opcao-titulo">Cartão ao receber</div>
-                        <div class="opcao-desc">Débito ou crédito na hora que receber</div>
-                    </div>
-                </label>
+            <div class="pagamento-tabs" id="pagamentoTabs" role="tablist" aria-label="Forma de pagamento">
+                <button type="button" class="pagamento-tab" id="tabPagarAgora" role="tab"
+                    aria-selected="false" aria-controls="panelPagarAgora"
+                    onclick="selecionarAbaPagamento('agora')">
+                    <span class="pagamento-tab-icon pagamento-tab-icon--pix" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M20 17h1v4h-4v-1"/>
+                        </svg>
+                    </span>
+                    <span class="pagamento-tab-text">
+                        <strong>Pagar agora</strong>
+                        <small>Pix com QR Code</small>
+                    </span>
+                </button>
+                <button type="button" class="pagamento-tab" id="tabPagarEntrega" role="tab"
+                    aria-selected="false" aria-controls="panelPagarEntrega"
+                    onclick="selecionarAbaPagamento('entrega')">
+                    <span class="pagamento-tab-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                        </svg>
+                    </span>
+                    <span class="pagamento-tab-text">
+                        <strong id="tabPagarEntregaTitulo">Pagar na entrega</strong>
+                        <small>Dinheiro, cartão ou Pix</small>
+                    </span>
+                </button>
             </div>
 
-            <div class="presencial-section" id="cpfPixSection">
-                <div class="form-group">
-                    <label for="cpfPix">CPF do pagador</label>
-                    <input type="text" id="cpfPix" inputmode="numeric" maxlength="14"
-                        placeholder="000.000.000-00" oninput="mascararCpfPix(this)">
-                    <p class="form-hint">Obrigatório para gerar o Pix real no Mercado Pago.</p>
+            <div class="pagamento-panel" id="panelPagarAgora" role="tabpanel" aria-labelledby="tabPagarAgora">
+                <div class="pix-info-box visible">
+                    <div class="pix-info-header">
+                        <span class="pix-info-badge">Confirmação imediata</span>
+                    </div>
+                    <p class="pix-info-desc">
+                        Na próxima tela você verá o <strong>QR Code Pix</strong> para pagar pelo app do banco.
+                        O pedido só entra na fila depois que o pagamento for confirmado.
+                    </p>
+                </div>
+
+                <div class="presencial-section" id="cpfPixSection">
+                    <div class="form-group">
+                        <label for="cpfPix">CPF do pagador</label>
+                        <input type="text" id="cpfPix" inputmode="numeric" maxlength="14"
+                            placeholder="000.000.000-00" oninput="mascararCpfPix(this); atualizarBotaoFinalizar()">
+                        <p class="form-hint">Obrigatório para gerar o Pix no Mercado Pago.</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="presencial-section" id="presencialSection">
-                <p class="presencial-label">Como você vai pagar ao receber?</p>
-                <div class="presencial-opcoes">
-                    <label class="presencial-radio">
-                        <input type="radio" name="formaPresencial" value="pix" onchange="selecionarFormaPresencial('pix')">
-                        Pix ao receber
+            <div class="pagamento-panel" id="panelPagarEntrega" role="tabpanel" aria-labelledby="tabPagarEntrega">
+                <p class="presencial-label" id="presencialLabel">Como você vai pagar ao receber?</p>
+
+                <div class="pagamento-opcoes pagamento-opcoes--entrega">
+                    <label class="pagamento-opcao" onclick="selecionarFormaEntrega('pix')">
+                        <input type="radio" name="formaEntrega" value="pix">
+                        <span class="pagamento-opcao-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                                <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/>
+                            </svg>
+                        </span>
+                        <div class="opcao-info">
+                            <div class="opcao-titulo">Pix presencial</div>
+                            <div class="opcao-desc">Pague com Pix na hora que receber</div>
+                        </div>
                     </label>
-                    <label class="presencial-radio">
-                        <input type="radio" name="formaPresencial" value="dinheiro" onchange="selecionarFormaPresencial('dinheiro')">
-                        Dinheiro ao receber
+
+                    <label class="pagamento-opcao" onclick="selecionarFormaEntrega('dinheiro')">
+                        <input type="radio" name="formaEntrega" value="dinheiro">
+                        <span class="pagamento-opcao-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </span>
+                        <div class="opcao-info">
+                            <div class="opcao-titulo">Dinheiro</div>
+                            <div class="opcao-desc">Pague em espécie ao receber</div>
+                        </div>
+                    </label>
+
+                    <label class="pagamento-opcao" onclick="selecionarFormaEntrega('cartao')">
+                        <input type="radio" name="formaEntrega" value="cartao">
+                        <span class="pagamento-opcao-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                            </svg>
+                        </span>
+                        <div class="opcao-info">
+                            <div class="opcao-titulo">Cartão</div>
+                            <div class="opcao-desc">Débito ou crédito na maquininha</div>
+                        </div>
                     </label>
                 </div>
 
@@ -120,8 +168,8 @@
             <label class="confirmar-pagamento-label">
                 <input type="checkbox" id="confirmarPagamento" onchange="atualizarBotaoFinalizar()">
                 <span id="confirmarPagamentoTexto">
-                    <strong id="confirmarPagamentoTitulo">Confirmo o pagamento na entrega</strong>
-                    <small id="confirmarPagamentoDesc">Estou ciente de que pagarei ao receber o pedido conforme a forma selecionada acima.</small>
+                    <strong id="confirmarPagamentoTitulo">Confirmo o pagamento</strong>
+                    <small id="confirmarPagamentoDesc">Revise a forma de pagamento antes de finalizar.</small>
                 </span>
             </label>
         </div>

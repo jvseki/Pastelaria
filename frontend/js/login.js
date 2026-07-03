@@ -62,7 +62,26 @@ function renderizarUltimaConta() {
     document.getElementById("ultimaContaAvatar").textContent = inicial;
     document.getElementById("ultimaContaNome").textContent = conta.nome || "Sua conta";
     document.getElementById("ultimaContaEmail").textContent = conta.email_google;
+
+    const btn = document.getElementById("btnContinuarUltimaConta");
+    if (btn) {
+        const primeiroNome = (conta.nome || "sua conta").split(" ")[0];
+        btn.textContent = `Continuar como ${primeiroNome}`;
+    }
+
     card.style.display = "block";
+}
+
+function entrarComUltimaConta() {
+    if (!window.google?.accounts?.id) {
+        mostrarToast("Aguarde o Google carregar e tente novamente.");
+        return;
+    }
+    google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            document.getElementById("googleLoginBtn")?.querySelector("div[role=button]")?.click();
+        }
+    });
 }
 
 function renderizarEstadoLogin({ clientId, scriptOk }) {
@@ -70,19 +89,22 @@ function renderizarEstadoLogin({ clientId, scriptOk }) {
     renderizarUltimaConta();
 
     if (isGoogleClientIdValid(clientId) && scriptOk) {
-        const temUltimaConta = !!getUltimaConta()?.email_google;
+        const ultimaConta = getUltimaConta();
+        const temUltimaConta = !!ultimaConta?.email_google;
 
         google.accounts.id.initialize({
             client_id: clientId,
             callback: handleGoogleLogin,
             auto_select: temUltimaConta,
-            cancel_on_tap_outside: true,
+            cancel_on_tap_outside: false,
             use_fedcm_for_prompt: false,
             itp_support: true,
+            context: "signin",
+            ...(temUltimaConta ? { login_hint: ultimaConta.email_google } : {}),
         });
 
         google.accounts.id.renderButton(container, {
-            theme: "filled_blue",
+            theme: "outline",
             size: "large",
             width: Math.min(container.offsetWidth || 360, 400),
             text: temUltimaConta ? "continue_with" : "signin_with",
@@ -91,7 +113,7 @@ function renderizarEstadoLogin({ clientId, scriptOk }) {
         });
 
         if (temUltimaConta) {
-            google.accounts.id.prompt();
+            setTimeout(() => google.accounts.id.prompt(), 400);
         }
 
         return;
