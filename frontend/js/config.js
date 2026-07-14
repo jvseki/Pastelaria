@@ -1,12 +1,16 @@
 (function () {
-    const isLocal =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
+    const host = window.location.hostname;
+    const isLocal = host === "localhost" || host === "127.0.0.1";
+    const isVercel = host.endsWith(".vercel.app");
 
-    // Producao: API no Render | Local: localhost
-    window.API_URL = isLocal
-        ? "http://localhost:8000"
-        : "https://pastelaria-geu7.onrender.com";
+    if (isLocal) {
+        window.API_URL = "http://localhost:8000";
+    } else if (isVercel) {
+        window.API_URL = "https://pastelaria-geu7.onrender.com";
+    } else {
+        // VPS Hostinger ou dominio proprio — API no mesmo endereco (Nginx faz proxy)
+        window.API_URL = window.location.origin;
+    }
 
     window.GOOGLE_CLIENT_ID =
         "19682040972-bqnoppb492er7rm8kdtlj3b6ie7ug5e3.apps.googleusercontent.com";
