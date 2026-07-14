@@ -1,5 +1,5 @@
 let abaPagamento = null;
-let formaAgora = "pix"; // "pix" | "credito" | "debito"
+let formaAgora = "pix"; // "pix" | "mp"
 let formaEntrega = null;
 let mercadoPagoHabilitado = false;
 let pixProducao = false;
@@ -77,7 +77,7 @@ async function carregarMercadoPago() {
         const opcoesEl = document.getElementById("opcoesAgora");
         if (opcoesEl) opcoesEl.style.display = "";
         const tabSmall = tabAgora.querySelector("small");
-        if (tabSmall) tabSmall.textContent = "Pix ou cartão";
+        if (tabSmall) tabSmall.textContent = "Pix, cartão ou banco";
     }
 
     selecionarAbaPagamento("agora");
@@ -186,8 +186,8 @@ function montarPayloadPedido(pagamentoFinal, troco = null) {
 function pagamentoEstaCompleto() {
     if (abaPagamento === "agora") {
         if (!mercadoPagoHabilitado) return false;
-        const ehCartao = formaAgora === "credito" || formaAgora === "debito";
-        if (ehCartao) return cartaoHabilitado;
+        const ehMp = formaAgora === "mp";
+        if (ehMp) return cartaoHabilitado;
         if (pixProducao) {
             return normalizarCpf(document.getElementById("cpfPix")?.value).length === 11;
         }
@@ -204,13 +204,9 @@ function atualizarTextoConfirmacao() {
     const aoReceber = isRetirada() ? "na retirada" : "na entrega";
 
     if (abaPagamento === "agora") {
-        if (formaAgora === "credito") {
-            if (titulo) titulo.textContent = "Confirmo e irei pagar com cartão de crédito";
-            if (desc) desc.textContent = "Você será redirecionado para o Mercado Pago para inserir os dados do cartão.";
-            if (btn) btn.textContent = "Ir para o Mercado Pago";
-        } else if (formaAgora === "debito") {
-            if (titulo) titulo.textContent = "Confirmo e irei pagar com cartão de débito";
-            if (desc) desc.textContent = "Você será redirecionado para o Mercado Pago para inserir os dados do cartão.";
+        if (formaAgora === "mp") {
+            if (titulo) titulo.textContent = "Confirmo e irei pagar no Mercado Pago";
+            if (desc) desc.textContent = "Você poderá usar cartão, Pix (Nubank, Inter, etc.) ou saldo MP.";
             if (btn) btn.textContent = "Ir para o Mercado Pago";
         } else {
             if (titulo) titulo.textContent = "Confirmo e irei pagar com Pix agora";
@@ -239,15 +235,15 @@ function selecionarFormaAgora(forma) {
         r.closest(".pagamento-opcao")?.classList.toggle("selected", r.checked);
     });
 
-    const ehCartao = formaAgora === "credito" || formaAgora === "debito";
+    const ehMp = formaAgora === "mp";
 
     const pixInfoBox = document.getElementById("pixInfoBox");
     const cpfSection = document.getElementById("cpfPixSection");
     const cartaoInfoBox = document.getElementById("cartaoInfoBox");
 
-    if (pixInfoBox) pixInfoBox.classList.toggle("visible", !ehCartao);
-    if (cpfSection) cpfSection.classList.toggle("visible", !ehCartao && pixProducao);
-    if (cartaoInfoBox) cartaoInfoBox.style.display = ehCartao ? "" : "none";
+    if (pixInfoBox) pixInfoBox.classList.toggle("visible", !ehMp);
+    if (cpfSection) cpfSection.classList.toggle("visible", !ehMp && pixProducao);
+    if (cartaoInfoBox) cartaoInfoBox.style.display = ehMp ? "" : "none";
 
     atualizarTextoConfirmacao();
     atualizarBotaoFinalizar();
@@ -321,9 +317,9 @@ async function finalizarPedido() {
     btn.disabled = true;
 
     if (abaPagamento === "agora") {
-        if (formaAgora === "credito" || formaAgora === "debito") {
+        if (formaAgora === "mp") {
             btn.textContent = "Aguarde...";
-            await finalizarComCartao(btn, formaAgora);
+            await finalizarComCartao(btn);
         } else {
             btn.textContent = "Gerando Pix...";
             await finalizarComPix(btn);
@@ -373,10 +369,10 @@ async function finalizarPedido() {
     }
 }
 
-async function finalizarComCartao(btn, modo) {
+async function finalizarComCartao(btn) {
     try {
         const payload = montarPayloadPedido("mercadopago");
-        payload.modo = modo;
+        payload.modo = "todos";
         const resultado = await api.iniciarCheckoutPro(payload);
 
         if (!resultado.checkout_url) {

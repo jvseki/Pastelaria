@@ -258,8 +258,8 @@ def iniciar_checkout_pro(
 ):
     """Cria pedido e redireciona para Checkout Pro (crédito ou débito no site do MP)."""
     modo = (body.modo or "").strip().lower()
-    if modo not in ("credito", "debito"):
-        raise HTTPException(status_code=400, detail="Modo inválido. Use credito ou debito.")
+    if modo not in ("credito", "debito", "todos"):
+        raise HTTPException(status_code=400, detail="Modo inválido. Use credito, debito ou todos.")
 
     if not cartao_online_habilitado():
         raise HTTPException(

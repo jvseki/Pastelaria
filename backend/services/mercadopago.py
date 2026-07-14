@@ -259,21 +259,21 @@ def criar_preferencia_checkout(
     modo: str,
 ) -> dict:
     """Checkout Pro — redireciona para página segura do Mercado Pago."""
-    if modo not in ("credito", "debito"):
+    if modo not in ("credito", "debito", "todos"):
         raise ValueError("Modo de cartão inválido")
 
     frontend = settings.FRONTEND_URL.rstrip("/")
     excluded = [
         {"id": "ticket"},
-        {"id": "bank_transfer"},
         {"id": "atm"},
     ]
     installments = 12
     if modo == "credito":
-        excluded.append({"id": "debit_card"})
-    else:
-        excluded.append({"id": "credit_card"})
+        excluded.extend([{"id": "debit_card"}, {"id": "bank_transfer"}])
+    elif modo == "debito":
+        excluded.extend([{"id": "credit_card"}, {"id": "bank_transfer"}])
         installments = 1
+    # modo "todos": credito, debito, pix (bank_transfer) e saldo MP liberados
 
     body: dict = {
         "items": [
