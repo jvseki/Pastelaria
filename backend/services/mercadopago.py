@@ -256,24 +256,29 @@ def criar_preferencia_checkout(
     valor: float,
     titulo: str,
     payer_email: str | None,
+    payer_cpf: str | None = None,
     modo: str,
 ) -> dict:
     """Checkout Pro — redireciona para página segura do Mercado Pago."""
-    if modo not in ("credito", "debito", "todos"):
+    if modo not in ("credito", "debito"):
         raise ValueError("Modo de cartão inválido")
 
     frontend = settings.FRONTEND_URL.rstrip("/")
     excluded = [
         {"id": "ticket"},
         {"id": "atm"},
+        {"id": "bank_transfer"},  # Pix fica no QR do site
     ]
     installments = 12
     if modo == "credito":
-        excluded.extend([{"id": "debit_card"}, {"id": "bank_transfer"}])
-    elif modo == "debito":
-        excluded.extend([{"id": "credit_card"}, {"id": "bank_transfer"}])
+        excluded.append({"id": "debit_card"})
+    else:
+        excluded.append({"id": "credit_card"})
         installments = 1
-    # modo "todos": credito, debito, pix (bank_transfer) e saldo MP liberados
+
+    payer: dict = {"email": payer_email or "comprador@pastelaria.com"}
+    if payer_cpf:
+        payer["identification"] = {"type": "CPF", "number": validar_cpf(payer_cpf)}
 
     body: dict = {
         "items": [
@@ -285,7 +290,7 @@ def criar_preferencia_checkout(
                 "currency_id": "BRL",
             }
         ],
-        "payer": {"email": payer_email or "comprador@pastelaria.com"},
+        "payer": payer,
         "external_reference": str(pedido_id),
         "notification_url": f"{_api_base_url()}/pagamentos/webhook",
         "back_urls": {

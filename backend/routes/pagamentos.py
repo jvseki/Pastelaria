@@ -258,8 +258,8 @@ def iniciar_checkout_pro(
 ):
     """Cria pedido e redireciona para Checkout Pro (crédito ou débito no site do MP)."""
     modo = (body.modo or "").strip().lower()
-    if modo not in ("credito", "debito", "todos"):
-        raise HTTPException(status_code=400, detail="Modo inválido. Use credito, debito ou todos.")
+    if modo not in ("credito", "debito"):
+        raise HTTPException(status_code=400, detail="Modo inválido. Use credito ou debito.")
 
     if not cartao_online_habilitado():
         raise HTTPException(
@@ -291,6 +291,7 @@ def iniciar_checkout_pro(
             valor=valor,
             titulo=f"Pedido #{pedido.numero_dia or pedido.id} — Pastelaria",
             payer_email=usuario.email_google,
+            payer_cpf=body.cpf,
             modo=modo,
         )
     except httpx.HTTPStatusError as exc:

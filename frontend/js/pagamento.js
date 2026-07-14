@@ -1,5 +1,5 @@
 let abaPagamento = null;
-let formaAgora = "pix"; // "pix" | "mp"
+let formaAgora = "pix"; // "pix" | "credito" | "debito"
 let formaEntrega = null;
 let mercadoPagoHabilitado = false;
 let pixProducao = false;
@@ -77,7 +77,7 @@ async function carregarMercadoPago() {
         const opcoesEl = document.getElementById("opcoesAgora");
         if (opcoesEl) opcoesEl.style.display = "";
         const tabSmall = tabAgora.querySelector("small");
-        if (tabSmall) tabSmall.textContent = "Pix, cartão ou banco";
+        if (tabSmall) tabSmall.textContent = "Pix ou cartão";
     }
 
     selecionarAbaPagamento("agora");
@@ -177,7 +177,7 @@ function montarPayloadPedido(pagamentoFinal, troco = null) {
             quantidade: item.quantidade,
         })),
     };
-    if (pagamentoFinal === "mercadopago" && pixProducao && formaAgora === "pix") {
+    if (pagamentoFinal === "mercadopago" && pixProducao) {
         payload.cpf = normalizarCpf(document.getElementById("cpfPix")?.value);
     }
     return payload;
@@ -186,8 +186,8 @@ function montarPayloadPedido(pagamentoFinal, troco = null) {
 function pagamentoEstaCompleto() {
     if (abaPagamento === "agora") {
         if (!mercadoPagoHabilitado) return false;
-        const ehMp = formaAgora === "mp";
-        if (ehMp) return cartaoHabilitado;
+        const ehCartao = formaAgora === "credito" || formaAgora === "debito";
+        if (ehCartao) return cartaoHabilitado && (!pixProducao || normalizarCpf(document.getElementById("cpfPix")?.value).length === 11);
         if (pixProducao) {
             return normalizarCpf(document.getElementById("cpfPix")?.value).length === 11;
         }
@@ -204,10 +204,14 @@ function atualizarTextoConfirmacao() {
     const aoReceber = isRetirada() ? "na retirada" : "na entrega";
 
     if (abaPagamento === "agora") {
-        if (formaAgora === "mp") {
-            if (titulo) titulo.textContent = "Confirmo e irei pagar no Mercado Pago";
-            if (desc) desc.textContent = "Você poderá usar cartão, Pix (Nubank, Inter, etc.) ou saldo MP.";
-            if (btn) btn.textContent = "Ir para o Mercado Pago";
+        if (formaAgora === "credito") {
+            if (titulo) titulo.textContent = "Confirmo e irei pagar com cartão de crédito";
+            if (desc) desc.textContent = "Você será redirecionado ao Mercado Pago para inserir o cartão (Nubank, Inter, etc.).";
+            if (btn) btn.textContent = "Pagar com crédito";
+        } else if (formaAgora === "debito") {
+            if (titulo) titulo.textContent = "Confirmo e irei pagar com cartão de débito";
+            if (desc) desc.textContent = "Você será redirecionado ao Mercado Pago para inserir o cartão de débito.";
+            if (btn) btn.textContent = "Pagar com débito";
         } else {
             if (titulo) titulo.textContent = "Confirmo e irei pagar com Pix agora";
             if (desc) desc.textContent = "Você verá o QR Code Pix na próxima tela para concluir o pagamento.";
@@ -235,15 +239,27 @@ function selecionarFormaAgora(forma) {
         r.closest(".pagamento-opcao")?.classList.toggle("selected", r.checked);
     });
 
-    const ehMp = formaAgora === "mp";
+    const ehCartao = formaAgora === "credito" || formaAgora === "debito";
 
     const pixInfoBox = document.getElementById("pixInfoBox");
     const cpfSection = document.getElementById("cpfPixSection");
+    const cpfHint = document.getElementById("cpfHint");
     const cartaoInfoBox = document.getElementById("cartaoInfoBox");
+    const cartaoInfoDesc = document.getElementById("cartaoInfoDesc");
 
-    if (pixInfoBox) pixInfoBox.classList.toggle("visible", !ehMp);
-    if (cpfSection) cpfSection.classList.toggle("visible", !ehMp && pixProducao);
-    if (cartaoInfoBox) cartaoInfoBox.style.display = ehMp ? "" : "none";
+    if (pixInfoBox) pixInfoBox.classList.toggle("visible", !ehCartao);
+    if (cpfSection) cpfSection.classList.toggle("visible", pixProducao);
+    if (cpfHint) {
+        cpfHint.textContent = ehCartao
+            ? "Obrigatório para pagamento com cartão no Mercado Pago."
+            : "Obrigatório para gerar o Pix no Mercado Pago.";
+    }
+    if (cartaoInfoBox) cartaoInfoBox.style.display = ehCartao ? "" : "none";
+    if (cartaoInfoDesc) {
+        cartaoInfoDesc.textContent = formaAgora === "debito"
+            ? "No Mercado Pago, insira o cartão de débito do seu banco (Nubank, Inter, Itaú, etc.). Pagamento à vista."
+            : "No Mercado Pago, insira o cartão de crédito do seu banco (Nubank, Inter, Itaú, etc.). Pode parcelar.";
+    }
 
     atualizarTextoConfirmacao();
     atualizarBotaoFinalizar();
@@ -317,9 +333,9 @@ async function finalizarPedido() {
     btn.disabled = true;
 
     if (abaPagamento === "agora") {
-        if (formaAgora === "mp") {
+        if (formaAgora === "credito" || formaAgora === "debito") {
             btn.textContent = "Aguarde...";
-            await finalizarComCartao(btn);
+            await finalizarComCartao(btn, formaAgora);
         } else {
             btn.textContent = "Gerando Pix...";
             await finalizarComPix(btn);
@@ -369,10 +385,10 @@ async function finalizarPedido() {
     }
 }
 
-async function finalizarComCartao(btn) {
+async function finalizarComCartao(btn, modo) {
     try {
         const payload = montarPayloadPedido("mercadopago");
-        payload.modo = "todos";
+        payload.modo = modo;
         const resultado = await api.iniciarCheckoutPro(payload);
 
         if (!resultado.checkout_url) {

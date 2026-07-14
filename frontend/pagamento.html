@@ -100,17 +100,31 @@
                             </div>
                         </label>
 
-                        <label class="pagamento-opcao" id="opcaoAgora-mp" onclick="selecionarFormaAgora('mp')">
-                            <input type="radio" name="formaAgora" value="mp">
+                        <label class="pagamento-opcao" id="opcaoAgora-credito" onclick="selecionarFormaAgora('credito')">
+                            <input type="radio" name="formaAgora" value="credito">
                             <span class="pagamento-opcao-icon" aria-hidden="true">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
-                                    <line x1="6" y1="15" x2="14" y2="15"/>
+                                    <line x1="6" y1="15" x2="10" y2="15"/>
                                 </svg>
                             </span>
                             <div class="opcao-info">
-                                <div class="opcao-titulo">Cartão, Pix ou banco</div>
-                                <div class="opcao-desc">Nubank, Inter, Itaú e outros no Mercado Pago</div>
+                                <div class="opcao-titulo">Cartão de crédito</div>
+                                <div class="opcao-desc">Nubank, Inter, Itaú e outros — à vista ou parcelado</div>
+                            </div>
+                        </label>
+
+                        <label class="pagamento-opcao" id="opcaoAgora-debito" onclick="selecionarFormaAgora('debito')">
+                            <input type="radio" name="formaAgora" value="debito">
+                            <span class="pagamento-opcao-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                                    <line x1="6" y1="15" x2="8" y2="15"/>
+                                </svg>
+                            </span>
+                            <div class="opcao-info">
+                                <div class="opcao-titulo">Cartão de débito</div>
+                                <div class="opcao-desc">Nubank, Inter, Itaú e outros — à vista</div>
                             </div>
                         </label>
                     </div>
@@ -130,7 +144,7 @@
                             <label for="cpfPix">CPF do pagador</label>
                             <input type="text" id="cpfPix" inputmode="numeric" maxlength="14"
                                 placeholder="000.000.000-00" oninput="mascararCpfPix(this); atualizarBotaoFinalizar()">
-                            <p class="form-hint">Obrigatório para gerar o Pix no Mercado Pago.</p>
+                            <p class="form-hint" id="cpfHint">Obrigatório para gerar o Pix no Mercado Pago.</p>
                         </div>
                     </div>
 
@@ -138,9 +152,9 @@
                         <div class="pix-info-header">
                             <span class="pix-info-badge">Site seguro do Mercado Pago</span>
                         </div>
-                        <p class="pix-info-desc">
-                            Você será redirecionado para o <strong>Mercado Pago</strong>, onde pode pagar com
-                            cartão (Nubank, Inter, etc.), Pix pelo app do banco ou saldo Mercado Pago.
+                        <p class="pix-info-desc" id="cartaoInfoDesc">
+                            Você será redirecionado para inserir os dados do cartão com segurança.
+                            Aceita cartões de qualquer banco (Nubank, Inter, Itaú, etc.).
                         </p>
                     </div>
                 </div>
