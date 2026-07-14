@@ -84,7 +84,52 @@
 
             <div class="pagamento-panel" id="panelPagarAgora" role="tabpanel" aria-labelledby="tabPagarAgora">
                 <div class="pagamento-agora-conteudo" id="agoraConteudoPix">
-                    <div class="pix-info-box visible">
+
+                    <div class="pagamento-opcoes pagamento-opcoes--agora" id="opcoesAgora" style="display:none">
+                        <label class="pagamento-opcao" id="opcaoAgora-pix" onclick="selecionarFormaAgora('pix')">
+                            <input type="radio" name="formaAgora" value="pix">
+                            <span class="pagamento-opcao-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                                    <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/>
+                                </svg>
+                            </span>
+                            <div class="opcao-info">
+                                <div class="opcao-titulo">Pix</div>
+                                <div class="opcao-desc">QR Code no app do banco</div>
+                            </div>
+                        </label>
+
+                        <label class="pagamento-opcao" id="opcaoAgora-credito" onclick="selecionarFormaAgora('credito')">
+                            <input type="radio" name="formaAgora" value="credito">
+                            <span class="pagamento-opcao-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                                    <line x1="6" y1="15" x2="10" y2="15"/>
+                                </svg>
+                            </span>
+                            <div class="opcao-info">
+                                <div class="opcao-titulo">Cartão de crédito</div>
+                                <div class="opcao-desc">À vista ou parcelado via Mercado Pago</div>
+                            </div>
+                        </label>
+
+                        <label class="pagamento-opcao" id="opcaoAgora-debito" onclick="selecionarFormaAgora('debito')">
+                            <input type="radio" name="formaAgora" value="debito">
+                            <span class="pagamento-opcao-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                                    <line x1="6" y1="15" x2="8" y2="15"/>
+                                </svg>
+                            </span>
+                            <div class="opcao-info">
+                                <div class="opcao-titulo">Cartão de débito</div>
+                                <div class="opcao-desc">À vista via Mercado Pago</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="pix-info-box visible" id="pixInfoBox">
                         <div class="pix-info-header">
                             <span class="pix-info-badge">Confirmação imediata</span>
                         </div>
@@ -101,6 +146,16 @@
                                 placeholder="000.000.000-00" oninput="mascararCpfPix(this); atualizarBotaoFinalizar()">
                             <p class="form-hint">Obrigatório para gerar o Pix no Mercado Pago.</p>
                         </div>
+                    </div>
+
+                    <div class="pix-info-box" id="cartaoInfoBox" style="display:none">
+                        <div class="pix-info-header">
+                            <span class="pix-info-badge">Site seguro do Mercado Pago</span>
+                        </div>
+                        <p class="pix-info-desc">
+                            Você será redirecionado para inserir os dados do cartão com segurança.
+                            O pedido entra na fila assim que o pagamento for aprovado.
+                        </p>
                     </div>
                 </div>
             </div>

@@ -122,7 +122,7 @@ def config_mercadopago():
         "habilitado": mercadopago_habilitado(),
         "sandbox": sandbox,
         "modo": "simulador_pix" if sandbox else "pix_mercadopago",
-        "cartao_habilitado": False,
+        "cartao_habilitado": cartao_online_habilitado(),
         "aviso_credenciais": aviso_credenciais_mp(),
     }
 
