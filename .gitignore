@@ -4,4 +4,8 @@ backend/__pycache__/
 **/__pycache__/
 *.pyc
 .env
+*.swp
+*~
+backups/
+pastelaria-migration-*
 client_secret*.json
