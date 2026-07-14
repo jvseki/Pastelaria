@@ -272,9 +272,16 @@ def criar_preferencia_checkout(
     installments = 12
     if modo == "credito":
         excluded.append({"id": "debit_card"})
+        if valor < 10:
+            installments = 1
+        elif valor < 50:
+            installments = 3
     else:
         excluded.append({"id": "credit_card"})
         installments = 1
+
+    if valor < 1:
+        raise ValueError("Pagamento com cartão exige valor mínimo de R$ 1,00")
 
     payer: dict = {"email": payer_email or "comprador@pastelaria.com"}
     if payer_cpf:
@@ -301,6 +308,7 @@ def criar_preferencia_checkout(
         "payment_methods": {
             "excluded_payment_types": excluded,
             "installments": installments,
+            "default_installments": 1,
         },
         "statement_descriptor": "PASTELARIA",
     }

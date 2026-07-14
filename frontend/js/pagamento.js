@@ -39,6 +39,7 @@ async function initPagamento() {
     renderizarResumoEntrega();
     atualizarLabelsEntrega();
     await carregarMercadoPago();
+    atualizarDisponibilidadeCartao();
     atualizarBotaoFinalizar();
 }
 
@@ -81,6 +82,28 @@ async function carregarMercadoPago() {
     }
 
     selecionarAbaPagamento("agora");
+}
+
+function cartaoDisponivel() {
+    return cartaoHabilitado && calcularTotal() >= 1;
+}
+
+function atualizarDisponibilidadeCartao() {
+    const total = calcularTotal();
+    const opcoes = ["credito", "debito"];
+    opcoes.forEach((modo) => {
+        const el = document.getElementById(`opcaoAgora-${modo}`);
+        if (!el) return;
+        const bloqueado = total < 1;
+        el.classList.toggle("pagamento-opcao--disabled", bloqueado);
+        el.style.opacity = bloqueado ? "0.45" : "";
+        el.style.pointerEvents = bloqueado ? "none" : "";
+    });
+
+    if ((formaAgora === "credito" || formaAgora === "debito") && total < 1) {
+        selecionarFormaAgora("pix");
+        mostrarToast("Cartão exige pedido mínimo de R$ 1,00. Use Pix para valores menores.");
+    }
 }
 
 function getTipoEntrega() {
@@ -187,7 +210,7 @@ function pagamentoEstaCompleto() {
     if (abaPagamento === "agora") {
         if (!mercadoPagoHabilitado) return false;
         const ehCartao = formaAgora === "credito" || formaAgora === "debito";
-        if (ehCartao) return cartaoHabilitado && (!pixProducao || normalizarCpf(document.getElementById("cpfPix")?.value).length === 11);
+        if (ehCartao) return cartaoDisponivel() && (!pixProducao || normalizarCpf(document.getElementById("cpfPix")?.value).length === 11);
         if (pixProducao) {
             return normalizarCpf(document.getElementById("cpfPix")?.value).length === 11;
         }
@@ -256,9 +279,12 @@ function selecionarFormaAgora(forma) {
     }
     if (cartaoInfoBox) cartaoInfoBox.style.display = ehCartao ? "" : "none";
     if (cartaoInfoDesc) {
-        cartaoInfoDesc.textContent = formaAgora === "debito"
-            ? "No Mercado Pago, insira o cartão de débito do seu banco (Nubank, Inter, Itaú, etc.). Pagamento à vista."
-            : "No Mercado Pago, insira o cartão de crédito do seu banco (Nubank, Inter, Itaú, etc.). Pode parcelar.";
+        const minimo = calcularTotal() < 1
+            ? "Valor mínimo para cartão: R$ 1,00. Para pedidos menores, use Pix."
+            : formaAgora === "debito"
+                ? "No Mercado Pago, insira o cartão de débito do seu banco (Nubank, Inter, Itaú, etc.). Pagamento à vista."
+                : "No Mercado Pago, insira o cartão de crédito do seu banco (Nubank, Inter, Itaú, etc.). Pode parcelar.";
+        cartaoInfoDesc.textContent = minimo;
     }
 
     atualizarTextoConfirmacao();
