@@ -267,7 +267,6 @@ def criar_preferencia_checkout(
         {"id": "ticket"},
         {"id": "bank_transfer"},
         {"id": "atm"},
-        {"id": "account_money"},
     ]
     installments = 12
     if modo == "credito":
