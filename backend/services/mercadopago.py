@@ -294,13 +294,16 @@ def criar_preferencia_checkout(
             "failure": f"{frontend}/pagamento.html?mp=failure",
             "pending": f"{frontend}/pedido.html?mp=pending",
         },
-        "auto_return": "approved",
         "payment_methods": {
             "excluded_payment_types": excluded,
             "installments": installments,
         },
         "statement_descriptor": "PASTELARIA",
     }
+
+    # auto_return so funciona com back_urls HTTPS; em http o MP rejeita a preferencia.
+    if frontend.startswith("https://"):
+        body["auto_return"] = "approved"
 
     with httpx.Client(timeout=30.0) as client:
         response = client.post(
