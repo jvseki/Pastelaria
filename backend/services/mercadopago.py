@@ -18,22 +18,6 @@ def mercadopago_habilitado() -> bool:
     return bool(settings.MERCADOPAGO_ACCESS_TOKEN.strip())
 
 
-def cartao_online_habilitado() -> bool:
-    """Checkout Pro (crédito/débito no site do MP) — só precisa do Access Token."""
-    if settings.MERCADOPAGO_SANDBOX:
-        return False
-    return bool(settings.MERCADOPAGO_ACCESS_TOKEN.strip())
-
-
-def cartao_simulador_habilitado() -> bool:
-    """Cartão de teste no site — sem credenciais MP (só com SANDBOX=true)."""
-    return settings.MERCADOPAGO_SANDBOX and not cartao_online_habilitado()
-
-
-def cartao_checkout_disponivel() -> bool:
-    return cartao_online_habilitado() or cartao_simulador_habilitado()
-
-
 def normalizar_cpf(cpf: str | None) -> str:
     return re.sub(r"\D", "", cpf or "")
 
@@ -80,31 +64,6 @@ def mensagem_erro_mp(exc: httpx.HTTPStatusError) -> str:
     if exc.response.status_code == 401:
         return "Access Token do Mercado Pago inválido ou expirado"
     return "Erro ao gerar Pix no Mercado Pago"
-
-
-_MENSAGENS_RECUSA_CARTAO = {
-    "cc_rejected_insufficient_amount": "Saldo ou limite insuficiente no cartão.",
-    "cc_rejected_bad_filled_card_number": "Número do cartão inválido. Confira os dados.",
-    "cc_rejected_bad_filled_date": "Data de validade inválida.",
-    "cc_rejected_bad_filled_security_code": "Código de segurança (CVV) inválido.",
-    "cc_rejected_bad_filled_other": "Revise os dados do cartão e do titular.",
-    "cc_rejected_call_for_authorize": "Ligue para o banco para autorizar a compra.",
-    "cc_rejected_card_disabled": "Cartão desabilitado ou bloqueado para compras online.",
-    "cc_rejected_duplicated_payment": "Pagamento duplicado. Aguarde alguns minutos.",
-    "cc_rejected_high_risk": "Pagamento recusado por segurança. Tente outro cartão ou use Pix.",
-    "cc_rejected_invalid_installments": "Parcelamento não permitido para este cartão.",
-    "cc_rejected_max_attempts": "Muitas tentativas. Aguarde e tente novamente.",
-    "cc_rejected_other_reason": "Cartão recusado pelo banco. Tente outro cartão ou use Pix.",
-}
-
-
-def mensagem_recusa_cartao(payment: dict) -> str:
-    codigo = str(payment.get("status_detail") or "").strip()
-    if codigo in _MENSAGENS_RECUSA_CARTAO:
-        return _MENSAGENS_RECUSA_CARTAO[codigo]
-    if codigo:
-        return f"Pagamento recusado ({codigo}). Tente outro cartão ou use Pix."
-    return "Pagamento recusado pelo banco ou pelo Mercado Pago."
 
 
 def _credencial_eh_teste(valor: str) -> bool:
@@ -187,162 +146,6 @@ def criar_pagamento_pix(
         return response.json()
 
 
-def criar_pagamento_cartao(
-    *,
-    pedido_id: int,
-    valor: float,
-    token: str,
-    payment_method_id: str,
-    installments: int,
-    issuer_id: str | None,
-    payer_email: str | None,
-    payer_nome: str | None,
-    payer_cpf: str | None,
-    descricao: str,
-    idempotency_suffix: str | None = None,
-) -> dict:
-    """Cria cobrança com cartão via token do Brick."""
-    cpf = validar_cpf(payer_cpf)
-    primeiro_nome, sobrenome = _split_nome(payer_nome)
-
-    body: dict = {
-        "transaction_amount": round(valor, 2),
-        "token": token,
-        "description": descricao[:256],
-        "installments": max(1, int(installments or 1)),
-        "payment_method_id": payment_method_id,
-        "payer": {
-            "email": payer_email or "comprador@pastelaria.com",
-            "first_name": primeiro_nome,
-            "last_name": sobrenome,
-            "identification": {
-                "type": "CPF",
-                "number": cpf,
-            },
-        },
-        "external_reference": str(pedido_id),
-        "notification_url": f"{_api_base_url()}/pagamentos/webhook",
-        "statement_descriptor": "PASTELARIA",
-        "binary_mode": False,
-    }
-    if issuer_id:
-        body["issuer_id"] = str(issuer_id)
-
-    with httpx.Client(timeout=30.0) as client:
-        idem = f"pastelaria-card-{pedido_id}"
-        if idempotency_suffix:
-            idem = f"{idem}-{idempotency_suffix}"
-        response = client.post(
-            f"{MP_API}/v1/payments",
-            headers=_headers(idempotency_key=idem),
-            json=body,
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-def resumo_pagamento_cartao(payment: dict) -> dict:
-    return {
-        "payment_id": str(payment.get("id") or ""),
-        "status": payment.get("status"),
-        "status_detail": payment.get("status_detail"),
-        "pedido_id": int(payment.get("external_reference") or 0),
-    }
-
-
-def criar_preferencia_checkout(
-    *,
-    pedido_id: int,
-    valor: float,
-    titulo: str,
-    payer_email: str | None,
-    payer_cpf: str | None = None,
-    modo: str,
-) -> dict:
-    """Checkout Pro — redireciona para página segura do Mercado Pago."""
-    if modo not in ("credito", "debito"):
-        raise ValueError("Modo de cartão inválido")
-
-    frontend = settings.FRONTEND_URL.rstrip("/")
-    excluded = [
-        {"id": "ticket"},
-        {"id": "atm"},
-        {"id": "bank_transfer"},  # Pix fica no QR do site
-    ]
-    installments = 12
-    if modo == "credito":
-        excluded.append({"id": "debit_card"})
-        if valor < 10:
-            installments = 1
-        elif valor < 50:
-            installments = 3
-    else:
-        excluded.append({"id": "credit_card"})
-        installments = 1
-
-    if valor < 1:
-        raise ValueError("Pagamento com cartão exige valor mínimo de R$ 1,00")
-
-    payer: dict = {"email": payer_email or "comprador@pastelaria.com"}
-    if payer_cpf:
-        payer["identification"] = {"type": "CPF", "number": validar_cpf(payer_cpf)}
-
-    body: dict = {
-        "items": [
-            {
-                "id": str(pedido_id),
-                "title": titulo[:256],
-                "quantity": 1,
-                "unit_price": round(valor, 2),
-                "currency_id": "BRL",
-            }
-        ],
-        "payer": payer,
-        "external_reference": str(pedido_id),
-        "notification_url": f"{_api_base_url()}/pagamentos/webhook",
-        "back_urls": {
-            "success": f"{frontend}/pedido.html?mp=success",
-            "failure": f"{frontend}/pagamento.html?mp=failure",
-            "pending": f"{frontend}/pedido.html?mp=pending",
-        },
-        "payment_methods": {
-            "excluded_payment_types": excluded,
-            "installments": installments,
-            "default_installments": 1,
-        },
-        "statement_descriptor": "PASTELARIA",
-    }
-
-    # auto_return so funciona com back_urls HTTPS; em http o MP rejeita a preferencia.
-    if frontend.startswith("https://"):
-        body["auto_return"] = "approved"
-
-    with httpx.Client(timeout=30.0) as client:
-        response = client.post(
-            f"{MP_API}/checkout/preferences",
-            headers=_headers(idempotency_key=f"pastelaria-pref-{pedido_id}-{modo}"),
-            json=body,
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-def buscar_preferencia(preference_id: str) -> dict:
-    with httpx.Client(timeout=30.0) as client:
-        response = client.get(
-            f"{MP_API}/checkout/preferences/{preference_id}",
-            headers=_headers(),
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-def url_checkout_preferencia(preference: dict) -> str:
-    if settings.MERCADOPAGO_SANDBOX:
-        return preference.get("sandbox_init_point") or preference.get("init_point") or ""
-    return preference.get("init_point") or preference.get("sandbox_init_point") or ""
-
-
 def extrair_dados_pix(payment: dict) -> dict:
     """Extrai QR e copia-e-cola de um pagamento Pix do MP."""
     tx = (payment.get("point_of_interaction") or {}).get("transaction_data") or {}
@@ -402,13 +205,6 @@ def confirmar_pix_simulado(pedido) -> None:
     pedido.pagamento_confirmado = True
     pedido.status = "pendente"
     pedido.mp_payment_id = pedido.mp_payment_id or f"SIM-{pedido.id}"
-
-
-def confirmar_cartao_simulado(pedido) -> None:
-    """Marca pagamento com cartão simulado como aprovado."""
-    pedido.pagamento_confirmado = True
-    pedido.status = "pendente"
-    pedido.mp_payment_id = pedido.mp_payment_id or f"SIM-CARD-{pedido.id}"
 
 
 def estornar_pagamento(payment_id: str) -> dict:
