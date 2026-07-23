@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pastelaria Delivery — Apresentação do Projeto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="watermark" aria-hidden="true">
+        <span>JVSEKI</span>
+        <span>JVSEKI</span>
+        <span>JVSEKI</span>
+    </div>
+
+    <header class="topbar">
+        <a class="topbar-brand" href="#topo">Pastelaria<span>Delivery</span></a>
+        <nav class="topbar-nav">
+            <a href="#ideia">Ideia</a>
+            <a href="#pratica">Prática</a>
+            <a href="#servidor">Servidor</a>
+            <a href="#dominio">Domínio</a>
+        </nav>
+        <a class="topbar-cta" href="#servidor">Como hospedar</a>
+    </header>
+
+    <main id="topo">
+        <section class="hero">
+            <div class="hero-media" aria-hidden="true">
+                <img
+                    src="https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1800&q=80"
+                    alt=""
+                >
+                <div class="hero-veil"></div>
+            </div>
+            <div class="hero-copy">
+                <p class="brand-mark">Pastelaria Delivery</p>
+                <h1>Um sistema próprio para a pastelaria receber pedidos online — sem depender de app de terceiros.</h1>
+                <p class="hero-lead">
+                    Site, cardápio, carrinho, Pix e painel da loja num só projeto, rodando sob o controle da empresa.
+                </p>
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="#ideia">Entender o projeto</a>
+                    <a class="btn btn-ghost" href="#pratica">Ver o fluxo</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="ideia">
+            <div class="section-inner">
+                <p class="eyebrow">A ideia principal</p>
+                <h2>Levar o delivery da pastelaria para a web — com a marca e o processo dela.</h2>
+                <p class="section-lead">
+                    Em vez de depender só de plataformas externas, a pastelaria passa a ter um canal próprio:
+                    o cliente pede pelo site, paga com Pix e acompanha o pedido. A loja organiza tudo no painel.
+                </p>
+
+                <ul class="idea-list">
+                    <li>
+                        <strong>Canal próprio</strong>
+                        <span>O pedido chega direto para a pastelaria, com a identidade visual dela.</span>
+                    </li>
+                    <li>
+                        <strong>Operação simples</strong>
+                        <span>Cardápio, carrinho, endereço, pagamento e status — tudo no mesmo fluxo.</span>
+                    </li>
+                    <li>
+                        <strong>Controle da empresa</strong>
+                        <span>Como no modelo do Vila Mouran: o servidor fica sob responsabilidade da pastelaria.</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section section-alt" id="pratica">
+            <div class="section-inner">
+                <p class="eyebrow">Como funciona na prática</p>
+                <h2>Do clique ao pastel — um caminho curto e claro.</h2>
+                <p class="section-lead">
+                    A praticidade está em reduzir atrito: o cliente faz o pedido em poucos passos;
+                    a pastelaria recebe e gerencia sem planilha ou WhatsApp solto.
+                </p>
+
+                <ol class="flow">
+                    <li>
+                        <span class="flow-num">01</span>
+                        <div>
+                            <h3>Cliente escolhe no cardápio</h3>
+                            <p>Pastéis, combos e bebidas. Adiciona ao carrinho e define entrega ou retirada.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-num">02</span>
+                        <div>
+                            <h3>Confirma endereço e pagamento</h3>
+                            <p>Login com Google, endereço salvo e Pix online pelo Mercado Pago — ou pagamento na entrega.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-num">03</span>
+                        <div>
+                            <h3>A pastelaria organiza no painel</h3>
+                            <p>Pedidos entram na fila, com status, forma de pagamento e avisos para a operação.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-num">04</span>
+                        <div>
+                            <h3>Cliente acompanha</h3>
+                            <p>Em “Meus pedidos” ele vê o andamento e pode retomar um Pix pendente, se precisar.</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section" id="servidor">
+            <div class="section-inner">
+                <p class="eyebrow">O servidor</p>
+                <h2>Recomendação: KVM da Hostinger — a pastelaria no comando.</h2>
+                <p class="section-lead">
+                    No mesmo espírito do Vila Mouran, o servidor não fica “solto” em várias plataformas:
+                    a empresa (a pastelaria) é responsável pelo ambiente onde o sistema roda.
+                </p>
+
+                <div class="server-block">
+                    <p>
+                        A recomendação é um <strong>VPS KVM da Hostinger</strong> (Ubuntu 24.04 LTS).
+                        Nele ficam juntos o site, a API e o banco de dados — um único lugar, estável e previsível.
+                    </p>
+                    <ul class="server-points">
+                        <li><strong>Site</strong> — interface do cliente e do admin</li>
+                        <li><strong>API</strong> — pedidos, login, Pix e painel</li>
+                        <li><strong>Banco</strong> — PostgreSQL no próprio servidor</li>
+                    </ul>
+                    <p class="server-note">
+                        Assim a pastelaria deixa de depender de Vercel + Render + Supabase separados
+                        e passa a ter um ambiente próprio, com backup e domínio sob o controle dela.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-alt" id="dominio">
+            <div class="section-inner">
+                <p class="eyebrow">O domínio</p>
+                <h2>O endereço na internet da pastelaria.</h2>
+                <p class="section-lead">
+                    O domínio é o nome que o cliente digita no navegador — por exemplo
+                    <em>pastelariaentrega.com.br</em>. Ele aponta para o IP do KVM e dá cara profissional ao negócio.
+                </p>
+
+                <div class="domain-grid">
+                    <div>
+                        <h3>Por que importa</h3>
+                        <p>
+                            Em vez de um link genérico de hospedagem, a marca aparece no endereço.
+                            Facilita divulgação, confiança e WhatsApp / Instagram.
+                        </p>
+                    </div>
+                    <div>
+                        <h3>Como conecta</h3>
+                        <p>
+                            No DNS do domínio, um registro <strong>A</strong> aponta para o IP do VPS.
+                            Com SSL (HTTPS), o site fica seguro e pronto para produção.
+                        </p>
+                    </div>
+                    <div>
+                        <h3>O que atualizar depois</h3>
+                        <p>
+                            Google Login, webhook do Mercado Pago e as URLs do sistema passam a usar
+                            o domínio oficial da pastelaria.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-close">
+            <div class="section-inner close-inner">
+                <p class="eyebrow">Em uma frase</p>
+                <h2>Projeto pronto para a pastelaria operar o próprio delivery — com servidor e domínio sob o controle dela.</h2>
+                <p class="section-lead">
+                    Mock de apresentação do sistema Pastelaria Delivery: ideia, fluxo prático,
+                    hospedagem em KVM Hostinger e papel do domínio.
+                </p>
+                <a class="btn btn-primary" href="#topo">Voltar ao início</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Pastelaria Delivery · apresentação mockada do projeto</p>
+        <p class="footer-mark">JVSEKI</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
