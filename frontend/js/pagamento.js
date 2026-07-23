@@ -1,5 +1,4 @@
 let abaPagamento = null;
-let formaAgora = "pix";
 let formaEntrega = null;
 let mercadoPagoHabilitado = false;
 let pixProducao = false;
@@ -24,15 +23,6 @@ async function initPagamento() {
         return;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("mp") === "failure") {
-        mostrarAlerta("O pagamento não foi concluído. Tente novamente ou escolha pagar ao receber.", {
-            titulo: "Pagamento cancelado",
-            tipo: "aviso",
-        });
-        window.history.replaceState({}, "", "pagamento.html");
-    }
-
     document.getElementById("totalPedido").textContent = formatarPreco(calcularTotal());
     atualizarDetalhesTotal();
     renderizarResumoEntrega();
@@ -42,22 +32,13 @@ async function initPagamento() {
 }
 
 async function carregarMercadoPago() {
-    let avisoCredenciais = null;
     try {
         const cfg = await api.getMercadoPagoConfig();
         mercadoPagoHabilitado = !!cfg.habilitado;
         pixProducao = cfg.modo === "pix_mercadopago";
-        avisoCredenciais = cfg.aviso_credenciais || null;
     } catch (_) {
         mercadoPagoHabilitado = false;
         pixProducao = false;
-    }
-
-    if (avisoCredenciais) {
-        mostrarAlerta(avisoCredenciais, {
-            titulo: "Credenciais do Mercado Pago",
-            tipo: "aviso",
-        });
     }
 
     const tabs = document.getElementById("pagamentoTabs");
@@ -167,7 +148,7 @@ function montarPayloadPedido(pagamentoFinal, troco = null) {
             quantidade: item.quantidade,
         })),
     };
-    if (pagamentoFinal === "mercadopago" && pixProducao && formaAgora === "pix") {
+    if (pagamentoFinal === "mercadopago" && pixProducao) {
         payload.cpf = normalizarCpf(document.getElementById("cpfPix")?.value);
     }
     return payload;
@@ -209,18 +190,6 @@ function atualizarBotaoFinalizar() {
     btn.disabled = !(confirmado && pagamentoEstaCompleto());
 }
 
-function selecionarFormaAgora(forma) {
-    formaAgora = "pix";
-
-    const cpfSection = document.getElementById("cpfPixSection");
-    if (cpfSection) {
-        cpfSection.classList.toggle("visible", pixProducao);
-    }
-
-    atualizarTextoConfirmacao();
-    atualizarBotaoFinalizar();
-}
-
 function selecionarAbaPagamento(aba) {
     abaPagamento = aba;
     formaEntrega = null;
@@ -244,11 +213,12 @@ function selecionarAbaPagamento(aba) {
     if (checkbox) checkbox.checked = false;
 
     if (aba === "agora") {
-        selecionarFormaAgora(formaAgora || "pix");
-    } else {
-        atualizarTextoConfirmacao();
-        atualizarBotaoFinalizar();
+        const cpfSection = document.getElementById("cpfPixSection");
+        if (cpfSection) cpfSection.classList.toggle("visible", pixProducao);
     }
+
+    atualizarTextoConfirmacao();
+    atualizarBotaoFinalizar();
 }
 
 function selecionarFormaEntrega(forma) {

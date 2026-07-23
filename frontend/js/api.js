@@ -295,26 +295,6 @@ const api = {
         });
     },
 
-    async iniciarCheckoutPro(pedido) {
-        return await apiRequest("/pagamentos/checkout-pro", {
-            method: "POST",
-            body: JSON.stringify(pedido),
-        });
-    },
-
-    async retomarCheckoutPro(pedidoId) {
-        return await apiRequest(`/pagamentos/retomar-checkout-pro/${pedidoId}`, {
-            method: "POST",
-        });
-    },
-
-    async iniciarCheckoutCartao(pedido) {
-        return await apiRequest("/pagamentos/checkout-cartao", {
-            method: "POST",
-            body: JSON.stringify(pedido),
-        });
-    },
-
     async confirmarPagamentoMercadoPago(pedidoId) {
         return await apiRequest(`/pagamentos/confirmar/${pedidoId}`, {
             method: "POST",

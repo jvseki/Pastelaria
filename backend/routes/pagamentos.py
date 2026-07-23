@@ -15,23 +15,14 @@ from services.mercadopago import (
     aplicar_status_pagamento,
     buscar_pagamento,
     buscar_pagamentos_por_pedido,
-    cartao_online_habilitado,
-    cartao_simulador_habilitado,
     confirmar_pix_simulado,
-    confirmar_cartao_simulado,
-    criar_pagamento_cartao,
     criar_pagamento_pix,
-    criar_preferencia_checkout,
-    buscar_preferencia,
-    url_checkout_preferencia,
     extrair_dados_pix,
     gerar_pix_simulado,
     mensagem_erro_mp,
     mercadopago_habilitado,
-    mensagem_recusa_cartao,
     aviso_credenciais_mp,
     obter_pix_de_pagamento_existente,
-    resumo_pagamento_cartao,
     validar_cpf,
 )
 from services.pedido_service import criar_pedido_no_banco, serializar_pedido_criado
@@ -43,17 +34,6 @@ router = APIRouter(prefix="/pagamentos", tags=["pagamentos"])
 
 class RetomarPixRequest(BaseModel):
     cpf: str | None = None
-
-
-class CheckoutCartaoRequest(PedidoRequest):
-    token: str
-    payment_method_id: str
-    installments: int = 1
-    issuer_id: str | None = None
-
-
-class CheckoutProRequest(PedidoRequest):
-    modo: str  # credito | debito
 
 
 def _itens_resposta(pedido: Pedido) -> list[dict]:
@@ -122,7 +102,6 @@ def config_mercadopago():
         "habilitado": mercadopago_habilitado(),
         "sandbox": sandbox,
         "modo": "simulador_pix" if sandbox else "pix_mercadopago",
-        "cartao_habilitado": False,
         "aviso_credenciais": aviso_credenciais_mp(),
     }
 
@@ -176,236 +155,6 @@ def iniciar_pagamento_pix(
 
     dados = serializar_pedido_criado(pedido, usuario, itens_resposta, endereco)
     dados["pix"] = pix
-    return dados
-
-
-@router.post("/checkout-cartao")
-def iniciar_pagamento_cartao(
-    body: CheckoutCartaoRequest,
-    usuario: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Cria pedido e processa pagamento com cartão (Mercado Pago Brick)."""
-    if not cartao_online_habilitado():
-        raise HTTPException(
-            status_code=503,
-            detail="Pagamento com cartão online não configurado. Defina MERCADOPAGO_PUBLIC_KEY e ACCESS_TOKEN no Render.",
-        )
-
-    pedido, itens_resposta, endereco = criar_pedido_no_banco(
-        db,
-        usuario,
-        pagamento="mercadopago",
-        troco=None,
-        tipo_entrega=body.tipo_entrega,
-        taxa_entrega=body.taxa_entrega,
-        local_retirada=body.local_retirada,
-        observacao=body.observacao,
-        itens_req=body.itens,
-        status="aguardando_pagamento",
-    )
-
-    valor = sum(float(i["preco"]) * i["quantidade"] for i in itens_resposta) + float(pedido.taxa_entrega or 0)
-    if valor <= 0:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Valor do pedido inválido para pagamento")
-
-    try:
-        cpf_validado = validar_cpf(body.cpf)
-        payment = criar_pagamento_cartao(
-            pedido_id=pedido.id,
-            valor=valor,
-            token=body.token,
-            payment_method_id=body.payment_method_id,
-            installments=body.installments,
-            issuer_id=body.issuer_id,
-            payer_email=usuario.email_google,
-            payer_nome=usuario.nome,
-            payer_cpf=cpf_validado,
-            descricao=f"Pedido #{pedido.numero_dia or pedido.id} — Pastelaria",
-            idempotency_suffix=str(int(time.time())),
-        )
-    except ValueError as exc:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except httpx.HTTPStatusError as exc:
-        db.rollback()
-        detail = mensagem_erro_mp(exc)
-        logger.error("Erro MP cartão: %s", exc.response.text)
-        raise HTTPException(status_code=502, detail=detail) from exc
-
-    status_mp = aplicar_status_pagamento(pedido, payment)
-    if status_mp in ("rejected", "cancelled"):
-        pedido.status = "cancelado"
-        db.commit()
-        detail = mensagem_recusa_cartao(payment)
-        logger.warning("Cartão recusado pedido %s: %s", pedido.id, payment.get("status_detail"))
-        raise HTTPException(status_code=402, detail=detail)
-
-    db.commit()
-    db.refresh(pedido)
-
-    dados = serializar_pedido_criado(pedido, usuario, itens_resposta, endereco)
-    dados["cartao"] = resumo_pagamento_cartao(payment)
-    return dados
-
-
-@router.post("/checkout-pro")
-def iniciar_checkout_pro(
-    body: CheckoutProRequest,
-    usuario: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Cria pedido e redireciona para Checkout Pro (crédito ou débito no site do MP)."""
-    modo = (body.modo or "").strip().lower()
-    if modo not in ("credito", "debito"):
-        raise HTTPException(status_code=400, detail="Modo inválido. Use credito ou debito.")
-
-    if not cartao_online_habilitado():
-        raise HTTPException(
-            status_code=503,
-            detail="Pagamento com cartão não configurado. Defina MERCADOPAGO_ACCESS_TOKEN no Render.",
-        )
-
-    pedido, itens_resposta, endereco = criar_pedido_no_banco(
-        db,
-        usuario,
-        pagamento="mercadopago",
-        troco=None,
-        tipo_entrega=body.tipo_entrega,
-        taxa_entrega=body.taxa_entrega,
-        local_retirada=body.local_retirada,
-        observacao=body.observacao,
-        itens_req=body.itens,
-        status="aguardando_pagamento",
-    )
-
-    valor = sum(float(i["preco"]) * i["quantidade"] for i in itens_resposta) + float(pedido.taxa_entrega or 0)
-    if valor <= 0:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Valor do pedido inválido para pagamento")
-
-    try:
-        preference = criar_preferencia_checkout(
-            pedido_id=pedido.id,
-            valor=valor,
-            titulo=f"Pedido #{pedido.numero_dia or pedido.id} — Pastelaria",
-            payer_email=usuario.email_google,
-            modo=modo,
-        )
-    except httpx.HTTPStatusError as exc:
-        db.rollback()
-        detail = mensagem_erro_mp(exc)
-        logger.error("Erro MP Checkout Pro: %s", exc.response.text)
-        raise HTTPException(status_code=502, detail=detail) from exc
-
-    checkout_url = url_checkout_preferencia(preference)
-    if not checkout_url:
-        db.rollback()
-        raise HTTPException(status_code=502, detail="Mercado Pago não retornou o link de pagamento")
-
-    pedido.mp_preference_id = str(preference.get("id") or "")
-    db.commit()
-    db.refresh(pedido)
-
-    dados = serializar_pedido_criado(pedido, usuario, itens_resposta, endereco)
-    dados["checkout_url"] = checkout_url
-    dados["modo_cartao"] = modo
-    return dados
-
-
-@router.post("/retomar-checkout-pro/{pedido_id}")
-def retomar_checkout_pro(
-    pedido_id: int,
-    usuario: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Retoma pagamento Checkout Pro pendente."""
-    if not cartao_online_habilitado():
-        raise HTTPException(status_code=503, detail="Checkout Pro não configurado")
-
-    pedido = (
-        db.query(Pedido)
-        .filter(Pedido.id == pedido_id, Pedido.usuario_id == usuario.id)
-        .options(joinedload(Pedido.itens).joinedload(ItemPedido.produto))
-        .first()
-    )
-    if not pedido:
-        raise HTTPException(status_code=404, detail="Pedido não encontrado")
-    if pedido.pagamento != "mercadopago":
-        raise HTTPException(status_code=400, detail="Pedido não é pagamento online")
-    if pedido.pagamento_confirmado:
-        raise HTTPException(status_code=400, detail="Este pedido já foi pago")
-    if pedido.status != "aguardando_pagamento":
-        raise HTTPException(status_code=400, detail="Este pedido não está aguardando pagamento")
-
-    pref_id = (pedido.mp_preference_id or "").strip()
-    if not pref_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Este pedido é pagamento Pix. Use Finalizar pagamento Pix em Meus pedidos.",
-        )
-
-    checkout_url = ""
-    if pref_id:
-        try:
-            preference = buscar_preferencia(pref_id)
-            checkout_url = url_checkout_preferencia(preference)
-        except httpx.HTTPStatusError:
-            checkout_url = ""
-
-    if not checkout_url:
-        raise HTTPException(
-            status_code=400,
-            detail="Link de pagamento expirado. Faça um novo pedido na tela de pagamento.",
-        )
-
-    itens_resposta = _itens_resposta(pedido)
-    endereco_db = db.query(Endereco).filter(Endereco.usuario_id == usuario.id).first()
-    dados = serializar_pedido_criado(pedido, usuario, itens_resposta, endereco_db)
-    dados["checkout_url"] = checkout_url
-    return dados
-
-
-@router.post("/checkout-cartao-simulado")
-def iniciar_pagamento_cartao_simulado(
-    body: PedidoRequest,
-    usuario: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Sandbox sem credenciais MP: confirma cartão fictício na hora (igual ao Pix simulado)."""
-    if not cartao_simulador_habilitado():
-        raise HTTPException(status_code=404, detail="Simulador de cartão indisponível")
-
-    pedido, itens_resposta, endereco = criar_pedido_no_banco(
-        db,
-        usuario,
-        pagamento="mercadopago",
-        troco=None,
-        tipo_entrega=body.tipo_entrega,
-        taxa_entrega=body.taxa_entrega,
-        local_retirada=body.local_retirada,
-        observacao=body.observacao,
-        itens_req=body.itens,
-        status="aguardando_pagamento",
-    )
-
-    valor = sum(float(i["preco"]) * i["quantidade"] for i in itens_resposta) + float(pedido.taxa_entrega or 0)
-    if valor <= 0:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Valor do pedido inválido para pagamento")
-
-    confirmar_cartao_simulado(pedido)
-    db.commit()
-    db.refresh(pedido)
-
-    dados = serializar_pedido_criado(pedido, usuario, itens_resposta, endereco)
-    dados["cartao"] = {
-        "simulado": True,
-        "status": "approved",
-        "payment_id": pedido.mp_payment_id,
-        "pedido_id": pedido.id,
-    }
     return dados
 
 
