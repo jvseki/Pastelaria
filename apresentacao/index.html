@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pastelaria Delivery — Apresentação do Projeto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    <title>Pastéis Nakachi — Demo do sistema de delivery | JVSEKI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
@@ -17,14 +17,14 @@
     </div>
 
     <header class="topbar">
-        <a class="topbar-brand" href="#topo">Pastelaria<span>Delivery</span></a>
+        <a class="topbar-brand" href="#topo">Pastéis<span>Nakachi</span></a>
         <nav class="topbar-nav">
             <a href="#ideia">Ideia</a>
-            <a href="#pratica">Prática</a>
+            <a href="#demo">Demo</a>
             <a href="#servidor">Servidor</a>
-            <a href="#dominio">Domínio</a>
+            <a href="#contato">Orçamento</a>
         </nav>
-        <a class="topbar-cta" href="#servidor">Como hospedar</a>
+        <a class="topbar-cta" href="#demo">Ver demo</a>
     </header>
 
     <main id="topo">
@@ -37,163 +37,367 @@
                 <div class="hero-veil"></div>
             </div>
             <div class="hero-copy">
-                <p class="brand-mark">Pastelaria Delivery</p>
-                <h1>Um sistema próprio para a pastelaria receber pedidos online — sem depender de app de terceiros.</h1>
+                <p class="brand-mark">Pastéis Nakachi</p>
+                <h1>Trailer de pastéis com canal próprio — do cardápio ao WhatsApp do motoboy.</h1>
                 <p class="hero-lead">
-                    Site, cardápio, carrinho, Pix e painel da loja num só projeto, rodando sob o controle da empresa.
+                    Demo interativa baseada no sistema real: cardápio, login Google, Pix, painel admin e aviso ao entregador.
+                    Quentinho, crocante e cheio de sabor — onde o trailer estiver.
                 </p>
                 <div class="hero-actions">
-                    <a class="btn btn-primary" href="#ideia">Entender o projeto</a>
-                    <a class="btn btn-ghost" href="#pratica">Ver o fluxo</a>
+                    <a class="btn btn-primary" href="#demo">Começar a demo</a>
+                    <a class="btn btn-ghost" href="#contato">Sobre o orçamento</a>
                 </div>
             </div>
         </section>
 
         <section class="section" id="ideia">
             <div class="section-inner">
-                <p class="eyebrow">A ideia principal</p>
-                <h2>Levar o delivery da pastelaria para a web — com a marca e o processo dela.</h2>
+                <p class="eyebrow">A ideia</p>
+                <h2>O mesmo fluxo do projeto da pastelaria — com a marca da Nakachi.</h2>
                 <p class="section-lead">
-                    Em vez de depender só de plataformas externas, a pastelaria passa a ter um canal próprio:
-                    o cliente pede pelo site, paga com Pix e acompanha o pedido. A loja organiza tudo no painel.
+                    A demo usa a lógica do sistema que já existe: cliente monta o pedido, entra com Google,
+                    paga com Pix (Mercado Pago) ou na entrega, a loja gerencia no painel e dispara o motoboy no WhatsApp.
                 </p>
-
                 <ul class="idea-list">
                     <li>
-                        <strong>Canal próprio</strong>
-                        <span>O pedido chega direto para a pastelaria, com a identidade visual dela.</span>
+                        <strong>Baseado no projeto real</strong>
+                        <span>Cardápio, carrinho, pagamento, admin e mensagem do motoboy — os mesmos passos do sistema.</span>
                     </li>
                     <li>
-                        <strong>Operação simples</strong>
-                        <span>Cardápio, carrinho, endereço, pagamento e status — tudo no mesmo fluxo.</span>
+                        <strong>Marca da Nakachi</strong>
+                        <span>Trailer de pastéis, pedido online, operação da empresa — sem marketplace no meio.</span>
                     </li>
                     <li>
-                        <strong>Controle da empresa</strong>
-                        <span>Como no modelo do Vila Mouran: o servidor fica sob responsabilidade da pastelaria.</span>
+                        <strong>JVSEKI = estrutura</strong>
+                        <span>Código, fluxo e integrações. Servidor e operação ficam com a empresa, na hospedagem que ela preferir.</span>
                     </li>
                 </ul>
             </div>
         </section>
 
-        <section class="section section-alt" id="pratica">
+        <section class="section section-alt" id="demo">
             <div class="section-inner">
-                <p class="eyebrow">Como funciona na prática</p>
-                <h2>Do clique ao pastel — um caminho curto e claro.</h2>
+                <p class="eyebrow">Demo interativa</p>
+                <h2>Clique e simule — cada tela tem legenda do que acontece no sistema real.</h2>
                 <p class="section-lead">
-                    A praticidade está em reduzir atrito: o cliente faz o pedido em poucos passos;
-                    a pastelaria recebe e gerencia sem planilha ou WhatsApp solto.
+                    Mockado: não chama API nem Mercado Pago de verdade. Serve para apresentar o fluxo completo à Pastéis Nakachi.
                 </p>
 
-                <ol class="flow">
-                    <li>
-                        <span class="flow-num">01</span>
-                        <div>
-                            <h3>Cliente escolhe no cardápio</h3>
-                            <p>Pastéis, combos e bebidas. Adiciona ao carrinho e define entrega ou retirada.</p>
+                <div class="demo-shell" id="demoShell">
+                    <div class="demo-progress" aria-hidden="true">
+                        <div class="demo-progress-bar" id="demoProgressBar"></div>
+                    </div>
+
+                    <div class="demo-steps" role="tablist" aria-label="Etapas da demo">
+                        <button type="button" class="demo-step active" data-step="0">1. Cardápio</button>
+                        <button type="button" class="demo-step" data-step="1">2. Login</button>
+                        <button type="button" class="demo-step" data-step="2">3. Entrega</button>
+                        <button type="button" class="demo-step" data-step="3">4. Pix</button>
+                        <button type="button" class="demo-step" data-step="4">5. Admin</button>
+                        <button type="button" class="demo-step" data-step="5">6. Motoboy</button>
+                    </div>
+
+                    <div class="demo-caption" id="demoCaption">
+                        <strong>Legenda</strong>
+                        <p id="demoCaptionText">Toque nos pastéis para montar o carrinho. No site real isso é o cardápio com preços e categorias.</p>
+                    </div>
+
+                    <!-- 0 CARDAPIO -->
+                    <div class="demo-panel active" data-panel="0">
+                        <div class="mock-phone">
+                            <div class="mock-phone-bar"><span>Cardápio · Pastéis Nakachi</span></div>
+                            <div class="mock-screen">
+                                <p class="mock-screen-title">Escolha os pastéis</p>
+                                <div class="menu-mock" id="menuMock">
+                                    <button type="button" class="menu-item" data-id="carne" data-nome="Pastel de carne" data-preco="12">
+                                        <span>Pastel de carne</span>
+                                        <span>R$ 12,00 · <em>+ adicionar</em></span>
+                                    </button>
+                                    <button type="button" class="menu-item" data-id="queijo" data-nome="Pastel de queijo" data-preco="12">
+                                        <span>Pastel de queijo</span>
+                                        <span>R$ 12,00 · <em>+ adicionar</em></span>
+                                    </button>
+                                    <button type="button" class="menu-item" data-id="frango" data-nome="Pastel de frango" data-preco="13">
+                                        <span>Pastel de frango c/ catupiry</span>
+                                        <span>R$ 13,00 · <em>+ adicionar</em></span>
+                                    </button>
+                                    <button type="button" class="menu-item" data-id="guarana" data-nome="Guaraná 350ml" data-preco="6">
+                                        <span>Guaraná 350ml</span>
+                                        <span>R$ 6,00 · <em>+ adicionar</em></span>
+                                    </button>
+                                </div>
+                                <div class="cart-live">
+                                    <p class="cart-live-label">Carrinho (<span id="cartCount">0</span>)</p>
+                                    <ul class="cart-mock" id="cartList">
+                                        <li class="cart-empty">Nenhum item ainda — toque no cardápio.</li>
+                                    </ul>
+                                    <p class="cart-total-line">Subtotal <strong id="cartSubtotal">R$ 0,00</strong></p>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-block" id="btnIrLogin" disabled>Continuar para login</button>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- 1 LOGIN -->
+                    <div class="demo-panel" data-panel="1">
+                        <div class="mock-phone">
+                            <div class="mock-phone-bar"><span>Login · Google</span></div>
+                            <div class="mock-screen mock-login" id="mockLogin">
+                                <div class="mock-logo">Pastéis Nakachi</div>
+                                <p class="mock-sub">Entre para salvar endereço e acompanhar pedidos</p>
+                                <div class="cart-mini" id="cartMiniLogin"></div>
+                                <button type="button" class="google-btn" id="btnGoogleMock">
+                                    <span class="google-g" aria-hidden="true">G</span>
+                                    Continuar com Google
+                                </button>
+                                <p class="mock-hint">Demo: não abre conta real — só simula o login do projeto.</p>
+                            </div>
+                            <div class="mock-screen mock-login-ok" id="mockLoginOk" hidden>
+                                <div class="avatar-mock">MN</div>
+                                <p class="login-ok-name">Maria Nakachi</p>
+                                <p class="login-ok-mail">maria@gmail.com</p>
+                                <p class="login-ok-badge">Sessão Google simulada</p>
+                                <button type="button" class="btn btn-primary btn-block" data-goto="2">Informar entrega</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2 ENTREGA -->
+                    <div class="demo-panel" data-panel="2">
+                        <div class="mock-phone">
+                            <div class="mock-phone-bar"><span>Endereço · tipo de recebimento</span></div>
+                            <div class="mock-screen">
+                                <p class="mock-screen-title">Como vai receber?</p>
+                                <div class="choice-row" id="tipoEntrega">
+                                    <button type="button" class="choice-btn active" data-tipo="entrega">
+                                        Entrega com motoboy
+                                        <small>+ R$ 5,00 taxa</small>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-tipo="retirada">
+                                        Retirar no trailer
+                                        <small>sem taxa</small>
+                                    </button>
+                                </div>
+                                <div class="form-mock" id="enderecoBox">
+                                    <label>Rua <input type="text" value="Rua das Flores" readonly></label>
+                                    <label>Número <input type="text" value="120" readonly></label>
+                                    <label>Bairro <input type="text" value="Centro" readonly></label>
+                                    <label>Referência <input type="text" value="Portão azul" readonly></label>
+                                </div>
+                                <p class="mock-hint" id="entregaHint">No projeto real o cliente salva o endereço após o login.</p>
+                                <p class="cart-total-line">Total estimado <strong id="totalEntrega">R$ 0,00</strong></p>
+                                <button type="button" class="btn btn-primary btn-block" data-goto="3">Ir para pagamento</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3 PIX -->
+                    <div class="demo-panel" data-panel="3">
+                        <div class="mock-phone">
+                            <div class="mock-phone-bar"><span>Pagamento · Pix online</span></div>
+                            <div class="mock-screen" id="pixAntes">
+                                <p class="mock-screen-title">Pagar agora</p>
+                                <p class="mock-sub">Aba “Pagar agora” do sistema — Pix via Mercado Pago.</p>
+                                <label class="form-mock-cpf">
+                                    CPF do pagador
+                                    <input type="text" value="000.000.000-00" readonly>
+                                </label>
+                                <label class="check-mock">
+                                    <input type="checkbox" id="confirmarPix">
+                                    Confirmo e irei pagar com Pix agora
+                                </label>
+                                <p class="cart-total-line">Cobrar <strong id="totalPix">R$ 0,00</strong></p>
+                                <button type="button" class="btn btn-primary btn-block" id="btnGerarPix" disabled>Gerar Pix e pagar</button>
+                                <p class="mock-hint">No real: API cria cobrança, mostra QR e confirma por webhook.</p>
+                            </div>
+                            <div class="mock-screen" id="pixDepois" hidden>
+                                <p class="mock-screen-title">QR Code Pix</p>
+                                <div class="qr-mock" aria-hidden="true">
+                                    <div class="qr-pattern"></div>
+                                </div>
+                                <p class="pix-copia">00020126...PASTEISNAKACHI...6304ABCD</p>
+                                <button type="button" class="btn btn-ghost-dark btn-block" id="btnCopiarPix">Copiar código Pix</button>
+                                <button type="button" class="btn btn-primary btn-block" id="btnSimularPago">Simular pagamento aprovado</button>
+                                <p class="mock-hint">Legenda: pedido só entra na fila da loja depois do Pix confirmado.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4 ADMIN -->
+                    <div class="demo-panel" data-panel="4">
+                        <div class="mock-desktop">
+                            <div class="mock-desktop-bar">
+                                <span>Painel admin · Pastéis Nakachi</span>
+                                <span class="mock-live">fila de pedidos</span>
+                            </div>
+                            <div class="admin-mock">
+                                <article class="admin-card">
+                                    <header>
+                                        <strong>Pedido #<span id="adminNum">014</span></strong>
+                                        <span class="status-pill" id="adminStatus">Aguardando aceite</span>
+                                    </header>
+                                    <p id="adminCliente">Maria Nakachi · (18) 99700-0000</p>
+                                    <p id="adminEndereco">Rua das Flores, 120 — Centro</p>
+                                    <p id="adminItens">—</p>
+                                    <p class="admin-pay">Pix online · pagamento confirmado</p>
+                                    <div class="admin-actions">
+                                        <button type="button" class="btn btn-sm btn-primary" id="btnAceitar">Aceitar</button>
+                                        <button type="button" class="btn btn-sm btn-ghost-dark" id="btnPreparar" disabled>Em preparo</button>
+                                        <button type="button" class="btn btn-sm btn-whatsapp" id="btnMotoboy" disabled>Enviar p/ motoboy</button>
+                                    </div>
+                                    <p class="admin-feedback" id="adminFeedback" hidden></p>
+                                </article>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5 WHATSAPP -->
+                    <div class="demo-panel" data-panel="5">
+                        <div class="wa-frame">
+                            <div class="wa-header">
+                                <div class="wa-avatar">M</div>
+                                <div>
+                                    <strong>Motoboy — Pastéis Nakachi</strong>
+                                    <small>mensagem automática do painel</small>
+                                </div>
+                            </div>
+                            <div class="wa-body">
+                                <div class="wa-bubble">
+                                    <pre id="waMessage"></pre>
+                                    <span class="wa-time">agora ✓✓</span>
+                                </div>
+                            </div>
+                            <p class="wa-caption">
+                                <strong>Legenda:</strong> igual ao botão “Enviar para motoboy” do admin real —
+                                monta o texto com cliente, itens, total, pagamento e endereço.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="demo-nav">
+                        <button type="button" class="btn btn-ghost-dark" id="demoPrev" disabled>Anterior</button>
+                        <button type="button" class="btn btn-ghost-dark" id="demoRestart" hidden>Recomeçar demo</button>
+                        <button type="button" class="btn btn-primary" id="demoNext">Próximo passo</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="legendas">
+            <div class="section-inner">
+                <p class="eyebrow">Mapa do sistema</p>
+                <h2>Como as telas do projeto se encaixam.</h2>
+                <ol class="legend-list">
+                    <li>
+                        <strong>Cardápio / carrinho</strong>
+                        <span>Cliente escolhe pastéis e bebidas (como no frontend do projeto).</span>
                     </li>
                     <li>
-                        <span class="flow-num">02</span>
-                        <div>
-                            <h3>Confirma endereço e pagamento</h3>
-                            <p>Login com Google, endereço salvo e Pix online pelo Mercado Pago — ou pagamento na entrega.</p>
-                        </div>
+                        <strong>Login Google</strong>
+                        <span>Identifica o cliente; pedidos ficam em “Meus pedidos”.</span>
                     </li>
                     <li>
-                        <span class="flow-num">03</span>
-                        <div>
-                            <h3>A pastelaria organiza no painel</h3>
-                            <p>Pedidos entram na fila, com status, forma de pagamento e avisos para a operação.</p>
-                        </div>
+                        <strong>Endereço</strong>
+                        <span>Entrega com motoboy (+ taxa) ou retirada no trailer.</span>
                     </li>
                     <li>
-                        <span class="flow-num">04</span>
-                        <div>
-                            <h3>Cliente acompanha</h3>
-                            <p>Em “Meus pedidos” ele vê o andamento e pode retomar um Pix pendente, se precisar.</p>
-                        </div>
+                        <strong>Pagamento</strong>
+                        <span>Pagar agora (Pix Mercado Pago) ou pagar na entrega / retirada.</span>
+                    </li>
+                    <li>
+                        <strong>Painel admin</strong>
+                        <span>Aceitar, preparar, status e envio ao motoboy.</span>
+                    </li>
+                    <li>
+                        <strong>WhatsApp</strong>
+                        <span>Mensagem pronta com rota e detalhes — um clique no admin.</span>
                     </li>
                 </ol>
             </div>
         </section>
 
-        <section class="section" id="servidor">
+        <section class="section section-alt" id="servidor">
             <div class="section-inner">
-                <p class="eyebrow">O servidor</p>
-                <h2>Recomendação: KVM da Hostinger — a pastelaria no comando.</h2>
+                <p class="eyebrow">Servidor e responsabilidade</p>
+                <h2>A empresa escolhe e cuida do servidor. JVSEKI entrega a estrutura.</h2>
                 <p class="section-lead">
-                    No mesmo espírito do Vila Mouran, o servidor não fica “solto” em várias plataformas:
-                    a empresa (a pastelaria) é responsável pelo ambiente onde o sistema roda.
+                    No mesmo espírito do Vila Mouran: o ambiente de hospedagem fica sob responsabilidade da empresa (Pastéis Nakachi).
+                    A JVSEKI não é parceira de nenhuma hospedagem — só monta o sistema e orienta o deploy.
                 </p>
+
+                <div class="resp-grid">
+                    <div class="resp-block">
+                        <h3>O que a JVSEKI faz</h3>
+                        <ul>
+                            <li>Estrutura do site e do painel</li>
+                            <li>Fluxo de pedido, login e Pix</li>
+                            <li>Integração Mercado Pago / Google</li>
+                            <li>Orientação de como publicar e apontar o domínio</li>
+                        </ul>
+                    </div>
+                    <div class="resp-block resp-block--empresa">
+                        <h3>O que a empresa faz</h3>
+                        <ul>
+                            <li>Escolhe e paga o servidor (VPS) que preferir</li>
+                            <li>É dona do servidor e dos dados</li>
+                            <li>Opera pedidos no dia a dia</li>
+                            <li>Domínio e conta Mercado Pago dela</li>
+                        </ul>
+                    </div>
+                </div>
 
                 <div class="server-block">
                     <p>
-                        A recomendação é um <strong>VPS KVM da Hostinger</strong> (Ubuntu 24.04 LTS).
-                        Nele ficam juntos o site, a API e o banco de dados — um único lugar, estável e previsível.
+                        <strong>Exemplo de servidor:</strong> um VPS tipo <strong>KVM</strong> (por exemplo na Hostinger, ou em outro provedor)
+                        com site + API + banco juntos. É só uma opção comum — a Nakachi pode usar a hospedagem que fizer mais sentido para ela.
                     </p>
-                    <ul class="server-points">
-                        <li><strong>Site</strong> — interface do cliente e do admin</li>
-                        <li><strong>API</strong> — pedidos, login, Pix e painel</li>
-                        <li><strong>Banco</strong> — PostgreSQL no próprio servidor</li>
-                    </ul>
                     <p class="server-note">
-                        Assim a pastelaria deixa de depender de Vercel + Render + Supabase separados
-                        e passa a ter um ambiente próprio, com backup e domínio sob o controle dela.
+                        JVSEKI não opera nem é responsável pelo servidor. Entrega a estrutura; a empresa decide, contrata e administra o ambiente.
                     </p>
                 </div>
             </div>
         </section>
 
-        <section class="section section-alt" id="dominio">
+        <section class="section" id="dominio">
             <div class="section-inner">
-                <p class="eyebrow">O domínio</p>
-                <h2>O endereço na internet da pastelaria.</h2>
+                <p class="eyebrow">Domínio</p>
+                <h2>O endereço oficial da Nakachi na internet.</h2>
                 <p class="section-lead">
-                    O domínio é o nome que o cliente digita no navegador — por exemplo
-                    <em>pastelariaentrega.com.br</em>. Ele aponta para o IP do KVM e dá cara profissional ao negócio.
+                    Exemplo: <em>pasteisnakachi.com.br</em> — aponta para o IP do servidor que a empresa contratar.
+                    Facilita divulgação no Instagram (@pasteis_nakachi) e passa confiança no checkout.
                 </p>
-
                 <div class="domain-grid">
                     <div>
-                        <h3>Por que importa</h3>
-                        <p>
-                            Em vez de um link genérico de hospedagem, a marca aparece no endereço.
-                            Facilita divulgação, confiança e WhatsApp / Instagram.
-                        </p>
+                        <h3>DNS</h3>
+                        <p>Registro A do domínio → IP do VPS. Depois ativa HTTPS (cadeado).</p>
                     </div>
                     <div>
-                        <h3>Como conecta</h3>
-                        <p>
-                            No DNS do domínio, um registro <strong>A</strong> aponta para o IP do VPS.
-                            Com SSL (HTTPS), o site fica seguro e pronto para produção.
-                        </p>
+                        <h3>Marca</h3>
+                        <p>O cliente digita o nome da Nakachi, não um link genérico.</p>
                     </div>
                     <div>
-                        <h3>O que atualizar depois</h3>
-                        <p>
-                            Google Login, webhook do Mercado Pago e as URLs do sistema passam a usar
-                            o domínio oficial da pastelaria.
-                        </p>
+                        <h3>Integrações</h3>
+                        <p>Google Login e webhook do Pix usam esse domínio em produção.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="section section-close">
+        <section class="section section-close" id="contato">
             <div class="section-inner close-inner">
-                <p class="eyebrow">Em uma frase</p>
-                <h2>Projeto pronto para a pastelaria operar o próprio delivery — com servidor e domínio sob o controle dela.</h2>
+                <p class="eyebrow">Orçamento</p>
+                <h2>Quer conversar sobre o projeto da Pastéis Nakachi?</h2>
                 <p class="section-lead">
-                    Mock de apresentação do sistema Pastelaria Delivery: ideia, fluxo prático,
-                    hospedagem em KVM Hostinger e papel do domínio.
+                    Demo mockada por JVSEKI, baseada no sistema de delivery da pastelaria.
+                    Escopo e valores ficam para conversa direta — sem contato exposto nesta página.
                 </p>
-                <a class="btn btn-primary" href="#topo">Voltar ao início</a>
+                <p class="contact-note">JVSEKI · estrutura do sistema · servidor sob responsabilidade da empresa</p>
             </div>
         </section>
     </main>
 
     <footer class="footer">
-        <p>Pastelaria Delivery · apresentação mockada do projeto</p>
+        <p>Demo mockada · Pastéis Nakachi · não é o site oficial em produção</p>
         <p class="footer-mark">JVSEKI</p>
     </footer>
 
