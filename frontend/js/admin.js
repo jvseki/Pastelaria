@@ -28,12 +28,9 @@ const PAGAMENTO_LABELS = {
     mercadopago: "Pix online",
 };
 
-const MOTOBOY_WHATSAPP = window.MOTOBOY_WHATSAPP || "5518997640335";
 const TZ_BR = "America/Sao_Paulo";
 
-if (!protegerPaginaAdmin()) {
-    throw new Error("Acesso negado");
-}
+
 
 let pedidos = [];
 let gavetas = [];
@@ -85,7 +82,7 @@ function calcularTotalPedido(pedido) {
 
 function gerarLinkMaps(endereco) {
     if (endereco.latitude && endereco.longitude) {
-        return `https://www.google.com/maps/dir/?api=1&destination=${endereco.latitude},${endereco.longitude}`;
+        return `https://www.google.com/maps/dir/?api=1&destination=${Number(endereco.latitude)},${Number(endereco.longitude)}`;
     }
     const query = encodeURIComponent(
         `${endereco.rua || ""}, ${endereco.numero || ""}, ${endereco.bairro || ""}, Brasil`
@@ -226,8 +223,13 @@ async function enviarParaMotoboy(pedidoId) {
     const pedido = pedidos.find((p) => p.id === pedidoId);
     if (!pedido) return;
 
-    const mensagem = gerarMensagemMotoboy(pedido);
-    const url = `https://wa.me/${MOTOBOY_WHATSAPP}?text=${mensagem}`;
+    let url;
+    try {
+        ({ url } = await apiRequest(`/admin/pedidos/${pedidoId}/whatsapp`));
+    } catch (error) {
+        mostrarAlerta(error.message, { titulo: "WhatsApp indisponível", tipo: "erro" });
+        return;
+    }
 
     if (pedido.status === "preparando") {
         await atualizarStatus(pedidoId, "entrega");
@@ -341,34 +343,34 @@ function renderizarPedidos() {
             const tipoEntrega = pedido.tipo_entrega || "entrega";
 
             return `
-            <article class="pedido-admin-card pedido-admin-card--${statusKey}">
+            <article class="pedido-admin-card pedido-admin-card--${escaparHtml(statusKey)}">
                 <div class="pedido-admin-header">
                     <div class="pedido-admin-ident">
                         <span class="pedido-admin-num">#${num}</span>
-                        <h2>${usuario.nome || "Cliente"}</h2>
+                        <h2>${escaparHtml(usuario.nome || "Cliente")}</h2>
                         <p class="pedido-admin-meta">${formatarDataHoraBR(pedido.data_pedido)} · ${tipoEntrega === "retirada" ? "Retirada" : "Entrega"}</p>
                     </div>
-                    <span class="status-badge ${statusClass}">${STATUS_LABELS[statusKey] || pedido.status}</span>
+                    <span class="status-badge ${statusClass}">${escaparHtml(STATUS_LABELS[statusKey] || pedido.status)}</span>
                 </div>
 
                 <div class="pedido-admin-body">
                     <div class="pedido-admin-section pedido-admin-section--cliente">
                         <h4>Cliente</h4>
-                        <p>${usuario.nome || "N/A"}</p>
-                        <p>${usuario.telefone || "Sem telefone"}</p>
+                        <p>${escaparHtml(usuario.nome || "N/A")}</p>
+                        <p>${escaparHtml(usuario.telefone || "Sem telefone")}</p>
                     </div>
 
                     <div class="pedido-admin-section pedido-admin-section--produtos">
                         <h4>Produtos</h4>
-                        <ul>${itens.map((i) => `<li>${i.quantidade}x ${i.nome || "Produto"}</li>`).join("")}</ul>
-                        ${pedido.observacao ? `<p class="pedido-observacao"><strong>Combo:</strong> ${pedido.observacao.replace(/\n/g, "<br>")}</p>` : ""}
+                        <ul>${itens.map((i) => `<li>${i.quantidade}x ${escaparHtml(i.nome || "Produto")}</li>`).join("")}</ul>
+                        ${pedido.observacao ? `<p class="pedido-observacao"><strong>Combo:</strong> ${escaparHtml(pedido.observacao).replace(/\n/g, "<br>")}</p>` : ""}
                         ${pedido.taxa_entrega ? `<p>Taxa de entrega: ${formatarPreco(pedido.taxa_entrega)}</p>` : ""}
                         <p class="pedido-admin-total">Total: ${formatarPreco(total)}</p>
                     </div>
 
                     <div class="pedido-admin-section pedido-admin-section--pagamento">
                         <h4>Pagamento</h4>
-                        <p>${PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento}</p>
+                        <p>${escaparHtml(PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento)}</p>
                         ${pedido.troco ? `<p>Troco para: ${formatarPreco(pedido.troco)}</p>` : ""}
                         <p class="pagamento-status ${pedido.pagamento_confirmado ? "pago" : "pendente-pagamento"}">
                             ${pedido.pagamento_confirmado ? "Pagamento confirmado" : "Aguardando confirmacao do pagamento"}
@@ -379,11 +381,11 @@ function renderizarPedidos() {
                         <h4>${tipoEntrega === "retirada" ? "Retirada" : "Endereço"}</h4>
                         ${
                             tipoEntrega === "retirada"
-                                ? `<p>Cliente retira no local</p><p>${pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria"}</p>`
-                                : `<p>${endereco.rua || ""}, ${endereco.numero || ""}</p>
-                                   <p>${endereco.bairro || ""}</p>
-                                   ${endereco.referencia ? `<p>Ref: ${endereco.referencia}</p>` : ""}
-                                   <a href="${mapsLink}" target="_blank" class="maps-link">Ver no Google Maps</a>`
+                                ? `<p>Cliente retira no local</p><p>${escaparHtml(pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria")}</p>`
+                                : `<p>${escaparHtml(endereco.rua || "")}, ${escaparHtml(endereco.numero || "")}</p>
+                                   <p>${escaparHtml(endereco.bairro || "")}</p>
+                                   ${endereco.referencia ? `<p>Ref: ${escaparHtml(endereco.referencia)}</p>` : ""}
+                                   <a href="${escaparHtml(mapsLink)}" target="_blank" class="maps-link">Ver no Google Maps</a>`
                         }
                     </div>
                 </div>
@@ -403,7 +405,7 @@ async function carregarPedidos() {
         renderizarPedidos();
     } catch (error) {
         document.getElementById("listaPedidos").innerHTML =
-            `<div class="admin-empty"><h3>Erro ao carregar pedidos</h3><p>${error.message}</p></div>`;
+            `<div class="admin-empty"><h3>Erro ao carregar pedidos</h3><p>${escaparHtml(error.message)}</p></div>`;
     }
 }
 
@@ -463,16 +465,16 @@ async function toggleGaveta(id) {
                           return `
                 <div class="gaveta-pedido-detalhe">
                     <div class="gaveta-pedido-topo">
-                        <strong>Pedido #${formatarNumeroPedido(p)} — ${p.usuario?.nome || "Cliente"}</strong>
+                        <strong>Pedido #${formatarNumeroPedido(p)} — ${escaparHtml(p.usuario?.nome || "Cliente")}</strong>
                         <span>${formatarPreco(total)}</span>
                     </div>
-                    <p class="gaveta-pedido-data">${formatarDataHoraBR(p.data_pedido)} · ${STATUS_LABELS[statusKey] || p.status}</p>
-                    <p class="gaveta-pedido-data">${(p.itens || []).map((i) => `${i.quantidade}x ${i.nome}`).join(" · ")}</p>
+                    <p class="gaveta-pedido-data">${formatarDataHoraBR(p.data_pedido)} · ${escaparHtml(STATUS_LABELS[statusKey] || p.status)}</p>
+                    <p class="gaveta-pedido-data">${(p.itens || []).map((i) => `${i.quantidade}x ${escaparHtml(i.nome)}`).join(" · ")}</p>
                 </div>`;
                       })
                       .join("");
     } catch (error) {
-        el.innerHTML = `<p class="gaveta-erro">${error.message}</p>`;
+        el.innerHTML = `<p class="gaveta-erro">${escaparHtml(error.message)}</p>`;
     }
 }
 
@@ -482,7 +484,7 @@ async function carregarGavetas() {
         renderizarGavetas();
     } catch (error) {
         document.getElementById("listaGavetas").innerHTML =
-            `<div class="admin-empty"><p>${error.message}</p></div>`;
+            `<div class="admin-empty"><p>${escaparHtml(error.message)}</p></div>`;
     }
 }
 
@@ -541,7 +543,11 @@ function iniciarAutoRefresh() {
     }, 15000);
 }
 
-initAbas();
-carregarPedidos();
-carregarGavetas();
-iniciarAutoRefresh();
+(async () => {
+    await restaurarSessao();
+    if (!protegerPaginaAdmin()) return;
+    initAbas();
+    await carregarPedidos();
+    await carregarGavetas();
+    iniciarAutoRefresh();
+})();

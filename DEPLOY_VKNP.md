@@ -1,3 +1,5 @@
+> Atualiza??o de seguran?a: siga [SECURITY.md](SECURITY.md) e o [README](README.md). O acesso administrativo agora usa sess?o Google e ADMIN_EMAIL no servidor. Em produ??o use APP_ENV=production, HTTPS e MERCADOPAGO_SANDBOX=false. As instru??es antigas de ambiente abaixo precisam ser adaptadas.
+
 # Migracao Hostinger → VKNP
 
 Guia para mover **site + API + PostgreSQL** do VPS Hostinger atual para o novo servidor VKNP.

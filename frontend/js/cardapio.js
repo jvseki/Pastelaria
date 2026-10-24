@@ -4,6 +4,7 @@ let produtoModalAtual = null;
 let modalModo = "preview";
 let comboEscolhasAtual = null;
 let modalQuantidade = 1;
+let focoAntesModal = null;
 
 function getCarrinho() {
     return JSON.parse(localStorage.getItem("carrinho") || "[]");
@@ -181,11 +182,13 @@ function atualizarModoModal(modo) {
 }
 
 function abrirModalItem(produto, modo = "preview") {
+    focoAntesModal = document.activeElement;
     produtoModalAtual = produto;
     if (modo === "preview") modalQuantidade = 1;
     preencherDadosModal(produto);
     atualizarModoModal(modo);
     document.getElementById("modalItem").classList.add("open");
+    document.querySelector("#modalItem .modal-close-btn").focus();
     document.body.style.overflow = "hidden";
 }
 
@@ -193,6 +196,7 @@ function fecharModalItem() {
     document.getElementById("modalItem").classList.remove("open");
     document.body.style.overflow = "";
     produtoModalAtual = null;
+    focoAntesModal?.focus();
     comboEscolhasAtual = null;
     modalQuantidade = 1;
     modalModo = "preview";
@@ -255,77 +259,53 @@ function finalizarPedidoDoModal() {
     window.location.href = "carrinho.html";
 }
 
-function renderizarCategorias(produtosLista) {
-    const categorias = ["Todos", ...new Set(produtosLista.map((p) => p.categoria))];
-    const container = document.getElementById("categorias");
 
-    container.innerHTML = categorias
-        .map(
-            (cat) =>
-                `<button class="categoria-btn ${cat === categoriaAtiva ? "active" : ""}" 
-                    onclick="filtrarCategoria('${cat}')">${cat}</button>`
-        )
-        .join("");
+function renderizarCategorias(lista) {
+    const container = document.getElementById('categorias');
+    container.replaceChildren();
+    for (const cat of ['Todos', ...new Set(lista.map(p => p.categoria))]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'categoria-btn' + (cat === categoriaAtiva ? ' active' : '');
+        button.textContent = cat;
+        button.setAttribute('aria-pressed', String(cat === categoriaAtiva));
+        button.addEventListener('click', () => filtrarCategoria(cat));
+        container.appendChild(button);
+    }
 }
-
 function filtrarCategoria(categoria) {
     categoriaAtiva = categoria;
-    renderizarCategorias(produtos);
+    document.querySelectorAll('#categorias button').forEach(button => {
+        const active = button.textContent === categoria;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+    });
     renderizarProdutos();
 }
-
-function renderizarProdutos() {
-    const grid = document.getElementById("produtosGrid");
-    const filtrados =
-        categoriaAtiva === "Todos"
-            ? produtos
-            : produtos.filter((p) => p.categoria === categoriaAtiva);
-
-    if (filtrados.length === 0) {
-        grid.innerHTML = `<div class="carrinho-vazio"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h2>Nenhum produto encontrado</h2></div>`;
-        return;
-    }
-
-    grid.innerHTML = filtrados
-        .map((p) => {
-            const img = imagemProduto(p);
-            const combo = isProdutoCombo(p);
-            return `
-        <article class="produto-card ${combo ? "produto-card--combo" : ""}" onclick="clicarProduto(${p.id})" role="button" tabindex="0">
-            ${combo ? `<span class="produto-badge-combo">Escolha sabores e bebidas</span>` : ""}
-            <div class="produto-img-wrap produto-img-cartoon">
-                <img class="produto-img" src="${img}" alt="${p.nome}" loading="lazy">
-            </div>
-            <div class="produto-info">
-                <span class="produto-categoria">${p.categoria}</span>
-                <h2 class="produto-nome">${p.nome}</h2>
-                <p class="produto-desc">${p.descricao}</p>
-                ${combo ? `<p class="produto-combo-hint">5 pasteis + 2 bebidas — voce escolhe!</p>` : ""}
-                <div class="produto-footer">
-                    <span class="produto-preco">${formatarPreco(p.preco)}</span>
-                    <button class="btn btn-primary btn-add" onclick="event.stopPropagation(); clicarProduto(${p.id})">
-                        ${combo ? "Montar combo" : "Ver produto"}
-                    </button>
-                </div>
-            </div>
-        </article>`;
-        })
-        .join("");
+function normalizarBusca(texto) {
+    return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
-
+function renderizarProdutos() {
+    const busca = normalizarBusca(document.getElementById('buscaProduto').value);
+    const filtrados = produtos.filter(p => (categoriaAtiva === 'Todos' || p.categoria === categoriaAtiva) && normalizarBusca(p.nome + ' ' + (p.descricao || '')).includes(busca));
+    document.getElementById('resultadoBusca').textContent = filtrados.length + ' produto(s) encontrado(s)';
+    document.getElementById('produtosGrid').innerHTML = filtrados.length ? renderizarCardsNakachi(filtrados) : '<div class="nk-state"><h2>Nenhum produto por aqui</h2><p>Tente outra busca ou categoria. Novos sabores podem chegar em breve.</p></div>';
+}
 async function carregarCardapio() {
+    const grid = document.getElementById('produtosGrid');
+    grid.innerHTML = '<div class="nk-state" role="status">Carregando cardápio…</div>';
     try {
-        produtos = await api.getProdutos();
-        produtos = produtos.filter((p) => p.ativo !== false);
-        produtos = deduplicarCombos(produtos);
-        produtos = aplicarImagensLocais(produtos);
+        produtos = aplicarImagensLocais((await api.getProdutos()).filter(p => p.ativo !== false));
+        const categoriaUrl = new URLSearchParams(location.search).get('categoria');
+        if (categoriaUrl && produtos.some(p => p.categoria === categoriaUrl)) categoriaAtiva = categoriaUrl;
         renderizarCategorias(produtos);
         renderizarProdutos();
-    } catch (error) {
-        document.getElementById("produtosGrid").innerHTML =
-            `<div class="carrinho-vazio"><h2>Erro ao carregar cardápio</h2><p>${error.message}</p></div>`;
+    } catch {
+        grid.innerHTML = '<div class="nk-state" role="alert"><h2>Não conseguimos carregar o cardápio</h2><p>Verifique sua conexão e tente novamente.</p><button class="btn btn-primary" id="recarregarCardapio">Tentar novamente</button></div>';
+        document.getElementById('recarregarCardapio').addEventListener('click', carregarCardapio);
     }
 }
+document.getElementById('buscaProduto')?.addEventListener('input', renderizarProdutos);
 
 document.getElementById("modalItem")?.addEventListener("click", (e) => {
     if (e.target.id === "modalItem") fecharModalItem();
@@ -334,3 +314,14 @@ document.getElementById("modalItem")?.addEventListener("click", (e) => {
 if (document.getElementById("produtosGrid")) {
     carregarCardapio();
 }
+
+document.addEventListener('keydown', event => {
+    const modal = document.getElementById('modalItem');
+    if (!modal?.classList.contains('open')) return;
+    if (event.key === 'Escape') fecharModalItem();
+    if (event.key !== 'Tab') return;
+    const elements = [...modal.querySelectorAll('button, select, input, a[href], [tabindex="0"]')].filter(el => !el.disabled && el.getClientRects().length);
+    const first = elements[0], last = elements[elements.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+});

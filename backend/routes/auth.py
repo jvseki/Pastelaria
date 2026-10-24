@@ -37,12 +37,7 @@ def auth_config():
 
 @router.get("/me")
 def get_me(usuario: Usuario = Depends(get_current_user)):
-    return {
-        "id": usuario.id,
-        "nome": usuario.nome,
-        "email_google": usuario.email_google,
-        "telefone": usuario.telefone,
-    }
+    return _usuario_response(usuario)
 
 
 def _usuario_response(usuario: Usuario) -> dict:
@@ -51,6 +46,7 @@ def _usuario_response(usuario: Usuario) -> dict:
         "nome": usuario.nome,
         "email_google": usuario.email_google,
         "telefone": usuario.telefone,
+        "is_admin": bool(settings.ADMIN_EMAIL) and (usuario.email_google or "").casefold() == settings.ADMIN_EMAIL.strip().casefold(),
     }
 
 

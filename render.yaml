@@ -6,13 +6,17 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
     envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEMO_MODE
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: GOOGLE_CLIENT_ID
         sync: false
-      - key: ADMIN_TOKEN
+      - key: ADMIN_EMAIL
         sync: false
       - key: MOTOBOY_WHATSAPP
         sync: false

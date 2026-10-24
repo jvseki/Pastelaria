@@ -5,20 +5,18 @@ from sqlalchemy import inspect, text
 from config import settings
 from database import engine, Base, SessionLocal
 from models import Produto
-from routes import auth, usuarios, produtos, pedidos, admin, pagamentos
+from routes import auth, usuarios, produtos, pedidos, admin, pagamentos, loja
 
 
 def _cors_origins() -> list[str]:
-    origins = {
-        settings.FRONTEND_URL.rstrip("/"),
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-    }
+    origins = {settings.FRONTEND_URL.rstrip("/")}
+    if settings.APP_ENV == "development":
+        origins.update({"http://localhost:5500", "http://127.0.0.1:5500"})
     return [o for o in origins if o]
 
 
 app = FastAPI(
-    title="Pastelaria Delivery API",
+    title="Pastéis Nakachi API",
     description="API do sistema de delivery da Pastelaria",
     version="1.0.0",
 )
@@ -26,7 +24,6 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
-    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,6 +35,7 @@ app.include_router(produtos.router)
 app.include_router(pedidos.router)
 app.include_router(admin.router)
 app.include_router(pagamentos.router)
+app.include_router(loja.router)
 
 
 @app.on_event("startup")
@@ -46,7 +44,6 @@ def startup():
         Base.metadata.create_all(bind=engine)
         _migrate_db()
         _backfill_numero_dia()
-        _seed_produtos()
     except Exception as exc:
         msg = str(exc)
         if "UnicodeDecodeError" in type(exc).__name__ or "UnicodeDecodeError" in msg:
@@ -66,10 +63,10 @@ def _migrate_db():
     with engine.connect() as conn:
         if "pagamento_confirmado" not in colunas:
             conn.execute(
-                text("ALTER TABLE pedidos ADD COLUMN pagamento_confirmado BOOLEAN DEFAULT 0")
+                text("ALTER TABLE pedidos ADD COLUMN pagamento_confirmado BOOLEAN DEFAULT FALSE")
             )
         if "arquivado" not in colunas:
-            conn.execute(text("ALTER TABLE pedidos ADD COLUMN arquivado BOOLEAN DEFAULT 0"))
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN arquivado BOOLEAN DEFAULT FALSE"))
         if "numero_dia" not in colunas:
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN numero_dia INTEGER"))
         if "observacao" not in colunas:
@@ -97,129 +94,9 @@ def _backfill_numero_dia():
         db.close()
 
 
-CATALOGO_PRODUTOS = [
-    {
-        "nome": "Pastel de Queijo",
-        "descricao": "Massa fina e crocante com queijo derretido",
-        "preco": 8.0,
-        "imagem": "images/produtos/pastel-queijo.svg",
-        "categoria": "Salgados",
-    },
-    {
-        "nome": "Pastel de Carne",
-        "descricao": "Carne moída temperada na massa dourada",
-        "preco": 9.0,
-        "imagem": "images/produtos/pastel-carne.svg",
-        "categoria": "Salgados",
-    },
-    {
-        "nome": "Pastel de Frango",
-        "descricao": "Frango desfiado com catupiry cremoso",
-        "preco": 9.5,
-        "imagem": "images/produtos/pastel-frango.svg",
-        "categoria": "Salgados",
-    },
-    {
-        "nome": "Pastel de Palmito",
-        "descricao": "Palmito refogado com queijo gratinado",
-        "preco": 10.0,
-        "imagem": "images/produtos/pastel-palmito.svg",
-        "categoria": "Salgados",
-    },
-    {
-        "nome": "Pastel de Nutella",
-        "descricao": "Pastel doce recheado com Nutella",
-        "preco": 12.0,
-        "imagem": "images/produtos/pastel-nutella.svg",
-        "categoria": "Doces",
-    },
-    {
-        "nome": "Pastel de Doce de Leite",
-        "descricao": "Doce de leite cremoso na massa quente",
-        "preco": 11.0,
-        "imagem": "images/produtos/pastel-doce-leite.svg",
-        "categoria": "Doces",
-    },
-    {
-        "nome": "Coca-Cola Lata",
-        "descricao": "Refrigerante Coca-Cola 350ml gelada",
-        "preco": 6.0,
-        "imagem": "images/produtos/coca-cola.svg",
-        "categoria": "Bebidas",
-    },
-    {
-        "nome": "Agua Mineral",
-        "descricao": "Agua mineral sem gas 500ml",
-        "preco": 4.0,
-        "imagem": "images/produtos/agua.svg",
-        "categoria": "Bebidas",
-    },
-    {
-        "nome": "Suco Natural",
-        "descricao": "Suco de laranja natural 500ml",
-        "preco": 8.0,
-        "imagem": "images/produtos/suco.svg",
-        "categoria": "Bebidas",
-    },
-    {
-        "nome": "Caldo de Cana",
-        "descricao": "Caldo de cana fresco 400ml",
-        "preco": 7.0,
-        "imagem": "images/produtos/caldo-cana.svg",
-        "categoria": "Bebidas",
-    },
-    {
-        "nome": "Combo Familia",
-        "descricao": "5 pasteis salgados + 2 bebidas — voce escolhe os sabores!",
-        "preco": 45.0,
-        "imagem": "images/produtos/combo.svg",
-        "categoria": "Combos",
-    },
-    {
-        "nome": "Teste MP 1 real",
-        "descricao": "Produto de teste para Pix e cartão (R$ 1,00)",
-        "preco": 1.0,
-        "imagem": "images/produtos/padrao.svg",
-        "categoria": "Teste MP",
-    },
-]
-
-
-def _seed_produtos():
-    db = SessionLocal()
-    try:
-        for item in CATALOGO_PRODUTOS:
-            existente = db.query(Produto).filter(Produto.nome == item["nome"]).first()
-            if not existente and item["nome"] == "Combo Familia":
-                existente = db.query(Produto).filter(Produto.nome == "Combo Família").first()
-            if existente:
-                existente.nome = item["nome"]
-                existente.descricao = item["descricao"]
-                existente.preco = item["preco"]
-                existente.imagem = item["imagem"]
-                existente.categoria = item["categoria"]
-                existente.ativo = True
-            else:
-                db.add(Produto(**item))
-        # Desativa duplicata antiga "Combo Família" (acento)
-        duplicata = db.query(Produto).filter(Produto.nome == "Combo Família").first()
-        principal = db.query(Produto).filter(Produto.nome == "Combo Familia").first()
-        if duplicata and principal and duplicata.id != principal.id:
-            duplicata.ativo = False
-        antigo_centavo = db.query(Produto).filter(Produto.nome == "Teste MP 1 centavo").first()
-        if antigo_centavo:
-            antigo_centavo.ativo = False
-        antigo_cinquenta = db.query(Produto).filter(Produto.nome == "Teste MP 50 centavos").first()
-        if antigo_cinquenta:
-            antigo_cinquenta.ativo = False
-        db.commit()
-    finally:
-        db.close()
-
-
 @app.get("/")
 def root():
-    return {"message": "Pastelaria Delivery API", "status": "online"}
+    return {"message": "Pastéis Nakachi API", "status": "online"}
 
 
 if __name__ == "__main__":

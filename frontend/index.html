@@ -2,17 +2,21 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <title>Pastelaria Delivery — Pasteis artesanais</title>
+    <title>Pastéis Nakachi — Seu próximo pedido começa aqui</title>
+    <meta name="description" content="Conheça o cardápio da Pastéis Nakachi. Pastéis, bebidas e raspadinhas de cana para montar o seu pedido.">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nakachi.css">
+    <link rel="stylesheet" href="css/motion.css">
+    <script src="js/motion.js" defer></script>
 </head>
 <body data-page="inicio">
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <header class="site-header">
         <div class="site-header-inner">
             <a href="index.html" class="brand">
-                <div class="brand-mark">パ</div>
-                <div class="brand-text">Pastelaria<span>パステル屋 · Delivery</span></div>
+                <div class="brand-text"><span>PASTÉIS</span>Nakachi</div>
             </a>
             <nav class="site-nav">
                 <a href="index.html" data-nav="inicio">Início</a>
@@ -22,108 +26,43 @@
         </div>
     </header>
 
-    <section class="hero hero-home">
-        <div class="hero-home-bg" aria-hidden="true"></div>
-        <div class="hero-content hero-home-content">
-            <div class="hero-badge">手作り · Feito na hora</div>
-            <h1>Pasteis crocantes<br><em>com alma japonesa</em></h1>
-            <p class="hero-lead">Tradição da massa fina e dourada, recheios generosos e entrega quentinha em Três Lagoas.</p>
-            <div class="hero-actions">
-                <a href="cardapio.html" class="btn btn-primary btn-lg">Ver cardápio</a>
-                <a href="#sobre" class="btn btn-hero-ghost">Conheça a casa</a>
-            </div>
-            <div class="hero-stats">
-                <div class="hero-stat"><strong>12+</strong><span>Sabores</span></div>
-                <div class="hero-stat"><strong>100%</strong><span>Artesanal</span></div>
-                <div class="hero-stat"><strong>Delivery</strong><span>Na sua porta</span></div>
-            </div>
-        </div>
-    </section>
 
-    <section class="home-section" id="sobre">
-        <div class="home-section-inner home-about">
-            <div class="home-about-text">
-                <span class="section-kicker"> sobre nós</span>
-                <h2>Uma pastelaria que une Brasil e Japão no mesmo mordisco</h2>
-                <p>A <strong>Pastelaria パステル屋</strong> nasceu do amor pela massa crocante feita na hora — fina por fora, recheada por dentro, do jeito que pastel bom tem que ser.</p>
-                <p>Cada pastel é preparado artesanalmente, com ingredientes selecionados e aquele cuidado de quem faz com carinho. Do clássico queijo ao combo família, tem opção para todo mundo.</p>
-                <ul class="home-about-list">
-                    <li>Massa fina assada na hora</li>
-                    <li>Recheios generosos e bem temperados</li>
-                    <li>Entrega rápida na região</li>
-                </ul>
-            </div>
-            <div class="home-about-visual">
-                <div class="about-card about-card--1">
-                    <span class="about-kanji">匠</span>
-                    <p>Artesanal</p>
+    <main id="conteudo">
+        <section class="nk-hero">
+            <div class="nk-container nk-hero-inner">
+                <div><span class="nk-eyebrow">Pastéis Nakachi · Aqui tem sabor</span>
+                    <h1>A felicidade<br>tem uma casquinha<br><em>crocante.</em></h1>
+                    <p>Encontre seu pastel favorito, escolha uma bebida e monte seu pedido do seu jeito.</p>
+                    <div class="nk-hero-actions"><a href="cardapio.html" class="btn btn-primary">Escolher meu pastel ↗</a><a href="#raspadinhas" class="btn nk-secondary">Conhecer as raspadinhas</a></div>
                 </div>
-                <div class="about-card about-card--2">
-                    <span class="about-kanji">熱</span>
-                    <p>Quentinho</p>
-                </div>
-                <div class="about-card about-card--3">
-                    <span class="about-kanji">味</span>
-                    <p>Saboroso</p>
+                <div class="nk-hero-visual nk-motion-scene" data-motion-scene>
+                    <div class="nk-scene-halo" aria-hidden="true"></div>
+                    <div class="nk-scene-object">
+                        <div class="nk-scene-orbit" aria-hidden="true"></div>
+                        <div class="nk-scene-frame"><img id="nakachiHeroImage" src="images/produtos/combo.svg" alt="Ilustração de pastéis e bebidas" width="560" height="360" fetchpriority="high"></div>
+                        <span class="nk-scene-label nk-scene-label--front" aria-hidden="true">Uma combinação<br><strong>de dar água na boca.</strong></span>
+                        <span class="nk-scene-spark nk-scene-spark--one" aria-hidden="true">✦</span>
+                        <span class="nk-scene-spark nk-scene-spark--two" aria-hidden="true">✦</span>
+                    </div>
+                    <div class="nk-image-note">Imagem ilustrativa</div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section class="home-destaques" id="destaques">
-        <div class="destaques-art-layer" aria-hidden="true">
-            <img src="images/destaques-art.svg" alt="" class="destaques-art-svg">
-            <div class="destaques-lantern destaques-lantern--left"></div>
-            <div class="destaques-lantern destaques-lantern--right"></div>
-        </div>
-        <div class="home-section-inner destaques-inner">
-            <div class="destaques-head">
-                <span class="section-kicker section-kicker--light">人気 · destaques</span>
-                <h2>Os favoritos da casa</h2>
-                <p>Escolhas da cozinha — massa dourada, recheio generoso. Toque para adicionar.</p>
-            </div>
-            <div class="destaques-showcase" id="destaquesGrid">
-                <div class="loading loading--light"><div class="spinner"></div> Carregando destaques...</div>
-            </div>
-            <div class="section-cta section-cta--destaques">
-                <a href="cardapio.html" class="btn btn-light">Ver cardápio completo</a>
-            </div>
-        </div>
-    </section>
-
-    <section class="home-section">
-        <div class="home-section-inner">
-            <div class="section-head section-head--center">
-                <span class="section-kicker"> por que pedir</span>
-                <h2>Experiência completa do pedido à entrega</h2>
-            </div>
-            <div class="features-grid">
-                <article class="feature-card">
-                    <div class="feature-icon">🥟</div>
-                    <h3>Feito na hora</h3>
-                    <p>Seu pastel sai fresquinho — massa crocante e recheio no ponto certo.</p>
-                </article>
-                <article class="feature-card">
-                    <div class="feature-icon">🛵</div>
-                    <h3>Delivery ágil</h3>
-                    <p>Pediu, a gente prepara e envia. Acompanhe o status pelo painel admin.</p>
-                </article>
-                <article class="feature-card">
-                    <div class="feature-icon">✨</div>
-                    <h3>Combos especiais</h3>
-                    <p>Peça para você ou para a família — tem combo com pasteis e bebidas.</p>
-                </article>
-            </div>
-        </div>
-    </section>
-
-    <section class="home-cta-banner">
-        <div class="home-cta-inner">
-            <h2>Com fome de pastel?</h2>
-            <p>Monte seu pedido em poucos cliques e receba quentinho em casa.</p>
-            <a href="cardapio.html" class="btn btn-light btn-lg">Pedir agora</a>
-        </div>
-    </section>
+        </section>
+        <div class="nk-ribbon"><div class="nk-container"><span>01 · Escolha seus sabores</span><span>02 · Monte sua sacola</span><span>03 · Acompanhe seu pedido</span></div></div>
+        <section class="nk-container nk-section" aria-labelledby="destaquesTitulo">
+            <div class="nk-section-heading"><div><span class="nk-eyebrow">Bateu aquela fome?</span><h2 id="destaquesTitulo">Seu próximo pedido começa aqui.</h2><p>Dos clássicos aos doces, encontre a sua combinação.</p></div><a class="nk-text-link" href="cardapio.html">Ver todo o cardápio →</a></div>
+            <div class="nk-product-grid" id="destaquesGrid" aria-live="polite"><div class="nk-state" role="status">Carregando produtos…</div></div>
+        </section>
+        <section class="nk-tropical" id="raspadinhas" aria-labelledby="raspadinhasTitulo">
+            <div class="nk-container"><div class="nk-section-heading"><div><span class="nk-eyebrow">Uma pausa refrescante</span><h2 id="raspadinhasTitulo">Raspadinhas de cana</h2><p>Um toque tropical para acompanhar o seu pastel. Conheça os sabores disponíveis.</p></div><a class="nk-text-link" href="cardapio.html?categoria=Raspadinhas%20de%20cana">Explorar sabores →</a></div>
+            <img id="raspadinhasBanner" class="nk-banner-original" alt="Raspadinhas de cana nos sabores morango, maracujá e limão" hidden>
+            <div class="nk-product-grid" id="raspadinhasGrid" aria-live="polite"><div class="nk-state" role="status">Carregando sabores…</div></div></div>
+        </section>
+        <section class="nk-container nk-section" aria-labelledby="comoPedirTitulo">
+            <div class="nk-section-heading"><div><span class="nk-eyebrow">Do seu jeito</span><h2 id="comoPedirTitulo">Poucos passos. Muito sabor.</h2></div></div>
+            <div class="nk-steps"><article class="nk-step"><span>01 / ESCOLHA</span><h3>Encontre sua combinação</h3><p>Explore o cardápio sem precisar entrar na sua conta.</p></article><article class="nk-step"><span>02 / CONFIRA</span><h3>Revise antes de confirmar</h3><p>Escolha as quantidades e confira os itens e valores na sacola.</p></article><article class="nk-step"><span>03 / ACOMPANHE</span><h3>Seu pedido sempre por perto</h3><p>Entre na sua conta para pedir e acompanhar o andamento em Meus pedidos.</p></article></div>
+        </section>
+    </main>
 
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item" data-nav="inicio">
@@ -141,7 +80,7 @@
     </nav>
 
     <div class="modal-overlay modal-overlay--produto" id="modalItem">
-        <div class="modal-box modal-produto-sheet">
+        <div class="modal-box modal-produto-sheet" role="dialog" aria-modal="true" aria-labelledby="modalItemNome" tabindex="-1">
             <button type="button" class="modal-close-btn" onclick="fecharModalItem()" aria-label="Fechar">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -203,6 +142,7 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/loja.js"></script>
     <script src="js/combo.js"></script>
     <script src="js/cardapio.js"></script>
     <script src="js/inicio.js"></script>

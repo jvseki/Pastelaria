@@ -1,3 +1,5 @@
+> Atualiza??o de seguran?a: siga [SECURITY.md](SECURITY.md) e o [README](README.md). O acesso administrativo agora usa sess?o Google e ADMIN_EMAIL no servidor. Em produ??o use APP_ENV=production, HTTPS e MERCADOPAGO_SANDBOX=false. As instru??es antigas de ambiente abaixo precisam ser adaptadas.
+
 # Checklist de deploy — jvseki/Pastelaria
 
 Repo: https://github.com/jvseki/Pastelaria
@@ -40,8 +42,8 @@ postgresql://postgres.xxxxx:MINHA_SENHA@aws-0-sa-east-1.pooler.supabase.com:6543
 | `DATABASE_URL` | URL do Supabase (passo 1) |
 | `SECRET_KEY` | Gere uma string longa aleatoria |
 | `GOOGLE_CLIENT_ID` | `19682040972-bqnoppb492er7rm8kdtlj3b6ie7ug5e3.apps.googleusercontent.com` |
-| `ADMIN_TOKEN` | `admin-token-secreto` (igual ao `frontend/js/config.js`) |
-| `MOTOBOY_WHATSAPP` | `5518997640335` |
+| `ADMIN_EMAIL` | E-mail Google autorizado no backend; nunca configure token administrativo no frontend |
+| `MOTOBOY_WHATSAPP` | `SEU_NUMERO_CONFIGURADO` |
 | `FRONTEND_URL` | Preencha depois do passo 3 (URL da Vercel) |
 
 5. Deploy → teste: `https://pastelaria-delivery-api.onrender.com`  
@@ -97,6 +99,6 @@ Detalhes: [GOOGLE_SETUP.md](GOOGLE_SETUP.md)
 
 **Erro de login Google:** Origem da Vercel nao cadastrada no Google Cloud.
 
-**Admin nao funciona:** `ADMIN_TOKEN` diferente entre Render e `config.js`.
+**Admin nao funciona:** confira `ADMIN_EMAIL` no backend e entre com essa conta Google. A API nao aceita mais tokens administrativos fixos.
 
 **Erro de banco:** Senha errada na `DATABASE_URL` ou SQL nao rodou no Supabase.

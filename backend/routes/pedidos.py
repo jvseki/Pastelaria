@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
-from typing import Optional
+from typing import Optional, Literal
 
 from config import settings
 from database import get_db
@@ -16,19 +16,19 @@ router = APIRouter(prefix="/pedidos", tags=["pedidos"])
 
 
 class ItemPedidoRequest(BaseModel):
-    produto_id: int
-    quantidade: int
+    produto_id: int = Field(gt=0, strict=True)
+    quantidade: int = Field(ge=1, le=100, strict=True)
 
 
 class PedidoRequest(BaseModel):
-    pagamento: str
-    troco: Optional[float] = None
-    tipo_entrega: str = "entrega"
-    taxa_entrega: float = 0
-    local_retirada: Optional[str] = None
-    observacao: Optional[str] = None
-    cpf: Optional[str] = None
-    itens: list[ItemPedidoRequest]
+    pagamento: Literal["pix", "dinheiro", "cartao", "mercadopago"]
+    troco: Optional[float] = Field(default=None, ge=0, le=100000, allow_inf_nan=False)
+    tipo_entrega: Literal["entrega", "retirada"] = "entrega"
+    taxa_entrega: float = Field(default=0, ge=0, le=1000, allow_inf_nan=False)
+    local_retirada: Optional[str] = Field(default=None, max_length=500)
+    observacao: Optional[str] = Field(default=None, max_length=2000)
+    cpf: Optional[str] = Field(default=None, max_length=20)
+    itens: list[ItemPedidoRequest] = Field(min_length=1, max_length=100)
 
 
 def serializar_pedido(pedido: Pedido, db: Session) -> dict:
@@ -169,6 +169,8 @@ def criar_pedido(
     usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if body.pagamento == "mercadopago":
+        raise HTTPException(status_code=400, detail="Use o checkout online para gerar o Pix")
     pedido, itens_resposta, endereco = criar_pedido_no_banco(
         db,
         usuario,

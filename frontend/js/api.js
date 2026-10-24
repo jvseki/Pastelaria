@@ -1,3 +1,7 @@
+function escaparHtml(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+}
+
 const API_BASE = window.API_URL || "http://localhost:8000";
 const AUTH_COOKIE_DAYS = 60;
 const AUTH_PERSIST_KEYS = new Set(["token", "usuario"]);
@@ -331,56 +335,42 @@ const api = {
     },
 
     async getPedidosAdmin() {
-        const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest("/admin/pedidos", {
-            headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
     },
 
     async atualizarStatusPedido(id, status) {
-        const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest(`/admin/pedidos/${id}/status`, {
             method: "PATCH",
             body: JSON.stringify({ status }),
-            headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
     },
 
     async confirmarPagamentoPedido(id) {
-        const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest(`/admin/pedidos/${id}/pagamento`, {
             method: "PATCH",
-            headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
     },
 
     async cancelarPedidoAdmin(id) {
-        const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest(`/admin/pedidos/${id}/cancelar`, {
             method: "POST",
-            headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
     },
 
     async fecharDia(forcar = false) {
-        const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest(`/admin/fechar-dia?forcar=${forcar ? "true" : "false"}`, {
             method: "POST",
-            headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
     },
 
     async getGavetas() {
-        const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest("/admin/gavetas", {
-            headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
     },
 
     async getGaveta(id) {
-        const adminToken = window.ADMIN_TOKEN || localStorage.getItem("adminToken");
         return await apiRequest(`/admin/gavetas/${id}`, {
-            headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
     },
 };

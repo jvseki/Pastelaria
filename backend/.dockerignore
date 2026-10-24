@@ -1,0 +1,15 @@
+.env
+.env.*
+*.db
+*.db-*
+*.sqlite*
+__pycache__
+*.pyc
+.venv
+venv
+tests
+*.pem
+*.key
+client_secret*.json
+credentials*.json
+service-account*.json

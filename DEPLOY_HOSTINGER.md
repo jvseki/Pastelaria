@@ -1,3 +1,5 @@
+> Atualiza??o de seguran?a: siga [SECURITY.md](SECURITY.md) e o [README](README.md). O acesso administrativo agora usa sess?o Google e ADMIN_EMAIL no servidor. Em produ??o use APP_ENV=production, HTTPS e MERCADOPAGO_SANDBOX=false. As instru??es antigas de ambiente abaixo precisam ser adaptadas.
+
 # Deploy na Hostinger KVM — Pastelaria
 
 Guia para subir **site + API + PostgreSQL** no mesmo VPS (Ubuntu 24.04).
@@ -73,7 +75,7 @@ FRONTEND_URL=http://SEU_IP
 API_PUBLIC_URL=http://SEU_IP
 SECRET_KEY=chave-secreta-longa
 GOOGLE_CLIENT_ID=... (o mesmo do Google Cloud)
-ADMIN_TOKEN=... (o mesmo do config.js / Render)
+ADMIN_EMAIL=seu-email-google-autorizado
 MERCADOPAGO_SANDBOX=true
 ```
 

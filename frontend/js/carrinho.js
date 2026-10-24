@@ -69,11 +69,11 @@ function renderizarCarrinho() {
             <div class="carrinho-item">
                 <div class="carrinho-item-top">
                     <div class="carrinho-item-info">
-                        <h3>${produto.nome}</h3>
-                        ${produto.detalhes ? `<p class="carrinho-item-detalhes">${produto.detalhes}</p>` : ""}
+                        <h3>${escaparHtml(produto.nome)}</h3>
+                        ${produto.detalhes ? `<p class="carrinho-item-detalhes">${escaparHtml(produto.detalhes)}</p>` : ""}
                         <p class="preco-unit">${formatarPreco(produto.preco)} cada</p>
                     </div>
-                    <button type="button" class="btn-lixeira" onclick="solicitarRemover(${index})" aria-label="Remover ${produto.nome}" title="Remover item">
+                    <button type="button" class="btn-lixeira" onclick="solicitarRemover(${index})" aria-label="Remover ${escaparHtml(produto.nome)}" title="Remover item">
                         ${ICONE_LIXEIRA}
                     </button>
                 </div>
@@ -303,11 +303,11 @@ function mostrarListaBebidas() {
             (b) => `
         <button type="button" class="bebida-opcao" onclick="escolherBebida(${b.id})">
             <div class="bebida-opcao-media">
-                <img src="${imagemProduto(b)}" alt="${b.nome}" loading="lazy">
+                <img src="${imagemProduto(b)}" alt="${escaparHtml(b.nome)}" loading="lazy">
             </div>
             <div class="bebida-opcao-body">
-                <strong>${b.nome}</strong>
-                ${b.descricao ? `<span>${b.descricao}</span>` : ""}
+                <strong>${escaparHtml(b.nome)}</strong>
+                ${b.descricao ? `<span>${escaparHtml(b.descricao)}</span>` : ""}
                 <span class="bebida-opcao-preco">${formatarPreco(b.preco)}</span>
             </div>
         </button>`

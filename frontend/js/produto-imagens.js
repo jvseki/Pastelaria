@@ -16,7 +16,7 @@ const IMAGENS_PRODUTOS = {
 
 function imagemProduto(produto) {
     if (!produto) return "images/produtos/padrao.svg";
-    return IMAGENS_PRODUTOS[produto.nome] || "images/produtos/padrao.svg";
+    return urlImagemSegura(produto.imagem) || IMAGENS_PRODUTOS[produto.nome] || "images/produtos/padrao.svg";
 }
 
 function aplicarImagensLocais(lista) {

@@ -144,7 +144,7 @@ function renderCardPedido(pedido) {
     const status = pedido.status || "pendente";
     const tipoEntrega = pedido.tipo_entrega === "retirada" ? "Retirada no local" : "Entrega com motoboy";
     const itensHtml = (pedido.itens || [])
-        .map((item) => `<li>${item.quantidade}x ${item.nome} — ${formatarPreco(item.preco * item.quantidade)}</li>`)
+        .map((item) => `<li>${item.quantidade}x ${escaparHtml(item.nome)} — ${formatarPreco(item.preco * item.quantidade)}</li>`)
         .join("");
 
     const cancelarBtn = pedidoClientePodeCancelar(pedido) ? `
@@ -160,13 +160,13 @@ function renderCardPedido(pedido) {
                     <h2>Pedido #${numero}</h2>
                     <p>${formatarDataPedido(pedido.data_pedido)}</p>
                 </div>
-                <span class="status-badge ${STATUS_CLASS[status] || "status-pendente"}">${STATUS_LABELS[status] || status}</span>
+                <span class="status-badge ${STATUS_CLASS[status] || "status-pendente"}">${escaparHtml(STATUS_LABELS[status] || status)}</span>
             </div>
             <ul class="pedido-historico-itens">${itensHtml}</ul>
             ${pedido.taxa_entrega ? `<p>Taxa de entrega: ${formatarPreco(pedido.taxa_entrega)}</p>` : ""}
             <p><strong>Total:</strong> ${formatarPreco(totalPedido(pedido))}</p>
             <p><strong>Recebimento:</strong> ${tipoEntrega}</p>
-            <p><strong>Pagamento:</strong> ${PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento}</p>
+            <p><strong>Pagamento:</strong> ${escaparHtml(PAGAMENTO_LABELS[pedido.pagamento] || pedido.pagamento)}</p>
             ${pedido.pagamento_confirmado && pedido.pagamento === "mercadopago"
                 ? `<p class="pedido-pago-online">Pagamento online confirmado</p>` : ""}
             ${cancelarBtn}
@@ -294,7 +294,7 @@ async function carregarMeusPedidos() {
         container.innerHTML = `
             <div class="form-card">
                 <h2>Não foi possível carregar seus pedidos</h2>
-                <p>${error.message}</p>
+                <p>${escaparHtml(error.message)}</p>
             </div>`;
     }
 }

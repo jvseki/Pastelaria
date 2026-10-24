@@ -83,6 +83,7 @@ async function salvarCadastro(event) {
 }
 
 async function initCadastro() {
+    await window.lojaPronta;
     if (!estaLogado()) {
         window.location.href = "login.html?redirect=cadastro.html";
         return;

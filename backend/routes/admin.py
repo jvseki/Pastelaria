@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo
 from database import get_db
 from models import Pedido, Endereco, ItemPedido, GavetaDiaria
 from config import settings
+from routes.usuarios import get_current_user
+from models import Usuario
 from services.mercadopago import estornar_pagamento, mensagem_erro_mp
 import httpx
 from services.whatsapp import formatar_mensagem_motoboy, gerar_link_whatsapp
@@ -15,12 +17,8 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 TZ_BR = ZoneInfo("America/Sao_Paulo")
 
 
-def verificar_admin(authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Não autorizado")
-
-    token = authorization.split(" ")[1]
-    if token != settings.ADMIN_TOKEN:
+def verificar_admin(usuario: Usuario = Depends(get_current_user)):
+    if not settings.ADMIN_EMAIL or (usuario.email_google or "").casefold() != settings.ADMIN_EMAIL.strip().casefold():
         raise HTTPException(status_code=403, detail="Acesso negado")
 
 
@@ -176,6 +174,9 @@ def confirmar_pagamento(
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
 
+    if pedido.pagamento == "mercadopago":
+        raise HTTPException(status_code=400, detail="Pagamento online deve ser confirmado pelo provedor")
+
     if pedido.status not in ("entrega", "finalizado"):
         raise HTTPException(
             status_code=400,
@@ -195,6 +196,8 @@ def link_whatsapp_motoboy(
     db: Session = Depends(get_db),
     _: None = Depends(verificar_admin),
 ):
+    if not settings.MOTOBOY_WHATSAPP:
+        raise HTTPException(status_code=503, detail="Configure o contato do motoboy no servidor")
     pedido = (
         db.query(Pedido)
         .options(joinedload(Pedido.usuario), joinedload(Pedido.itens).joinedload(ItemPedido.produto))

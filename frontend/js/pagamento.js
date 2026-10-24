@@ -3,9 +3,15 @@ let formaEntrega = null;
 let mercadoPagoHabilitado = false;
 let pixProducao = false;
 const carrinho = JSON.parse(localStorage.getItem("carrinho") || "[]");
-const TAXA_ENTREGA = Number(window.TAXA_ENTREGA || 0);
+
 
 async function initPagamento() {
+    const loja = await window.lojaPronta;
+    if (!loja) {
+        document.getElementById('btnFinalizar').disabled = true;
+        mostrarAlerta('Não foi possível consultar os valores da loja. Recarregue a página para tentar novamente.', { titulo: 'Checkout indisponível', tipo: 'erro' });
+        return;
+    }
     if (!estaLogado()) {
         window.location.href = "login.html?redirect=pagamento.html";
         return;
@@ -82,7 +88,7 @@ function calcularSubtotal() {
 }
 
 function calcularTaxaEntrega() {
-    return getTipoEntrega() === "entrega" ? TAXA_ENTREGA : 0;
+    return getTipoEntrega() === "entrega" ? Number(window.TAXA_ENTREGA || 0) : 0;
 }
 
 function calcularTotal() {
@@ -110,8 +116,8 @@ function renderizarResumoEntrega() {
         };
         texto.innerHTML = `
             <strong>Retirar no local</strong><br>
-            ${local.nome} - ${local.endereco}
-            ${local.mapsUrl ? `<br><a href="${local.mapsUrl}" target="_blank" rel="noopener">Ver localização</a>` : ""}
+            ${escaparHtml(local.nome)} - ${escaparHtml(local.endereco)}
+            ${urlImagemSegura(local.mapsUrl) ? `<br><a href="${escaparHtml(urlImagemSegura(local.mapsUrl))}" target="_blank" rel="noopener">Ver localização</a>` : ""}
         `;
         return;
     }
@@ -119,7 +125,7 @@ function renderizarResumoEntrega() {
     const endereco = parsePersistedJson("endereco", {}) || {};
     texto.innerHTML = `
         <strong>Entrega com motoboy</strong><br>
-        ${endereco.rua || ""}, ${endereco.numero || ""} - ${endereco.bairro || ""}
+        ${escaparHtml(endereco.rua || "")}, ${escaparHtml(endereco.numero || "")} - ${escaparHtml(endereco.bairro || "")}
     `;
 }
 

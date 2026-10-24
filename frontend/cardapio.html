@@ -2,17 +2,20 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <title>Cardápio - Pastelaria Delivery</title>
+    <title>Cardápio - Pastéis Nakachi</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nakachi.css">
+    <link rel="stylesheet" href="css/motion.css">
+    <script src="js/motion.js" defer></script>
 </head>
 <body data-page="cardapio">
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <header class="site-header">
         <div class="site-header-inner">
             <a href="index.html" class="brand">
-                <div class="brand-mark">パ</div>
-                <div class="brand-text">Pastelaria<span>パステル屋 · Delivery</span></div>
+                <div class="brand-text"><span>PASTÉIS</span>Nakachi</div>
             </a>
             <nav class="site-nav">
                 <a href="index.html" data-nav="inicio">Início</a>
@@ -22,22 +25,24 @@
         </div>
     </header>
 
-    <section class="hero hero-compact">
-        <div class="hero-content">
-            <div class="hero-badge">メニュー · Cardápio</div>
-            <h1>Escolha seus pasteis</h1>
-            <p>Massa fina, recheio generoso e entrega quentinha na sua porta.</p>
-        </div>
-    </section>
-
-    <div class="categorias" id="categorias"></div>
-
-    <section class="produtos-grid" id="produtosGrid">
-        <div class="loading">
-            <div class="spinner"></div>
-            Carregando cardapio...
-        </div>
-    </section>
+    <main id="conteudo">
+        <section class="nk-container nk-menu-header"><span class="nk-eyebrow">Escolha, combine, aproveite</span><h1>O que vai ser hoje?</h1><p>Pastéis, bebidas e combinações para a sua fome.</p>
+            <div class="nk-menu-scene nk-motion-scene" data-motion-scene aria-hidden="true">
+                <div class="nk-scene-halo"></div>
+                <div class="nk-scene-object nk-flavor-fan">
+                    <img class="nk-flavor nk-flavor--left" src="images/produtos/pastel-carne.svg" alt="" width="220" height="165" decoding="async">
+                    <img class="nk-flavor nk-flavor--right" src="images/produtos/caldo-cana.svg" alt="" width="220" height="165" decoding="async">
+                    <img class="nk-flavor nk-flavor--center" src="images/produtos/pastel-queijo.svg" alt="" width="220" height="165" decoding="async">
+                    <span class="nk-scene-spark nk-scene-spark--one">✦</span>
+                    <span class="nk-scene-spark nk-scene-spark--two">✦</span>
+                </div>
+            </div>
+            <label class="nk-search" for="buscaProduto">Encontre um sabor<input id="buscaProduto" type="search" placeholder="Busque por nome ou ingrediente" autocomplete="off"></label>
+        </section>
+        <nav class="categorias" id="categorias" aria-label="Categorias do cardápio"></nav>
+        <p class="nk-container nk-results" id="resultadoBusca" role="status"></p>
+        <section class="nk-product-grid" id="produtosGrid" aria-label="Produtos"><div class="nk-state" role="status">Carregando cardápio…</div></section>
+    </main>
 
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item" data-nav="inicio">
@@ -55,7 +60,7 @@
     </nav>
 
     <div class="modal-overlay modal-overlay--produto" id="modalItem">
-        <div class="modal-box modal-produto-sheet">
+        <div class="modal-box modal-produto-sheet" role="dialog" aria-modal="true" aria-labelledby="modalItemNome" tabindex="-1">
             <button type="button" class="modal-close-btn" onclick="fecharModalItem()" aria-label="Fechar">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -117,6 +122,7 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/loja.js"></script>
     <script src="js/combo.js"></script>
     <script src="js/cardapio.js"></script>
 </body>

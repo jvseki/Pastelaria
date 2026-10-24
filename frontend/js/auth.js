@@ -11,8 +11,7 @@ function getUsuario() {
 
 function isAdmin() {
     const usuario = getUsuario();
-    const adminEmail = (window.ADMIN_EMAIL || "").toLowerCase();
-    return !!usuario?.email_google && usuario.email_google.toLowerCase() === adminEmail;
+    return usuario?.is_admin === true;
 }
 
 function logout() {
@@ -96,7 +95,7 @@ function atualizarHeader() {
     }
 
     if (usuario) {
-        const nome = usuario.nome.split(" ")[0];
+        const nome = escaparHtml(usuario.nome.split(" ")[0]);
 
         html += `<a href="meus-pedidos.html" class="header-btn header-btn-login header-btn-pedidos">
             Meus pedidos
@@ -115,6 +114,7 @@ function atualizarHeader() {
         html += `<a href="login.html" class="header-btn header-btn-login">Entrar</a>`;
     }
 
+    html += `<a href="carrinho.html" class="header-btn header-cart" aria-label="Abrir carrinho">Sacola <span class="nav-badge" style="display:none">0</span></a>`;
     container.innerHTML = html;
 }
 

@@ -168,7 +168,9 @@ async function handleGoogleLogin(response) {
 }
 
 const params = new URLSearchParams(window.location.search);
-const redirect = params.get("redirect") || "index.html";
+const destinosPermitidos = new Set(["index.html", "cardapio.html", "carrinho.html", "cadastro.html", "pagamento.html", "meus-pedidos.html", "conta.html", "admin.html"]);
+const destino = params.get("redirect");
+const redirect = destinosPermitidos.has(destino) ? destino : "index.html";
 
 function redirecionarAposLogin() {
     window.location.href = redirect;

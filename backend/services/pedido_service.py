@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from models import Pedido, ItemPedido, Produto, Endereco, Usuario
 from services.numeracao_pedidos import proximo_numero_dia
+from config import settings
 
 
 def criar_pedido_no_banco(
@@ -24,7 +25,8 @@ def criar_pedido_no_banco(
         raise HTTPException(status_code=400, detail="Pedido sem itens")
 
     tipo = tipo_entrega if tipo_entrega in ("entrega", "retirada") else "entrega"
-    taxa = max(taxa_entrega or 0, 0) if tipo == "entrega" else 0
+    # O navegador não define a taxa cobrada, nem o endereço oficial de retirada.
+    taxa = settings.TAXA_ENTREGA if tipo == "entrega" else 0
     endereco = db.query(Endereco).filter(Endereco.usuario_id == usuario.id).first()
 
     if tipo == "entrega" and not endereco:
@@ -36,7 +38,7 @@ def criar_pedido_no_banco(
         troco=troco,
         tipo_entrega=tipo,
         taxa_entrega=taxa,
-        local_retirada=local_retirada if tipo == "retirada" else None,
+        local_retirada=settings.LOJA_ENDERECO if tipo == "retirada" else None,
         observacao=observacao,
         status=status,
         pagamento_confirmado=False,
@@ -50,6 +52,10 @@ def criar_pedido_no_banco(
         produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
         if not produto:
             raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
+        if not produto.ativo:
+            raise HTTPException(status_code=400, detail="Produto indisponível")
+        if not 1 <= item.quantidade <= 100:
+            raise HTTPException(status_code=400, detail="Quantidade inválida")
 
         db.add(ItemPedido(pedido_id=pedido.id, produto_id=item.produto_id, quantidade=item.quantidade))
         itens_resposta.append({

@@ -1,150 +1,92 @@
-# Pastelaria Delivery
+﻿# Pastéis Nakachi
 
-Sistema web de delivery para pastelaria com cardápio, carrinho, pagamento, login Google e painel administrativo.
+Sistema de delivery em evolução, preservando FastAPI, SQLAlchemy, HTML, CSS e JavaScript do projeto original. A primeira reformulação cobre identidade, catálogo e correções prioritárias de segurança; gestão completa do catálogo e checkout visitante ainda estão planejados.
 
-## Tecnologias
+**Segurança:** havia um token administrativo público. A API atual não o aceita mais. Leia [SECURITY.md](SECURITY.md) antes de atualizar uma instalação existente: a credencial antiga precisa ser revogada na hospedagem. Nenhum deploy foi feito automaticamente.
 
-- **Frontend:** HTML, CSS, JavaScript puro
-- **Backend:** Python + FastAPI
-- **Banco:** PostgreSQL
-- **Deploy frontend:** Vercel
-- **Deploy backend:** Render
+## Desenvolvimento local (PowerShell, Python 3.12)
 
-## Estrutura
+Na raiz do repositório:
 
-```
-Pastelaria/
-├── frontend/          # Interface do cliente e admin
-│   ├── index.html     # Cardápio
-│   ├── carrinho.html
-│   ├── login.html
-│   ├── cadastro.html
-│   ├── pagamento.html
-│   ├── pedido.html
-│   ├── admin.html
-│   ├── css/style.css
-│   └── js/
-├── backend/           # API FastAPI
-│   ├── app.py
-│   ├── config.py
-│   ├── database.py
-│   ├── models/
-│   ├── routes/
-│   └── services/
-└── render.yaml
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r backend/requirements.txt
+Copy-Item backend/.env.example backend/.env
+cd backend
+python -m uvicorn app:app --reload --host 127.0.0.1 --port 8000
 ```
 
-## Como rodar localmente
+Copie o exemplo somente se ainda não tiver um `.env`; preserve configurações existentes. O exemplo do backend utiliza SQLite local. O `.env` é lido no diretório de execução. Em produção, use as variáveis privadas do serviço.
 
-### 1. Backend (API)
+Em outro terminal, na raiz:
+
+```powershell
+.\.venv\Scripts\python.exe -m http.server 5500 --bind 127.0.0.1 --directory frontend
+```
+
+Abra http://localhost:5500. API: http://localhost:8000/docs. Não abra o HTML diretamente via `file://`.
+
+## Demonstração sem alterar dados reais
+
+Use um banco exclusivo para demonstração. Em `backend/.env`, defina `DEMO_MODE=true` e, se desejar o simulador de Pix, `MERCADOPAGO_SANDBOX=true`. Depois, no diretório `backend`:
+
+```powershell
+python seed_demo.py
+```
+
+A carga inclui os produtos tradicionais já usados no projeto, doces, bebidas, Combo Família e três raspadinhas. Os preços são exemplos e um aviso aparece no site. Se existir qualquer produto, o comando recusa a carga sem alterar dados. Reiniciar a API nunca repõe ou sobrescreve produtos. Não ative demonstração em uma instalação real.
+
+## Conta administrativa e configurações
+
+- `GOOGLE_CLIENT_ID`: identificador OAuth da instalação. Cadastre a origem local/produtiva no Google. Sem configuração, o cardápio funciona e o login permanece indisponível.
+- `ADMIN_EMAIL`: e-mail Google autorizado pelo backend. O usuário entra normalmente com Google. Nenhum token administrativo é inserido em JavaScript. Sem essa configuração, o painel fica bloqueado.
+- `SECRET_KEY`: chave JWT aleatória, privada e persistente, de pelo menos 32 caracteres. Gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"` e salve somente nas variáveis privadas. Sem configuração, apenas em desenvolvimento, a chave temporária muda ao reiniciar e invalida sessões.
+- `APP_ENV=production`: exige chave configurada, frontend HTTPS e simulador/demonstração desligados. As sessões novas expiram em 12 horas por padrão.
+- `LOJA_NOME`, `LOJA_CONTATO`, `LOJA_ENDERECO`, `LOJA_HORARIOS`: dados públicos do rodapé. Não preenchemos informações oficiais desconhecidas.
+- `LOJA_LOGO`, `LOJA_BANNER`, `LOJA_BANNER_RASPADINHAS`: caminhos públicos das imagens originais, por exemplo `images/marca/logo.png`. Os anexos visuais ainda precisam ser copiados para essa pasta; o nome tipográfico e as ilustrações atuais são provisórios.
+- `TAXA_ENTREGA`: taxa fixa em reais, calculada no servidor. Padrão de desenvolvimento: 5. Retirada tem taxa zero. Configure o valor real antes de operar.
+- `MOTOBOY_WHATSAPP`: número do destinatário configurado no servidor, apenas se utilizar envio manual pelo painel.
+
+As informações públicas usam `GET /loja`. A edição dessas configurações pelo painel está prevista para a próxima etapa. Não há ainda abertura/fechamento operacional automático.
+
+## O que mudou e como testar
+
+| Área | Arquivos principais | Verificação |
+| --- | --- | --- |
+| Identidade e catálogo | `frontend/index.html`, `cardapio.html`, `css/nakachi.css`, `js/inicio.js`, `js/cardapio.js` | Abra em celular/desktop, busque um sabor, filtre categorias, adicione quantidade e revise a sacola. |
+| Marca e imagens | `frontend/js/loja.js`, `js/produto-imagens.js`, `backend/routes/loja.py` | Configure dados e imagens, reinicie a API e confira o rodapé, banner e logo. |
+| Dados demonstrativos | `backend/seed_demo.py`, `backend/app.py` | Em banco vazio, execute a carga; execute novamente e confira a recusa. Alterações não são sobrescritas ao reiniciar. |
+| Autorização | `backend/routes/admin.py`, `auth.py`, `frontend/js/auth.js`, `api.js` | Cliente comum recebe 403; conta de `ADMIN_EMAIL` acessa o painel. Token estático antigo recebe 401. |
+| Pedidos | `backend/routes/pedidos.py`, `services/pedido_service.py` | Quantidade negativa e produto inativo são recusados; envio de taxa zero não altera a taxa do servidor. Pix manual continua não pago. |
+| Prevenção | `.gitignore`, `backend/.dockerignore`, `.github/`, `scripts/check_secrets.py` | Execute os comandos abaixo. |
+
+Testes isolados, sem credenciais e sem banco real:
 
 ```powershell
 cd backend
-Copy-Item .env.example .env
-pip install -r requirements.txt
-uvicorn app:app --reload
+python -m unittest discover -s tests -v
+cd ..
+python scripts/check_secrets.py
+python scripts/check_secrets.py --history
 ```
 
-API em `http://localhost:8000`
+O último comando deve encontrar o token antigo no histórico até uma limpeza coordenada; só imprime arquivo, posição e tipo de achado. Não faça force-push apenas para silenciar o resultado. Revogue a credencial primeiro.
 
-### 2. Frontend
+Teste também teclado (Tab, Enter e Escape), zoom, erro ao desligar a API e listas vazias em banco sem produtos. Login Google e pagamentos reais precisam de homologação própria.
 
-Abra a pasta `frontend` com Live Server (VS Code) ou:
+## Hospedagem e evolução
 
-```powershell
-cd frontend
-npx serve .
-```
+### Movimento 3D na rolagem
 
-Acesse `http://localhost:3000` (ou a porta do Live Server).
+A home e o cardápio têm uma vitrine em camadas, perspectiva ligada ao scroll, entrada suave dos cards e movimento das imagens. No desktop, as imagens também reagem ao mouse. No celular, a rolagem nativa controla os efeitos sem bloquear os gestos de toque.
 
-> O frontend precisa da API rodando para cardápio, login, pedidos e admin.
+Implementação em `frontend/css/motion.css` e `frontend/js/motion.js`, carregada apenas em `index.html` e `cardapio.html`. Usa CSS 3D e JavaScript, sem novas dependências. Não são modelos 3D nem vídeos renderizados com Remotion: são as imagens existentes organizadas em planos com profundidade.
 
-### Backend + PostgreSQL (opcional)
+O botão **Pausar efeitos** salva a preferência localmente. A opção de movimento reduzido do sistema desativa as animações automaticamente. As atualizações usam `requestAnimationFrame` apenas quando há rolagem, mouse ou mudança de conteúdo; não há um loop de animação permanente. Cards novos após busca/filtros são observados automaticamente.
 
-1. Crie o banco no pgAdmin e execute `backend/schema.sql`
-2. Copie `.env.example` para `.env` e configure:
+Para testar, abra a home e o cardápio no servidor local, role para cima e para baixo, pause os efeitos e navegue entre páginas. Confira também a preferência de movimento reduzido do sistema. Foram verificados tamanhos de 320, 390 e 1440 pixels, pausa persistente, mudança de preferência, filtros e adição à sacola em navegador automatizado com API simulada. Desempenho em celulares físicos ainda precisa ser avaliado.
 
-```powershell
-cd backend
-Copy-Item .env.example .env
-pip install -r requirements.txt
-uvicorn app:app --reload
-```
+O Docker Compose existente continua disponível. O Nginx encaminha `/loja` para a API e bloqueia arquivos ocultos. A imagem Docker exclui `.env`, bancos e chaves. Configure HTTPS no proxy público. Em hospedagem separada, ajuste a URL pública da sua API em `frontend/js/config.js`; não é mais usado automaticamente o backend da template.
 
-Por padrão o `.env` usa **SQLite** (`pastelaria.db`) para você subir a API sem configurar PostgreSQL. Para usar PostgreSQL, troque no `.env`:
-
-```
-DATABASE_URL=postgresql://postgres:SUA_SENHA@localhost:5432/pastelaria
-```
-
-API disponível em `http://localhost:8000`
-
-> **Erro `UnicodeDecodeError` no Windows?** Isso geralmente significa que o PostgreSQL não está rodando ou a senha no `.env` está errada. Use SQLite (padrão) ou confira o serviço no pgAdmin.
-
-3. Em `frontend/js/config.js`, aponte `API_URL` para `http://localhost:8000`
-
-## Fluxo do cliente
-
-1. Cardápio → adicionar produtos ao carrinho
-2. Carrinho → ajustar quantidades
-3. Login com Google
-4. Cadastro de endereço
-5. Pagamento (Pix / Dinheiro / Cartão)
-6. Confirmação do pedido
-
-## Painel Admin
-
-Acesse `/admin.html` para:
-
-- Ver pedidos em tempo real
-- Atualizar status (Aceitar → Preparando → Saiu p/ entrega → Finalizado)
-- Confirmar pagamento na entrega
-- Enviar pedido para motoboy via WhatsApp com link do Google Maps
-- **Fechar dia (gaveta)** — arquiva todos os pedidos ativos e guarda o histórico
-
-## Deploy
-
-Guia completo com **Supabase**: **[DEPLOY_SUPABASE.md](DEPLOY_SUPABASE.md)**
-
-Resumo:
-
-| Onde | O quê |
-|------|--------|
-| **Supabase** | Banco PostgreSQL |
-| **Render** | API FastAPI (`backend/`) |
-| **Vercel** | Site (`frontend/`) |
-
-### Vercel (frontend)
-
-1. Conecte o repositório na Vercel
-2. Root directory: `frontend`
-3. Configure variáveis em `config.js` ou injete via script no deploy
-
-### Render (backend)
-
-1. Conecte o repositório no Render
-2. Use o `render.yaml` ou configure manualmente:
-   - Root: `backend`
-   - Build: `pip install -r requirements.txt`
-   - Start: `uvicorn app:app --host 0.0.0.0 --port $PORT`
-3. Adicione `DATABASE_URL` do PostgreSQL (Render ou externo)
-
-## Configurações
-
-| Variável | Descrição |
-|----------|-----------|
-| `GOOGLE_CLIENT_ID` | Login com Google OAuth — **só no backend** |
-| `ADMIN_TOKEN` | Token de acesso ao painel admin |
-| `MOTOBOY_WHATSAPP` | Número do motoboy (ex: 5511999999999) |
-| `GOOGLE_MAPS_API_KEY` | Geocodificação de endereços |
-
-### Pix online
-
-Guia: **[MERCADOPAGO.md](MERCADOPAGO.md)** — em sandbox usa **simulador Pix** no site (sem cartão nem redirect do MP).
-
-### Login com Google
-
-Siga o guia **[GOOGLE_SETUP.md](GOOGLE_SETUP.md)** — leva cerca de 5 minutos.
-
-Resumo: crie credencial OAuth no Google Cloud, coloque o Client ID em `backend/.env` e reinicie a API. O frontend detecta automaticamente.
+Consulte [DIAGNOSTICO_NAKACHI.md](DIAGNOSTICO_NAKACHI.md) para o diagnóstico, decisões, limites e próximas etapas; [SECURITY.md](SECURITY.md) para revogação e pendências. Os guias antigos de deploy são referências de infraestrutura: as regras de autenticação e ambiente deste README prevalecem.

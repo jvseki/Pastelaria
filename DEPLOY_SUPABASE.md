@@ -1,3 +1,5 @@
+> Atualiza??o de seguran?a: siga [SECURITY.md](SECURITY.md) e o [README](README.md). O acesso administrativo agora usa sess?o Google e ADMIN_EMAIL no servidor. Em produ??o use APP_ENV=production, HTTPS e MERCADOPAGO_SANDBOX=false. As instru??es antigas de ambiente abaixo precisam ser adaptadas.
+
 # Deploy com Supabase + Render + Vercel
 
 Guia passo a passo para colocar a Pastelaria Delivery no ar usando **Supabase** (banco PostgreSQL), **Render** (API) e **Vercel** (site).
@@ -139,8 +141,8 @@ Em **Environment** → adicione:
 | `DATABASE_URL` | URL do Supabase (passo 1.3) |
 | `SECRET_KEY` | String aleatória longa (ex: gere no 1Password) |
 | `GOOGLE_CLIENT_ID` | Seu Client ID do Google OAuth |
-| `ADMIN_TOKEN` | Token secreto para o admin (ex: `pastel-admin-2025-xYz`) |
-| `MOTOBOY_WHATSAPP` | `5518997640335` |
+| `ADMIN_EMAIL` | E-mail Google autorizado no backend; nunca configure token administrativo no frontend |
+| `MOTOBOY_WHATSAPP` | `SEU_NUMERO_CONFIGURADO` |
 | `FRONTEND_URL` | URL da Vercel (preencha depois do passo 3) |
 
 ### 2.3 Deploy

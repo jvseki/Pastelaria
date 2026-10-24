@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pastelaria Delivery">
   <rect width="32" height="32" rx="7" fill="#c41e3a"/>
-  <text x="16" y="22.5" text-anchor="middle" font-size="17" font-family="Georgia, 'Times New Roman', serif" fill="#f5e6c8">Ñ</text>
+  <path d="M6 18 Q16 6 26 18 L23 24 Q16 19 9 24 Z" fill="#f5e6c8"/>
+  <path d="M9 20 Q16 14 23 20" fill="none" stroke="#c41e3a" stroke-width="1.4" opacity=".55" stroke-linecap="round"/>
 </svg>

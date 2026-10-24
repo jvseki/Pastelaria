@@ -96,19 +96,19 @@ function renderPedido(pedido, mpStatus, container) {
             </div>
             <h2>Pedido recebido</h2>
             <p class="pedido-numero">Pedido #${numPedido}</p>
-            <span class="status-badge ${statusClass[st] || "status-pendente"}">${statusLabels[st] || st}</span>
+            <span class="status-badge ${statusClass[st] || "status-pendente"}">${escaparHtml(statusLabels[st] || st)}</span>
             ${msgExtra}
         </div>
 
         <div class="pedido-detalhes">
             <h3>Resumo do pedido</h3>
-            ${itens.map((i) => `<p>${i.quantidade}x ${i.nome} — ${formatarPreco(i.preco * i.quantidade)}</p>`).join("")}
+            ${itens.map((i) => `<p>${i.quantidade}x ${escaparHtml(i.nome)} — ${formatarPreco(i.preco * i.quantidade)}</p>`).join("")}
             ${taxaEntrega ? `<p>Taxa de entrega — ${formatarPreco(taxaEntrega)}</p>` : ""}
             <p style="margin-top:12px;font-weight:600;color:var(--text)">Total: ${formatarPreco(total)}</p>
             <hr style="margin:12px 0;border:none;border-top:1px solid var(--border)">
             <p><strong>Recebimento:</strong> ${tipoEntrega === "retirada" ? "Retirar no local" : "Entrega com motoboy"}</p>
-            ${tipoEntrega === "retirada" ? `<p style="font-size:0.88rem;color:var(--text-secondary)">${pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria"}</p>` : ""}
-            <p><strong>Pagamento:</strong> ${pagamentoLabels[pedido.pagamento] || pedido.pagamento}</p>
+            ${tipoEntrega === "retirada" ? `<p style="font-size:0.88rem;color:var(--text-secondary)">${escaparHtml(pedido.local_retirada || window.LOJA_ENDERECO || "Pastelaria")}</p>` : ""}
+            <p><strong>Pagamento:</strong> ${escaparHtml(pagamentoLabels[pedido.pagamento] || pedido.pagamento)}</p>
             ${isMp
                 ? `<p style="font-size:0.88rem;color:var(--text-secondary)">Pagamento via Pix online.</p>`
                 : `<p style="font-size:0.88rem;color:var(--text-secondary)">Voce confirmou o pagamento ao receber ao finalizar o pedido.</p>`}
